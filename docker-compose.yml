@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: secret
+    volumes:
+      - ./conf/mongo-keyfile:/data/keyfile/mongo-keyfile
+      - mongodb_data:/data/db
+    command: >
+      --keyFile /data/keyfile/mongo-keyfile
+      --replSet rs0
+      --bind_ip_all
+    networks:
+      - bondma-network
+
+  server:
+    image: bondma-server:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mongodb://admin:secret@mongodb:27017/bondma?authSource=admin&replicaSet=rs0
+    depends_on:
+      - mongodb
+    networks:
+      - bondma-network
+
+  web:
+    image: bondma-web:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    depends_on:
+      - server
+    networks:
+      - bondma-network
+
+networks:
+  bondma-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
