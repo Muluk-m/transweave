@@ -29,14 +29,14 @@ export class UserService {
 
   // Query user by ID
   async findUserById(id: string): Promise<User | null> {
-    return this.prisma.user.findFirst({
+    return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
   // Query user by email
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findFirst({
+    return this.prisma.user.findUnique({
       where: { email },
     });
   }
