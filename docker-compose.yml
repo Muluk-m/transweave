@@ -23,7 +23,7 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=mongodb://admin:secret@host.docker.internal:27017/bondma?authSource=admin&replicaSet=rs0
+      - DATABASE_URL=mongodb://admin:secret@mongodb:27017/bondma?authSource=admin&replicaSet=rs0
     depends_on:
       - mongodb
     networks:
@@ -35,7 +35,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_INTERNAL_API_URL=http://localhost:3001
+      - NEXT_INTERNAL_API_URL=http://server:3001
     depends_on:
       - server
     networks:
