@@ -7,6 +7,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   async onModuleInit() {
+    console.log('Connecting to database with URL:', process.env.DATABASE_URL);
     await this.$connect();
   }
 
