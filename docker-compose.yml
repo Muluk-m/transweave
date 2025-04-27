@@ -30,16 +30,16 @@ services:
       - bondma-network
 
   web:
-  image: bondma-web:latest
-  ports:
-    - "3000:3000"
-  environment:
-    - NODE_ENV=production
-    - NEXT_INTERNAL_API_URL=http://localhost:3001
-  depends_on:
-    - server
-  networks:
-    - bondma-network
+    image: bondma-web:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_INTERNAL_API_URL=http://localhost:3001
+    depends_on:
+      - server
+    networks:
+      - bondma-network
 
 networks:
   bondma-network:
