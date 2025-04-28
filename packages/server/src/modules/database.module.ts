@@ -1,4 +1,4 @@
-import { Module, Logger } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   User,
@@ -18,8 +18,8 @@ import {
     (() => {
       const dbUrl =
         process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma';
-      Logger.log(`数据库连接地址: ${dbUrl}`, 'DatabaseModule');
       return MongooseModule.forRoot(dbUrl, {
+        authMechanism: 'SCRAM-SHA-1',
         bufferCommands: false,
         autoCreate: true,
         autoIndex: false,
