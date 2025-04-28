@@ -35,7 +35,12 @@ export class TeamService {
           teamId: team._id,
           role: 'owner',
         });
+
         await membership.save({ session });
+
+        team.memberships.push(membership);
+
+        await team.save({ session }); // 保存修改
 
         // 查询团队并填充成员信息
         result = await this.teamModel
@@ -61,8 +66,14 @@ export class TeamService {
   }
 
   async findTeamsByUserId(userId: string) {
+    const memberships = await this.membershipModel
+      .find({ userId })
+      .select('_id')
+      .lean();
+    const membershipIds = memberships.map((m) => m._id);
+
     return this.teamModel
-      .find({ 'memberships.userId': userId })
+      .find({ memberships: { $in: membershipIds } })
       .populate({
         path: 'memberships',
         populate: {

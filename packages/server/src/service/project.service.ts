@@ -152,28 +152,49 @@ export class ProjectService {
     comment?: string;
     translations?: Record<string, string>;
   }) {
-    // 检查key是否已存在
-    const existingToken = await this.tokenModel
-      .findOne({
-        projectId: data.projectId,
-        key: data.key,
-      })
-      .exec();
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      let result: any = null;
+      await session.withTransaction(async () => {
+        // 检查key是否已存在
+        const existingToken = await this.tokenModel
+          .findOne({
+            projectId: data.projectId,
+            key: data.key,
+          })
+          .session(session)
+          .exec();
 
-    if (existingToken) {
-      throw new BadRequestException(`令牌键'${data.key}'已存在`);
+        if (existingToken) {
+          throw new BadRequestException(`令牌键'${data.key}'已存在`);
+        }
+
+        // 创建令牌并直接存储翻译
+        const token = new this.tokenModel({
+          projectId: data.projectId,
+          key: data.key,
+          tags: data.tags || [],
+          comment: data.comment || '',
+          translations: data.translations || {},
+        });
+
+        await token.save({ session });
+
+        // 将token添加到对应的project中
+        await this.projectModel
+          .findByIdAndUpdate(
+            data.projectId,
+            { $push: { tokens: token._id } },
+            { session },
+          )
+          .exec();
+
+        result = token;
+      });
+      return result;
+    } finally {
+      session.endSession();
     }
-
-    // 创建令牌并直接存储翻译
-    const token = new this.tokenModel({
-      projectId: data.projectId,
-      key: data.key,
-      tags: data.tags || [],
-      comment: data.comment || '',
-      translations: data.translations || {},
-    });
-
-    return token.save();
   }
 
   // 获取单个令牌
@@ -447,6 +468,15 @@ export class ProjectService {
 
               await newToken.save({ session });
 
+              // 将新令牌添加到项目中
+              await this.projectModel
+                .findByIdAndUpdate(
+                  projectId,
+                  { $push: { tokens: newToken._id } },
+                  { session },
+                )
+                .exec();
+
               stats.added++;
             }
           }
@@ -487,6 +517,15 @@ export class ProjectService {
               });
 
               await newToken.save({ session });
+
+              // 将新令牌添加到项目中
+              await this.projectModel
+                .findByIdAndUpdate(
+                  projectId,
+                  { $push: { tokens: newToken._id } },
+                  { session },
+                )
+                .exec();
 
               stats.added++;
             }
