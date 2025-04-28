@@ -1,479 +1,536 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-base-to-string */
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Project, ProjectDocument, Token, TokenDocument } from '../models';
 import { MembershipService } from './membership.service';
-import { createZipWithLanguageFiles, exportToCSV, exportToJSON, exportToXML, exportToYAML } from 'src/utils/exportTo';
+import { createZipWithLanguageFiles } from 'src/utils/exportTo';
 import { parseImportData } from 'src/utils/importFrom';
+import { MongooseService } from './mongoose.service';
 
 @Injectable()
 export class ProjectService {
   constructor(
-    private prisma: PrismaService,
-    private membershipService: MembershipService
+    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectModel(Token.name) private tokenModel: Model<TokenDocument>,
+    private membershipService: MembershipService,
+    private mongooseService: MongooseService,
   ) {}
 
-  async createProject(data: { 
-    name: string; 
+  async createProject(data: {
+    name: string;
     teamId: string;
     url: string;
     description?: string;
     languages?: string[];
   }) {
-    return this.prisma.project.create({
-      data: {
-        ...data,
-        languages: data.languages || [],  // Use provided languages or default to empty array
-      },
-    });
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      let result: ProjectDocument | null = null;
+      await session.withTransaction(async () => {
+        const project = new this.projectModel({
+          ...data,
+          languages: data.languages || [],
+        });
+        await project.save({ session });
+        result = project;
+      });
+      return result;
+    } finally {
+      session.endSession();
+    }
   }
 
   async findAllProjects() {
-    return this.prisma.project.findMany();
+    return this.projectModel.find().exec();
   }
 
   async findProjectById(id: string) {
-    return this.prisma.project.findUnique({
-      where: { id },
-      include: {
-        tokens: true, // Include all tokens
-      }
-    });
+    return this.projectModel.findById(id).populate('tokens').exec();
   }
 
   async findProjectsByTeamId(teamId: string) {
-    return this.prisma.project.findMany({
-      where: { teamId },
-    });
+    return this.projectModel.find({ teamId }).exec();
   }
 
-  async updateProject(id: string, data: { 
-    name?: string;
-    description?: string;
-    languages?: string[];
-  }) {
-    return this.prisma.project.update({
-      where: { id },
-      data,
-    });
+  async updateProject(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      languages?: string[];
+    },
+  ) {
+    return this.projectModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
   async deleteProject(id: string) {
-    // First delete all tokens associated with this project
-    await this.prisma.token.deleteMany({
-      where: { projectId: id }
-    });
-    
-    // Then delete the project itself
-    return this.prisma.project.delete({
-      where: { id },
-    });
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      await session.withTransaction(async () => {
+        // 先删除关联的所有tokens
+        await this.tokenModel
+          .deleteMany({ projectId: id })
+          .session(session)
+          .exec();
+
+        // 再删除项目
+        await this.projectModel.findByIdAndDelete(id).session(session).exec();
+      });
+      return { success: true };
+    } finally {
+      session.endSession();
+    }
   }
 
   async addLanguage(id: string, language: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id }
-    });
-    
-    // Ensure language array exists and avoid duplicate additions
-    const languages = project?.languages || [];
-    if (!languages.includes(language)) {
-      return this.prisma.project.update({
-        where: { id },
-        data: {
-          languages: [...languages, language]
-        }
-      });
+    const project = await this.projectModel.findById(id).exec();
+
+    if (!project) {
+      throw new NotFoundException('项目不存在');
     }
-    
+
+    // 确保language数组存在且避免重复添加
+    const languages = project.languages || [];
+    if (!languages.includes(language)) {
+      project.languages = [...languages, language];
+      return project.save();
+    }
+
     return project;
   }
 
   async removeLanguage(id: string, language: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id }
-    });
-    
-    const languages = project?.languages || [];
-    return this.prisma.project.update({
-      where: { id },
-      data: {
-        languages: languages.filter(lang => lang !== language)
-      }
-    });
+    const project = await this.projectModel.findById(id).exec();
+
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    const languages = project.languages || [];
+    project.languages = languages.filter((lang) => lang !== language);
+    return project.save();
   }
 
   // Check if user has permission to access the project
-  async checkUserProjectPermission(projectId: string, userId: string): Promise<boolean> {
+  async checkUserProjectPermission(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
     // First get project information to find its team
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-      select: { teamId: true }
-    });
+    const project = await this.projectModel
+      .findById(projectId)
+      .select('teamId')
+      .exec();
 
     if (!project) {
-      throw new NotFoundException('Project does not exist');
+      throw new NotFoundException('项目不存在');
     }
 
     // Check if user is a team member
-    return this.membershipService.isMember(project.teamId, userId);
+    return this.membershipService.isMember(String(project.teamId), userId);
   }
 
   // ============= Token related methods =============
 
-  // Get all tokens in a project
+  // 获取项目中的所有令牌
   async getProjectTokens(projectId: string) {
-    return this.prisma.token.findMany({
-      where: { projectId }
-    });
+    return this.tokenModel.find({ projectId }).exec();
   }
 
-  // Create new token
+  // 创建新令牌
   async createToken(data: {
     projectId: string;
     key: string;
     tags?: string[];
     comment?: string;
-    translations?: Record<string, string>; // Changed to use translation object directly
+    translations?: Record<string, string>;
   }) {
-    // Check if key already exists
-    const existingToken = await this.prisma.token.findFirst({
-      where: {
-        projectId: data.projectId,
-        key: data.key
-      }
-    });
-
-    if (existingToken) {
-      throw new BadRequestException(`Token key '${data.key}' already exists`);
-    }
-
-    // Create token and store translations directly
-    return this.prisma.token.create({
-      data: {
+    // 检查key是否已存在
+    const existingToken = await this.tokenModel
+      .findOne({
         projectId: data.projectId,
         key: data.key,
-        tags: data.tags || [],
-        comment: data.comment || '',
-        translations: data.translations || {}, // Store translation object directly
-      }
+      })
+      .exec();
+
+    if (existingToken) {
+      throw new BadRequestException(`令牌键'${data.key}'已存在`);
+    }
+
+    // 创建令牌并直接存储翻译
+    const token = new this.tokenModel({
+      projectId: data.projectId,
+      key: data.key,
+      tags: data.tags || [],
+      comment: data.comment || '',
+      translations: data.translations || {},
     });
+
+    return token.save();
   }
 
-  // Get a single token
+  // 获取单个令牌
   async getTokenById(tokenId: string) {
-    const token = await this.prisma.token.findUnique({
-      where: { id: tokenId }
-    });
+    const token = await this.tokenModel.findById(tokenId).exec();
 
     if (!token) {
-      throw new NotFoundException(`Token ${tokenId} does not exist`);
+      throw new NotFoundException(`令牌 ${tokenId} 不存在`);
     }
 
     return token;
   }
 
-  // Update token
-  async updateToken(tokenId: string, data: {
-    key?: string;
-    tags?: string[];
-    comment?: string;
-    translations?: Record<string, string>; // Add translation object parameter
-  }) {
-    // Get token to confirm it exists
+  // 更新令牌
+  async updateToken(
+    tokenId: string,
+    data: {
+      key?: string;
+      tags?: string[];
+      comment?: string;
+      translations?: Record<string, string>;
+    },
+  ) {
+    // 获取令牌以确认它存在
     const token = await this.getTokenById(tokenId);
 
-    // If changing key, check for duplicates
+    // 如果更改键，检查重复
     if (data.key && data.key !== token.key) {
-      const existingToken = await this.prisma.token.findFirst({
-        where: {
+      const existingToken = await this.tokenModel
+        .findOne({
           projectId: token.projectId,
           key: data.key,
-          NOT: { id: tokenId }
-        }
-      });
+          _id: { $ne: tokenId },
+        })
+        .exec();
 
       if (existingToken) {
-        throw new BadRequestException(`Token key '${data.key}' already exists`);
+        throw new BadRequestException(`令牌键'${data.key}'已存在`);
       }
     }
 
-    // Prepare update data
+    // 准备更新数据
     const updateData: any = {};
     if (data.key !== undefined) updateData.key = data.key;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.comment !== undefined) updateData.comment = data.comment;
 
-    // If translations are provided, merge them rather than completely replacing
+    // 如果提供了翻译，合并而不是完全替换
     if (data.translations) {
-      // Get existing translations from current token
-      const currentTranslations = token.translations as Record<string, string> || {};
-      
-      // Merge new translations
+      // 获取当前令牌的现有翻译
+      const currentTranslations = token.translations || {};
+
+      // 合并新翻译
       updateData.translations = {
         ...currentTranslations,
-        ...data.translations
+        ...data.translations,
       };
     }
 
-    // Execute update
-    return this.prisma.token.update({
-      where: { id: tokenId },
-      data: updateData
-    });
+    // 执行更新
+    return this.tokenModel
+      .findByIdAndUpdate(tokenId, updateData, { new: true })
+      .exec();
   }
 
-  // Delete token
+  // 删除令牌
   async deleteToken(tokenId: string) {
-    // Get token to confirm it exists
+    // 获取令牌以确认它存在
     await this.getTokenById(tokenId);
 
-    // Delete token
-    return this.prisma.token.delete({
-      where: { id: tokenId }
-    });
+    // 删除令牌
+    return this.tokenModel.findByIdAndDelete(tokenId).exec();
   }
 
   // Export project content
-  async exportProjectTokens(projectId: string, options: {
-    format: 'json' | 'csv' | 'xml' | 'yaml';
-    scope?: 'all' | 'completed' | 'incomplete' | 'custom';
-    languages?: string[];
-    showEmptyTranslations?: boolean;
-    prettify?: boolean;
-    includeMetadata?: boolean;
-    asZip?: boolean; // Add option: whether to export as ZIP package
-  }) {
-    // Get project information, mainly for supported language list
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId }
-    });
-    
+  async exportProjectTokens(
+    projectId: string,
+    options: {
+      format: 'json' | 'csv' | 'xml' | 'yaml';
+      scope?: 'all' | 'completed' | 'incomplete' | 'custom';
+      languages?: string[];
+      showEmptyTranslations?: boolean;
+      prettify?: boolean;
+      includeMetadata?: boolean;
+      asZip?: boolean; // 添加选项：是否作为ZIP包导出
+    },
+  ) {
+    // 获取项目信息，主要是支持的语言列表
+    const project = await this.projectModel.findById(projectId).exec();
+
     if (!project) {
-      throw new NotFoundException('Project does not exist');
+      throw new NotFoundException('项目不存在');
     }
 
-    // Get all tokens
-    let tokens = await this.prisma.token.findMany({
-      where: { projectId }
-    });
+    // 获取所有令牌
+    let tokens = await this.tokenModel.find({ projectId }).lean().exec();
 
-    // Filter tokens based on scope
+    // 根据范围筛选令牌
     if (options.scope) {
-      tokens = this.filterTokensByScope(tokens, options.scope, project.languages);
+      tokens = this.filterTokensByScope(
+        tokens,
+        options.scope,
+        project.languages,
+      );
     }
 
-    // If languages are specified, only export translations for these languages
-    const targetLanguages = (options.languages && options.languages.length > 0) 
-      ? options.languages.filter(lang => project.languages.includes(lang))
-      : project.languages;
+    // 如果指定了语言，则仅导出这些语言的翻译
+    const targetLanguages =
+      options.languages && options.languages.length > 0
+        ? options.languages.filter((lang) => project.languages.includes(lang))
+        : project.languages;
 
-    // Filter based on showEmptyTranslations option
+    // 根据showEmptyTranslations选项过滤
     if (options.showEmptyTranslations === false) {
-      tokens = tokens.map(token => {
-        const translations = token.translations as Record<string, string> || {};
+      tokens = tokens.map((token) => {
+        const translations = token.translations || {};
         const filteredTranslations: Record<string, string> = {};
-        
-        targetLanguages.forEach(lang => {
+
+        targetLanguages.forEach((lang) => {
           if (translations[lang]) {
             filteredTranslations[lang] = translations[lang];
           }
         });
-        
+
         return {
           ...token,
-          translations: filteredTranslations
+          translations: filteredTranslations,
         };
       });
     } else {
-      // Ensure all tokens include all target languages, even if empty
-      tokens = tokens.map(token => {
-        const translations = token.translations as Record<string, string> || {};
+      // 确保所有令牌都包含所有目标语言，即使是空的
+      tokens = tokens.map((token) => {
+        const translations = token.translations || {};
         const completeTranslations: Record<string, string> = {};
-        
-        targetLanguages.forEach(lang => {
+
+        targetLanguages.forEach((lang) => {
           completeTranslations[lang] = translations[lang] || '';
         });
-        
+
         return {
           ...token,
-          translations: completeTranslations
+          translations: completeTranslations,
         };
       });
     }
 
-    // Remove unwanted metadata
+    // 移除不需要的元数据
     if (!options.includeMetadata) {
-      // @ts-ignore
-      tokens = tokens.map(({ id, projectId, key, translations }) => ({
-        id, projectId, key, translations
-      }));
+      const formattedTokens = tokens.map(
+        ({ _id, projectId, key, translations }) => ({
+          id: String(_id),
+          projectId,
+          key,
+          translations,
+        }),
+      );
+      tokens = formattedTokens as typeof tokens;
     }
 
-    // Default export as ZIP (one file per language)
-    return await createZipWithLanguageFiles(tokens, project, targetLanguages, options.format, {
-      prettify: options.prettify
-    });
+    // 默认导出为ZIP（每种语言一个文件）
+    return await createZipWithLanguageFiles(
+      tokens,
+      {
+        ...project.toObject(),
+        id: String(project._id),
+      },
+      targetLanguages,
+      options.format,
+      {
+        prettify: options.prettify,
+      },
+    );
   }
 
   // Import project content
-  async importProjectTokens(projectId: string, data: {
-    language: string;      // Language to import
-    content: string;       // File content
-    format: 'json' | 'csv' | 'xml' | 'yaml'; // Import format
-    mode: 'append' | 'replace'; // Import mode
-  }) {
-    // Get project information
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId }
-    });
-    
-    if (!project) {
-      throw new NotFoundException('Project does not exist');
-    }
+  async importProjectTokens(
+    projectId: string,
+    data: {
+      language: string; // 要导入的语言
+      content: string; // 文件内容
+      format: 'json' | 'csv' | 'xml' | 'yaml'; // 导入格式
+      mode: 'append' | 'replace'; // 导入模式
+    },
+  ) {
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      const stats = {
+        added: 0, // 添加的新令牌数量
+        updated: 0, // 更新的令牌数量
+        unchanged: 0, // 未更改的令牌数量
+        total: 0, // 处理的令牌总数
+      };
 
-    // Verify if language is in project's supported language list
-    if (!project.languages.includes(data.language)) {
-      throw new BadRequestException(`Project does not support "${data.language}" language`);
-    }
+      await session.withTransaction(async () => {
+        // 获取项目信息
+        const project = await this.projectModel
+          .findById(projectId)
+          .session(session)
+          .exec();
 
-    // Parse imported data
-    const importData = parseImportData(data.content, data.format);
-    
-    if (!importData || Object.keys(importData).length === 0) {
-      throw new BadRequestException('Imported file does not contain valid data or has incorrect format');
-    }
-
-    // Get all current tokens for the project
-    const existingTokens = await this.prisma.token.findMany({
-      where: { projectId }
-    });
-
-    // Statistics
-    const stats = {
-      added: 0,        // Number of new tokens added
-      updated: 0,      // Number of tokens updated
-      unchanged: 0,    // Number of tokens unchanged
-      total: Object.keys(importData).length // Total tokens processed
-    };
-
-    // Process data according to import mode
-    if (data.mode === 'replace') {
-      // Replace mode: first clear all existing translations for this language
-      await Promise.all(existingTokens.map(async token => {
-        const translations = token.translations as Record<string, string> || {};
-        // Delete translation for this language
-        delete translations[data.language];
-        
-        // Update token
-        await this.prisma.token.update({
-          where: { id: token.id },
-          data: { translations }
-        });
-      }));
-
-      // Then import new data
-      for (const key of Object.keys(importData)) {
-        const value = importData[key];
-        const existingToken = existingTokens.find(t => t.key === key);
-        
-        if (existingToken) {
-          // Update existing token's translation
-          const translations = existingToken.translations as Record<string, string> || {};
-          translations[data.language] = value;
-          
-          await this.prisma.token.update({
-            where: { id: existingToken.id },
-            data: { translations }
-          });
-          
-          stats.updated++;
-        } else {
-          // Create new token
-          const translations: Record<string, string> = {};
-          translations[data.language] = value;
-          
-          await this.prisma.token.create({
-            data: {
-              projectId,
-              key,
-              tags: [],
-              comment: '',
-              translations
-            }
-          });
-          
-          stats.added++;
+        if (!project) {
+          throw new NotFoundException('项目不存在');
         }
-      }
-    } else {
-      // Append mode: keep existing translations, only update or add new ones
-      for (const key of Object.keys(importData)) {
-        const value = importData[key];
-        const existingToken = existingTokens.find(t => t.key === key);
-        
-        if (existingToken) {
-          // Get existing translations
-          const translations = existingToken.translations as Record<string, string> || {};
-          
-          // Check if update is needed
-          if (translations[data.language] !== value) {
-            translations[data.language] = value;
-            
-            await this.prisma.token.update({
-              where: { id: existingToken.id },
-              data: { translations }
-            });
-            
-            stats.updated++;
-          } else {
-            stats.unchanged++;
+
+        // 验证语言是否在项目的支持语言列表中
+        if (!project.languages.includes(data.language)) {
+          throw new BadRequestException(`项目不支持"${data.language}"语言`);
+        }
+
+        // 解析导入的数据
+        const importData = parseImportData(data.content, data.format);
+
+        if (!importData || Object.keys(importData).length === 0) {
+          throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
+        }
+
+        // 获取项目的所有当前令牌
+        const existingTokens = await this.tokenModel
+          .find({ projectId })
+          .session(session)
+          .exec();
+
+        // 统计信息
+        stats.total = Object.keys(importData).length;
+
+        // 根据导入模式处理数据
+        if (data.mode === 'replace') {
+          // 替换模式：首先清除此语言的所有现有翻译
+          await Promise.all(
+            existingTokens.map(async (token) => {
+              const translations = token.translations || {};
+              // 删除此语言的翻译
+              delete translations[data.language];
+
+              // 更新令牌
+              await this.tokenModel
+                .findByIdAndUpdate(token._id, { translations })
+                .session(session)
+                .exec();
+            }),
+          );
+
+          // 然后导入新数据
+          for (const key of Object.keys(importData)) {
+            const value = importData[key];
+            const existingToken = existingTokens.find((t) => t.key === key);
+
+            if (existingToken) {
+              // 更新现有令牌的翻译
+              const translations = existingToken.translations || {};
+              translations[data.language] = value;
+
+              await this.tokenModel
+                .findByIdAndUpdate(existingToken._id, { translations })
+                .session(session)
+                .exec();
+
+              stats.updated++;
+            } else {
+              // 创建新令牌
+              const translations: Record<string, string> = {};
+              translations[data.language] = value;
+
+              const newToken = new this.tokenModel({
+                projectId,
+                key,
+                tags: [],
+                comment: '',
+                translations,
+              });
+
+              await newToken.save({ session });
+
+              stats.added++;
+            }
           }
         } else {
-          // Create new token
-          const translations: Record<string, string> = {};
-          translations[data.language] = value;
-          
-          await this.prisma.token.create({
-            data: {
-              projectId,
-              key,
-              tags: [],
-              comment: '',
-              translations
-            }
-          });
-          
-          stats.added++;
-        }
-      }
-    }
+          // 追加模式：保留现有翻译，仅更新或添加新的
+          for (const key of Object.keys(importData)) {
+            const value = importData[key];
+            const existingToken = existingTokens.find((t) => t.key === key);
 
-    return {
-      stats,
-      message: `Import completed: ${stats.added} added, ${stats.updated} updated, ${stats.unchanged} unchanged`
-    };
+            if (existingToken) {
+              // 获取现有翻译
+              const translations = existingToken.translations || {};
+
+              // 检查是否需要更新
+              if (translations[data.language] !== value) {
+                translations[data.language] = value;
+
+                await this.tokenModel
+                  .findByIdAndUpdate(existingToken._id, { translations })
+                  .session(session)
+                  .exec();
+
+                stats.updated++;
+              } else {
+                stats.unchanged++;
+              }
+            } else {
+              // 创建新令牌
+              const translations: Record<string, string> = {};
+              translations[data.language] = value;
+
+              const newToken = new this.tokenModel({
+                projectId,
+                key,
+                tags: [],
+                comment: '',
+                translations,
+              });
+
+              await newToken.save({ session });
+
+              stats.added++;
+            }
+          }
+        }
+      });
+
+      return {
+        stats,
+        message: `导入完成：${stats.added}个已添加，${stats.updated}个已更新，${stats.unchanged}个未更改`,
+      };
+    } finally {
+      session.endSession();
+    }
   }
 
   // Filter tokens by scope
-  private filterTokensByScope(tokens: any[], scope: string, projectLanguages: string[]) {
+  private filterTokensByScope(
+    tokens: any[],
+    scope: string,
+    projectLanguages: string[],
+  ) {
     switch (scope) {
       case 'all':
         return tokens;
       case 'completed':
-        return tokens.filter(token => {
-          const translations = token.translations as Record<string, string> || {};
-          return projectLanguages.every(lang => translations[lang] && translations[lang].trim() !== '');
+        return tokens.filter((token) => {
+          const translations = token.translations || {};
+          return projectLanguages.every(
+            (lang) => translations[lang] && translations[lang].trim() !== '',
+          );
         });
       case 'incomplete':
-        return tokens.filter(token => {
-          const translations = token.translations as Record<string, string> || {};
-          return projectLanguages.some(lang => !translations[lang] || translations[lang].trim() === '');
+        return tokens.filter((token) => {
+          const translations = token.translations || {};
+          return projectLanguages.some(
+            (lang) => !translations[lang] || translations[lang].trim() === '',
+          );
         });
       case 'custom':
-        // Custom filter can be extended as needed
+        // 自定义过滤器可以根据需要扩展
         return tokens;
       default:
         return tokens;
     }
   }
-
 }

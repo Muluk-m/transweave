@@ -1,4 +1,23 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Logger, UseGuards, ForbiddenException, NotFoundException, Res, Header, Query, UnauthorizedException, BadRequestException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-base-to-string */
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Logger,
+  UseGuards,
+  ForbiddenException,
+  NotFoundException,
+  Res,
+  Header,
+  Query,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser } from '../jwt/current-user.decorator';
@@ -13,16 +32,22 @@ interface UserPayload {
 
 @Controller('api/project')
 export class ProjectController {
-  constructor(private projectService: ProjectService, private userService: UserService) {}
+  constructor(
+    private projectService: ProjectService,
+    private userService: UserService,
+  ) {}
 
   @Post('create')
-  async createProject(@Body() data: { 
-    name: string; 
-    teamId: string; 
-    url: string; 
-    description?: string;
-    languages?: string[];
-  }) {
+  async createProject(
+    @Body()
+    data: {
+      name: string;
+      teamId: string;
+      url: string;
+      description?: string;
+      languages?: string[];
+    },
+  ) {
     return this.projectService.createProject(data);
   }
 
@@ -37,11 +62,15 @@ export class ProjectController {
   }
 
   @Put('update/:id')
-  async updateProject(@Param('id') id: string, @Body() data: { 
-    name?: string;
-    description?: string;
-    languages?: string[];
-  }) {
+  async updateProject(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      name?: string;
+      description?: string;
+      languages?: string[];
+    },
+  ) {
     return this.projectService.updateProject(id, data);
   }
 
@@ -56,12 +85,18 @@ export class ProjectController {
   }
 
   @Post('language/:id')
-  async addLanguage(@Param('id') id: string, @Body() data: { language: string }) {
+  async addLanguage(
+    @Param('id') id: string,
+    @Body() data: { language: string },
+  ) {
     return this.projectService.addLanguage(id, data.language);
   }
 
   @Delete('language/:id/:language')
-  async removeLanguage(@Param('id') id: string, @Param('language') language: string) {
+  async removeLanguage(
+    @Param('id') id: string,
+    @Param('language') language: string,
+  ) {
     return this.projectService.removeLanguage(id, language);
   }
 
@@ -70,9 +105,12 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async checkProjectPermission(
     @Param('id') projectId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
-    return await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    return await this.projectService.checkUserProjectPermission(
+      projectId,
+      user.userId,
+    );
   }
 
   // ============= Token related APIs =============
@@ -82,14 +120,19 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async getProjectTokens(
     @Param('projectId') projectId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      projectId,
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to access this project');
+      throw new ForbiddenException(
+        'You do not have permission to access this project',
+      );
     }
-    
+
     return this.projectService.getProjectTokens(projectId);
   }
 
@@ -97,21 +140,27 @@ export class ProjectController {
   @Post('token')
   @UseGuards(AuthGuard)
   async createToken(
-    @Body() data: {
+    @Body()
+    data: {
       projectId: string;
       key: string;
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Using translation object directly instead of array
     },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(data.projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      data.projectId,
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to create content in this project');
+      throw new ForbiddenException(
+        'You do not have permission to create content in this project',
+      );
     }
-    
+
     return this.projectService.createToken(data);
   }
 
@@ -120,18 +169,23 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async getToken(
     @Param('tokenId') tokenId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     const token = await this.projectService.getTokenById(tokenId);
     if (!token || !token.projectId) {
       throw new NotFoundException(`Project ${token.projectId} does not exist`);
     }
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(token.projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      token.projectId.toString(),
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to access this content');
+      throw new ForbiddenException(
+        'You do not have permission to access this content',
+      );
     }
-    
+
     return token;
   }
 
@@ -140,13 +194,14 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async updateToken(
     @Param('tokenId') tokenId: string,
-    @Body() data: {
+    @Body()
+    data: {
       key?: string;
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Add direct translation object
     },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // First get token to ensure it exists
     const token = await this.projectService.getTokenById(tokenId);
@@ -154,11 +209,16 @@ export class ProjectController {
       throw new NotFoundException(`Project ${token.projectId} does not exist`);
     }
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(token.projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      token.projectId.toString(),
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to modify this content');
+      throw new ForbiddenException(
+        'You do not have permission to modify this content',
+      );
     }
-    
+
     return this.projectService.updateToken(tokenId, data);
   }
 
@@ -167,7 +227,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async deleteToken(
     @Param('tokenId') tokenId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // First get token to ensure it exists
     const token = await this.projectService.getTokenById(tokenId);
@@ -175,11 +235,16 @@ export class ProjectController {
       throw new NotFoundException(`Project ${token.projectId} does not exist`);
     }
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(token.projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      token.projectId.toString(),
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to delete this content');
+      throw new ForbiddenException(
+        'You do not have permission to delete this content',
+      );
     }
-    
+
     return this.projectService.deleteToken(tokenId);
   }
 
@@ -189,7 +254,8 @@ export class ProjectController {
   @Header('Content-Type', 'application/zip')
   async exportProject(
     @Param('projectId') projectId: string,
-    @Body() data: {
+    @Body()
+    data: {
       format: 'json' | 'csv' | 'xml' | 'yaml'; // Export format
       scope?: 'all' | 'completed' | 'incomplete' | 'custom'; // Export scope
       languages?: string[]; // Selected languages
@@ -198,22 +264,33 @@ export class ProjectController {
       includeMetadata?: boolean; // Whether to include metadata
     },
     @CurrentUser() user: UserPayload,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      projectId,
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to export this project');
+      throw new ForbiddenException(
+        'You do not have permission to export this project',
+      );
     }
-    
+
     try {
       // Call service to export data as ZIP package
-      const zipBuffer = await this.projectService.exportProjectTokens(projectId, data);
-      
+      const zipBuffer = await this.projectService.exportProjectTokens(
+        projectId,
+        data,
+      );
+
       // Set response headers
-      res.setHeader('Content-Disposition', `attachment; filename="translations-${projectId}.zip"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="translations-${projectId}.zip"`,
+      );
       res.setHeader('Content-Type', 'application/zip');
-      
+
       // Send ZIP file
       return res.send(zipBuffer);
     } catch (error) {
@@ -228,7 +305,8 @@ export class ProjectController {
   async downloadProject(
     @Param('projectId') projectId: string,
     @Query('format') format: 'json' | 'csv' | 'xml' | 'yaml' = 'json', // Default to json
-    @Query('scope') scope: 'all' | 'completed' | 'incomplete' | 'custom' = 'all',
+    @Query('scope')
+    scope: 'all' | 'completed' | 'incomplete' | 'custom' = 'all',
     @Query('languages') languages: string, // Comma-separated language list, e.g. 'zh,en,ja'
     @Query('showEmptyTranslations') showEmptyTranslations: string,
     @Query('prettify') prettify: string,
@@ -236,12 +314,12 @@ export class ProjectController {
     @Query('username') username: string, // Username
     @Query('password') password: string, // Password
     @Query('apiKey') apiKey: string, // Optional API key
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
       // First try to authenticate user
       let userId: string;
-      
+
       // If apiKey is provided, use apiKey for verification first
       // if (apiKey) {
       //   const apiKeyInfo = await this.userService.validateApiKey(apiKey, projectId);
@@ -258,15 +336,20 @@ export class ProjectController {
         }
         userId = user.id;
       } else {
-        throw new UnauthorizedException('Please provide valid authentication information (username/password or API key)');
+        throw new UnauthorizedException(
+          'Please provide valid authentication information (username/password or API key)',
+        );
       }
-      
+
       // Verify project permission
-      const hasPermission = await this.projectService.checkUserProjectPermission(projectId, userId);
+      const hasPermission =
+        await this.projectService.checkUserProjectPermission(projectId, userId);
       if (!hasPermission) {
-        throw new ForbiddenException('You do not have permission to download this project');
+        throw new ForbiddenException(
+          'You do not have permission to download this project',
+        );
       }
-      
+
       // Process query parameters
       const exportConfig = {
         format,
@@ -276,15 +359,21 @@ export class ProjectController {
         prettify: prettify === 'true',
         includeMetadata: includeMetadata === 'true',
       };
-      
+
       // Call service to export data as ZIP package
-      const zipBuffer = await this.projectService.exportProjectTokens(projectId, exportConfig);
-      
+      const zipBuffer = await this.projectService.exportProjectTokens(
+        projectId,
+        exportConfig,
+      );
+
       // Set response headers
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      res.setHeader('Content-Disposition', `attachment; filename="translations-${projectId}-${timestamp}.zip"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="translations-${projectId}-${timestamp}.zip"`,
+      );
       res.setHeader('Content-Type', 'application/zip');
-      
+
       // Send ZIP file
       return res.send(zipBuffer);
     } catch (error) {
@@ -298,25 +387,34 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async importProject(
     @Param('projectId') projectId: string,
-    @Body() data: {
-      language: string;      // Language to import
-      content: string;       // File content
+    @Body()
+    data: {
+      language: string; // Language to import
+      content: string; // File content
       format: 'json' | 'csv' | 'xml' | 'yaml'; // Import format
       mode: 'append' | 'replace'; // Import mode
     },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Verify permission
-    const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      projectId,
+      user.userId,
+    );
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have permission to import content to this project');
+      throw new ForbiddenException(
+        'You do not have permission to import content to this project',
+      );
     }
-    
+
     try {
-      const result = await this.projectService.importProjectTokens(projectId, data);
+      const result = await this.projectService.importProjectTokens(
+        projectId,
+        data,
+      );
       return {
         success: true,
-        ...result
+        ...result,
       };
     } catch (error) {
       Logger.error(`Import failed: ${error.message}`, error.stack);

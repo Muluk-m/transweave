@@ -1,141 +1,125 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Team, TeamDocument, Membership, MembershipDocument } from '../models';
+import { MongooseService } from './mongoose.service';
 
 @Injectable()
 export class TeamService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(Membership.name)
+    private membershipModel: Model<MembershipDocument>,
+    private mongooseService: MongooseService,
+  ) {}
 
-  async createTeam(data: {
-    name: string;
-    url: string;
-    userId: string;
-  }) {
-    return this.prisma.$transaction(async (tx) => {
-      const name = (data.name ?? '').trim();
-      const url = (data.url ?? '').trim() || Math.random().toString(36).slice(2, 10);
-      const team = await tx.team.create({
-        data: {
-          name: name,
-          url: url,
-        }
-      });
+  async createTeam(data: { name: string; url: string; userId: string }) {
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      let result: any = null;
+      await session.withTransaction(async () => {
+        const name = (data.name ?? '').trim();
+        const url =
+          (data.url ?? '').trim() || Math.random().toString(36).slice(2, 10);
 
-      await tx.membership.create({
-        data: {
+        // 创建团队
+        const team = new this.teamModel({
+          name,
+          url,
+        });
+        await team.save({ session });
+
+        // 创建会员关系
+        const membership = new this.membershipModel({
           userId: data.userId,
-          teamId: team.id,
+          teamId: team._id,
           role: 'owner',
-        }
-      });
+        });
+        await membership.save({ session });
 
-      return tx.team.findUnique({
-        where: { id: team.id },
-        include: {
-          memberships: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
+        // 查询团队并填充成员信息
+        result = await this.teamModel
+          .findById(team._id)
+          .populate({
+            path: 'memberships',
+            populate: {
+              path: 'user',
+              select: 'id name email',
+            },
+          })
+          .session(session)
+          .exec();
       });
-    });
+      return result;
+    } finally {
+      session.endSession();
+    }
   }
 
   async findAllTeams() {
-    return this.prisma.team.findMany();
+    return this.teamModel.find().exec();
   }
-  
+
   async findTeamsByUserId(userId: string) {
-    return this.prisma.team.findMany({
-      where: {
-        memberships: {
-          some: { userId }
-        }
-      },
-      include: {
-        memberships: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    });
+    return this.teamModel
+      .find({ 'memberships.userId': userId })
+      .populate({
+        path: 'memberships',
+        populate: {
+          path: 'user',
+          select: 'id name email',
+        },
+      })
+      .exec();
   }
 
   async findTeamById(id: string) {
-    return this.prisma.team.findUnique({
-      where: { id },
-      include: {
-        memberships: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    });
+    return this.teamModel
+      .findById(id)
+      .populate({
+        path: 'memberships',
+        populate: {
+          path: 'user',
+          select: 'id name email',
+        },
+      })
+      .exec();
   }
 
   // Update team information
   async updateTeam(id: string, data: { name?: string; url?: string }) {
-    return this.prisma.team.update({
-      where: { id },
-      data
-    });
+    return this.teamModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
   // Delete team
   async deleteTeam(id: string) {
     // First delete all related membership records
-    await this.prisma.membership.deleteMany({
-      where: { teamId: id }
-    });
-    
+    await this.membershipModel.deleteMany({ teamId: id }).exec();
+
     // Then delete the team
-    return this.prisma.team.delete({
-      where: { id }
-    });
+    return this.teamModel.findByIdAndDelete(id).exec();
   }
-  
+
   // Get all member information for a specific team
   async getTeamMembers(teamId: string) {
-    const team = await this.prisma.team.findUnique({
-      where: { id: teamId },
-      include: {
-        memberships: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
-    });
-    
-    return team?.memberships.map(membership => ({
+    const team = await this.teamModel
+      .findById(teamId)
+      .populate({
+        path: 'memberships',
+        populate: {
+          path: 'user',
+          select: 'id name email',
+        },
+      })
+      .exec();
+
+    if (!team || !team.memberships) {
+      return [];
+    }
+
+    return team?.memberships.map((membership) => ({
       ...membership.user,
-      role: membership.role
+      role: membership.role,
     }));
   }
 }

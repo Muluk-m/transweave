@@ -1,8 +1,19 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import { TeamService } from '../service/team.service';
 import { MembershipService } from '../service/membership.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser } from '../jwt/current-user.decorator';
+import { DeleteResult } from 'mongoose';
 
 interface UserPayload {
   userId: string;
@@ -14,14 +25,14 @@ interface UserPayload {
 export class TeamController {
   constructor(
     private teamService: TeamService,
-    private membershipService: MembershipService
-  ) { }
+    private membershipService: MembershipService,
+  ) {}
 
   @Post('create')
   @UseGuards(AuthGuard)
   async createTeam(
-    @Body() data: { name: string, url: string },
-    @CurrentUser() user: UserPayload
+    @Body() data: { name: string; url: string },
+    @CurrentUser() user: UserPayload,
   ) {
     return this.teamService.createTeam({
       ...data,
@@ -32,13 +43,18 @@ export class TeamController {
   @Get('all')
   @UseGuards(AuthGuard)
   async findAllTeams(@CurrentUser() user: UserPayload) {
-    const memberships = await this.membershipService.getUserMemberships(user.userId);
-    return memberships.map(membership => membership.team);
+    const memberships = await this.membershipService.getUserMemberships(
+      user.userId,
+    );
+    return memberships.map((membership) => membership.team);
   }
 
   @Get('find/:id')
   @UseGuards(AuthGuard)
-  async findTeamById(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+  async findTeamById(
+    @Param('id') id: string,
+    @CurrentUser() user: UserPayload,
+  ) {
     const isMember = await this.membershipService.isMember(id, user.userId);
     if (!isMember) {
       throw new ForbiddenException('No permission to access this team');
@@ -51,9 +67,12 @@ export class TeamController {
   async updateTeam(
     @Param('id') id: string,
     @Body() data: { name?: string; url?: string },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
-    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(id, user.userId);
+    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(
+      id,
+      user.userId,
+    );
     if (!isManagerOrOwner) {
       throw new ForbiddenException('No permission to modify this team');
     }
@@ -62,10 +81,7 @@ export class TeamController {
 
   @Delete('delete/:id')
   @UseGuards(AuthGuard)
-  async deleteTeam(
-    @Param('id') id: string,
-    @CurrentUser() user: UserPayload
-  ) {
+  async deleteTeam(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     const isOwner = await this.membershipService.isOwner(id, user.userId);
     if (!isOwner) {
       throw new ForbiddenException('No permission to delete this team');
@@ -84,10 +100,13 @@ export class TeamController {
   async addMember(
     @Param('id') teamId: string,
     @Body() data: { userId: string; role: string },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Ensure only team owners or managers can add members
-    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(teamId, user.userId);
+    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(
+      teamId,
+      user.userId,
+    );
     if (!isManagerOrOwner) {
       throw new ForbiddenException('No permission to add members to this team');
     }
@@ -103,7 +122,7 @@ export class TeamController {
     return this.membershipService.createMembership({
       teamId,
       userId: data.userId,
-      role: data.role
+      role: data.role,
     });
   }
 
@@ -114,7 +133,7 @@ export class TeamController {
     @Param('id') teamId: string,
     @Param('userId') memberId: string,
     @Body() data: { role: string },
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Ensure only team owners can update roles
     const isOwner = await this.membershipService.isOwner(teamId, user.userId);
@@ -131,16 +150,24 @@ export class TeamController {
   async removeMember(
     @Param('id') teamId: string,
     @Param('userId') memberId: string,
-    @CurrentUser() user: UserPayload
-  ) {
+    @CurrentUser() user: UserPayload,
+  ): Promise<DeleteResult> {
     // Ensure only team owners or managers can remove members
-    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(teamId, user.userId);
+    const isManagerOrOwner = await this.membershipService.isManagerOrOwner(
+      teamId,
+      user.userId,
+    );
     if (!isManagerOrOwner) {
-      throw new ForbiddenException('No permission to remove members from this team');
+      throw new ForbiddenException(
+        'No permission to remove members from this team',
+      );
     }
 
     // Cannot remove team owners
-    const memberRole = await this.membershipService.getUserRole(teamId, memberId);
+    const memberRole = await this.membershipService.getUserRole(
+      teamId,
+      memberId,
+    );
     if (memberRole === 'owner') {
       throw new ForbiddenException('Cannot remove team owners');
     }
@@ -153,12 +180,14 @@ export class TeamController {
   @UseGuards(AuthGuard)
   async getTeamMembers(
     @Param('id') teamId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     // Verify if user is a team member
     const isMember = await this.membershipService.isMember(teamId, user.userId);
     if (!isMember) {
-      throw new ForbiddenException('No permission to access this team member list');
+      throw new ForbiddenException(
+        'No permission to access this team member list',
+      );
     }
 
     return this.teamService.getTeamMembers(teamId);
@@ -169,9 +198,8 @@ export class TeamController {
   @UseGuards(AuthGuard)
   async checkUserHasPermission(
     @Param('id') teamId: string,
-    @CurrentUser() user: UserPayload
+    @CurrentUser() user: UserPayload,
   ) {
     return await this.membershipService.isMember(teamId, user.userId);
   }
-
 }

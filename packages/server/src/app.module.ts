@@ -4,7 +4,7 @@ import { AppController } from './controller/index.controller';
 import { AppService } from './service/index.service';
 import { UserService } from './service/user.service';
 import { TeamService } from './service/team.service';
-import { PrismaService } from './service/prisma.service';
+import { MongooseService } from './service/mongoose.service';
 import { UserController } from './controller/user.controller';
 import { AuthController } from './controller/auth.controller';
 import { TeamController } from './controller/team.controller';
@@ -13,10 +13,12 @@ import { ProjectService } from './service/project.service';
 import { JwtStrategy } from './jwt/strategy';
 import { PassportModule } from '@nestjs/passport';
 import { MembershipService } from './service/membership.service';
+import { DatabaseModule } from './modules/database.module';
 
 @Module({
   imports: [
     PassportModule,
+    DatabaseModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'your-secret-key',
@@ -29,17 +31,16 @@ import { MembershipService } from './service/membership.service';
     AuthController,
     TeamController,
     ProjectController,
-    UserController
+    UserController,
   ],
   providers: [
     AppService,
     UserService,
     TeamService,
-    PrismaService,
+    MongooseService,
     ProjectService,
     JwtStrategy,
     MembershipService,
   ],
 })
-
-export class AppModule { }
+export class AppModule {}

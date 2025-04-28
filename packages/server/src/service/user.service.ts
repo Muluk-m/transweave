@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { User } from '../../prisma/generated/client';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from '../models';
 import { verifyPassword } from 'src/utils/crypto';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   // Create user
   async createUser(data: {
@@ -13,32 +14,27 @@ export class UserService {
     email: string;
     password: string;
   }): Promise<User> {
-    return this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      },
+    const createdUser = new this.userModel({
+      name: data.name,
+      email: data.email,
+      password: data.password,
     });
+    return createdUser.save();
   }
 
   // Query all users
   async findAllUsers(): Promise<User[]> {
-    return this.prisma.user.findMany();
+    return this.userModel.find().exec();
   }
 
   // Query user by ID
   async findUserById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
-    });
+    return this.userModel.findById(id).exec();
   }
 
   // Query user by email
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
+    return this.userModel.findOne({ email }).exec();
   }
 
   // Update user information
@@ -46,21 +42,22 @@ export class UserService {
     id: string,
     data: { name?: string; email?: string },
   ): Promise<User | null> {
-    return this.prisma.user.update({
-      where: { id },
-      data: {
-        name: data.name,
-        email: data.email,
-        updatedAt: new Date(),
-      },
-    });
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          ...(data.name && { name: data.name }),
+          ...(data.email && { email: data.email }),
+          updatedAt: new Date(),
+        },
+        { new: true },
+      )
+      .exec();
   }
 
   // Delete user
   async deleteUser(id: string): Promise<User | null> {
-    return this.prisma.user.delete({
-      where: { id },
-    });
+    return this.userModel.findByIdAndDelete(id).exec();
   }
 
   // Search users
@@ -69,40 +66,29 @@ export class UserService {
       return []; // Require at least 2 characters
     }
 
-    const users = await this.prisma.user.findMany({
-      where: {
-        OR: [
-          { name: { contains: keyword, mode: 'insensitive' } },
-          { email: { contains: keyword, mode: 'insensitive' } },
+    return this.userModel
+      .find({
+        $or: [
+          { name: { $regex: keyword, $options: 'i' } },
+          { email: { $regex: keyword, $options: 'i' } },
         ],
-      },
-      take: 10, // Limit result count
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        // Do not return password
-      },
-    });
-
-    return users;
+      })
+      .select('id name email')
+      .limit(10)
+      .exec();
   }
 
   async validateUser(
     nameOrEmail: string,
     password: string,
   ): Promise<User | null> {
-    // First try to find user by email
-    let user = await this.prisma.user.findFirst({
-      where: { email: nameOrEmail },
-    });
+    // First try to find user by email or name
+    const user = await this.userModel
+      .findOne({
+        $or: [{ email: nameOrEmail }, { name: nameOrEmail }],
+      })
+      .exec();
 
-    // If not found by email, try by username
-    if (!user) {
-      user = await this.prisma.user.findFirst({
-        where: { name: nameOrEmail },
-      });
-    }
     // If user is found and password matches
     if (user) {
       // Verify password
