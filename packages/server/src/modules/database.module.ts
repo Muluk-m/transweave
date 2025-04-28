@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   User,
@@ -15,9 +15,12 @@ import {
 
 @Module({
   imports: [
-    MongooseModule.forRoot(
-      process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma',
-    ),
+    (() => {
+      const dbUrl =
+        process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma';
+      Logger.log(`数据库连接地址: ${dbUrl}`, 'DatabaseModule');
+      return MongooseModule.forRoot(dbUrl);
+    })(),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Team.name, schema: TeamSchema },
