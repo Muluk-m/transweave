@@ -239,7 +239,7 @@ export namespace Prisma {
 
   /**
    * Prisma Client JS version: 6.6.0
-   * Query Engine version: 605197351a3c8bdd595af2d2a9bc3025bca48ea2
+   * Query Engine version: f676762280b54cd07c770017ed3711ddde35f37a
    */
   export type PrismaVersion = {
     client: string
@@ -2161,6 +2161,10 @@ export namespace Prisma {
      * Filter which Users to update
      */
     where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
   }
 
   /**
@@ -2223,6 +2227,10 @@ export namespace Prisma {
      * Filter which Users to delete
      */
     where?: UserWhereInput
+    /**
+     * Limit how many Users to delete.
+     */
+    limit?: number
   }
 
   /**
@@ -3162,6 +3170,10 @@ export namespace Prisma {
      * Filter which Teams to update
      */
     where?: TeamWhereInput
+    /**
+     * Limit how many Teams to update.
+     */
+    limit?: number
   }
 
   /**
@@ -3224,6 +3236,10 @@ export namespace Prisma {
      * Filter which Teams to delete
      */
     where?: TeamWhereInput
+    /**
+     * Limit how many Teams to delete.
+     */
+    limit?: number
   }
 
   /**
@@ -4174,6 +4190,10 @@ export namespace Prisma {
      * Filter which Memberships to update
      */
     where?: MembershipWhereInput
+    /**
+     * Limit how many Memberships to update.
+     */
+    limit?: number
   }
 
   /**
@@ -4236,6 +4256,10 @@ export namespace Prisma {
      * Filter which Memberships to delete
      */
     where?: MembershipWhereInput
+    /**
+     * Limit how many Memberships to delete.
+     */
+    limit?: number
   }
 
   /**
@@ -5191,6 +5215,10 @@ export namespace Prisma {
      * Filter which Projects to update
      */
     where?: ProjectWhereInput
+    /**
+     * Limit how many Projects to update.
+     */
+    limit?: number
   }
 
   /**
@@ -5253,6 +5281,10 @@ export namespace Prisma {
      * Filter which Projects to delete
      */
     where?: ProjectWhereInput
+    /**
+     * Limit how many Projects to delete.
+     */
+    limit?: number
   }
 
   /**
@@ -6211,6 +6243,10 @@ export namespace Prisma {
      * Filter which Tokens to update
      */
     where?: TokenWhereInput
+    /**
+     * Limit how many Tokens to update.
+     */
+    limit?: number
   }
 
   /**
@@ -6273,6 +6309,10 @@ export namespace Prisma {
      * Filter which Tokens to delete
      */
     where?: TokenWhereInput
+    /**
+     * Limit how many Tokens to delete.
+     */
+    limit?: number
   }
 
   /**
@@ -6587,8 +6627,8 @@ export namespace Prisma {
     userId?: StringFilter<"Membership"> | string
     teamId?: StringFilter<"Membership"> | string
     role?: StringFilter<"Membership"> | string
-    user?: XOR<UserRelationFilter, UserWhereInput>
-    team?: XOR<TeamRelationFilter, TeamWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
   }
 
   export type MembershipOrderByWithRelationInput = {
@@ -6608,8 +6648,8 @@ export namespace Prisma {
     userId?: StringFilter<"Membership"> | string
     teamId?: StringFilter<"Membership"> | string
     role?: StringFilter<"Membership"> | string
-    user?: XOR<UserRelationFilter, UserWhereInput>
-    team?: XOR<TeamRelationFilter, TeamWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
   }, "id">
 
   export type MembershipOrderByWithAggregationInput = {
@@ -6646,7 +6686,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Project"> | Date | string
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     tokens?: TokenListRelationFilter
-    team?: XOR<TeamRelationFilter, TeamWhereInput>
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -6677,7 +6717,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Project"> | Date | string
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     tokens?: TokenListRelationFilter
-    team?: XOR<TeamRelationFilter, TeamWhereInput>
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -6722,7 +6762,7 @@ export namespace Prisma {
     projectId?: StringFilter<"Token"> | string
     createdAt?: DateTimeFilter<"Token"> | Date | string
     updatedAt?: DateTimeFilter<"Token"> | Date | string
-    Project?: XOR<ProjectRelationFilter, ProjectWhereInput>
+    Project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
   }
 
   export type TokenOrderByWithRelationInput = {
@@ -6749,7 +6789,7 @@ export namespace Prisma {
     projectId?: StringFilter<"Token"> | string
     createdAt?: DateTimeFilter<"Token"> | Date | string
     updatedAt?: DateTimeFilter<"Token"> | Date | string
-    Project?: XOR<ProjectRelationFilter, ProjectWhereInput>
+    Project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
   }, "id">
 
   export type TokenOrderByWithAggregationInput = {
@@ -7230,12 +7270,12 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type UserRelationFilter = {
+  export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
   }
 
-  export type TeamRelationFilter = {
+  export type TeamScalarRelationFilter = {
     is?: TeamWhereInput
     isNot?: TeamWhereInput
   }
@@ -7359,7 +7399,7 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
   }
 
-  export type ProjectRelationFilter = {
+  export type ProjectScalarRelationFilter = {
     is?: ProjectWhereInput
     isNot?: ProjectWhereInput
   }

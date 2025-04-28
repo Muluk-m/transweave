@@ -21,7 +21,7 @@ model User {
   email       String       @unique
   memberships Membership[]
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  updatedAt   DateTime     @default(now())
 }
 
 model Team {
@@ -31,7 +31,7 @@ model Team {
   memberships Membership[]
   projects    Project[]    @relation("ProjectInTeam")
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  updatedAt   DateTime     @default(now())
 }
 
 model Membership {
@@ -54,7 +54,7 @@ model Project {
   description String?
   languages   String[]
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 }
 
 model Token {
@@ -66,5 +66,5 @@ model Token {
   projectId    String   @db.ObjectId
   Project      Project  @relation(fields: [projectId], references: [id])
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @default(now())
 }

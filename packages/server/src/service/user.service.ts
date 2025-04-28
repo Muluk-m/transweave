@@ -51,6 +51,7 @@ export class UserService {
       data: {
         name: data.name,
         email: data.email,
+        updatedAt: new Date(),
       },
     });
   }
