@@ -28,6 +28,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.4.1",
+    "dotenv": "^16.5.0",
     "jszip": "^3.10.1",
     "mongoose": "^8.14.0",
     "passport": "^0.7.0",

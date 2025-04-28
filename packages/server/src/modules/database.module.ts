@@ -16,8 +16,7 @@ import {
 @Module({
   imports: [
     MongooseModule.forRoot(
-      'mongodb://admin:secret@localhost:27017/bondma?authSource=admin&replicaSet=rs0',
-      // process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma',
+      process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma',
     ),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },

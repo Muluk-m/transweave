@@ -69,7 +69,7 @@ export function HeaderView() {
     };
 
     const currentLocale = getCurrentLocale();
-    
+
     return (
         <header className="sticky top-0 z-50 w-full h-[64px] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between">
             <div className="container flex h-14 items-center">
@@ -133,19 +133,6 @@ export function HeaderView() {
             </div>
 
             <div id="header-right" className="flex items-center mr-8 gap-2">
-                {/* GitHub repository link */}
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="rounded-full"
-                    asChild
-                >
-                    <Link href="https://github.com/HeroIsUseless/bondma" target="_blank" rel="noopener noreferrer">
-                        <Github className="h-[1.2rem] w-[1.2rem]" />
-                        <span className="sr-only">{t('header.githubRepo')}</span>
-                    </Link>
-                </Button>
-                
                 {/* Language switcher dropdown menu */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -155,13 +142,13 @@ export function HeaderView() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                             onClick={() => handleLanguageChange('zh-CN')}
                             className={currentLocale === 'zh-CN' ? 'bg-muted' : ''}
                         >
                             {t('header.languages.chinese')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                             onClick={() => handleLanguageChange('en-US')}
                             className={currentLocale === 'en-US' ? 'bg-muted' : ''}
                         >
