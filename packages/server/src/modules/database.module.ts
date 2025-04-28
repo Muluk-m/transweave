@@ -20,12 +20,10 @@ import {
         process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma';
       Logger.log(`数据库连接地址: ${dbUrl}`, 'DatabaseModule');
       return MongooseModule.forRoot(dbUrl, {
-        ssl: true,
-        sslValidate: false,
-        retryWrites: false,
-        replicaSet: 'rs0',
-        authMechanism: 'SCRAM-SHA-1',
-      } as any);
+        bufferCommands: false,
+        autoCreate: true,
+        autoIndex: false,
+      });
     })(),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
