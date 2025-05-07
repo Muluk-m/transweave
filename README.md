@@ -1,67 +1,42 @@
-# Bondma - Multilingual Translation Management Platform
-[中文文档](./doc/readme/zh.md)
+# QLJ I18N Manager
 
-## Project Overview
+## 项目简介
 
-Bondma is a modern multilingual translation management platform designed to simplify the internationalization (i18n) process for applications and websites. It provides an intuitive user interface to help teams efficiently manage, translate, and synchronize multilingual content.
+QLJ I18N Manager 是一个用于管理多语言资源的平台，帮助开发团队高效地管理多语言项目并实现无缝协作。
 
-How to use: This project has separated frontend and backend and is completely open-source, built with Nextjs + Nestjs. After deployment, you can visually manage internationalization entries on this translation platform, and it features open APIs that make it convenient to retrieve all entries via scripts. It's suitable for collaborative work between product translation and development during project development, improving communication efficiency.
+## 项目结构
 
-This platform implements "bootstrapping", meaning it uses itself to manage all internationalization entries within the platform project.
-
-The naming inspiration for this platform comes from the character Tang Shiye (also known as Bond Ma) from the movie "Let the Bullets Fly", who was skilled in English and translation.
-
-![Bondma Main](./doc/readme/main.png)
-
-![Bondma Page](./doc/readme/index.png)
-
-## Key Features
-
-- **Team Collaboration**: Supports multiple team members collaborating on translation projects with role-based permission management
-- **Multi-language Support**: Add unlimited languages, supporting all major languages
-- **Import/Export**: Support for importing and exporting in various formats including JSON, CSV, YAML, XML, etc.
-- **Version Control**: Track content change history to ensure translation consistency
-- **API Integration**: Provides REST API for seamless integration with CI/CD workflows
-- **Secure and Reliable**: Encrypted data storage with secure access control
-
-## Tech Stack
-
-- **Frontend**: Next.js, React, TailwindCSS, Jotai
-- **Backend**: NestJS, MongoDB
-- **Deployment**: Docker, Kubernetes
-
-## Quick Start
-```
-pnpm i
+```bash
+.
+├── packages/
+│   ├── server/
+│   └── web/
+├── README.md
+└── package.json
 ```
 
-```
-mongod --config ./conf/mongo.conf
+
+## 安装依赖
+
+```bash
+pnpm install
 ```
 
-```
+## 运行项目
+
+```bash
 cd packages/server
-pnpm run start
+pnpm run start:dev
 ```
 
-```
+```bash
 cd packages/web
 pnpm run dev
 ```
 
-### Prerequisites
+```bash
+docker compose up -d
+```
 
-- Node.js 18+
-- MongoDB
-- Docker (optional)
 
-### Contact
 
-![weixin](./doc/readme/weixin.jpg)
-![qq](./doc/readme/qq.png)
-
-### Donation
-
-![prize](./doc/readme/prize.jpg)
-
-![Bondma Logo](./doc/readme/dollar.jpg)

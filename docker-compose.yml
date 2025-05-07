@@ -10,6 +10,7 @@ services:
     volumes:
       - ./conf/mongo-keyfile:/data/keyfile/mongo-keyfile
       - mongodb_data:/data/db
+      - ./init/init-replica.js:/docker-entrypoint-initdb.d/init-replica.js
     command: >
       --keyFile /data/keyfile/mongo-keyfile
       --replSet rs0
@@ -17,29 +18,29 @@ services:
     networks:
       - bondma-network
 
-  server:
-    image: bondma-server:latest
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=mongodb://admin:secret@mongodb:27017/bondma?authSource=admin&replicaSet=rs0
-    depends_on:
-      - mongodb
-    networks:
-      - bondma-network
+  # server:
+  #   image: bondma-server:latest
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - DATABASE_URL=mongodb://admin:secret@mongodb:27017/bondma?authSource=admin&replicaSet=rs0
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - bondma-network
 
-  web:
-    image: bondma-web:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_INTERNAL_API_URL=http://server:3001
-    depends_on:
-      - server
-    networks:
-      - bondma-network
+  # web:
+  #   image: bondma-web:latest
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - NEXT_INTERNAL_API_URL=http://server:3001
+  #   depends_on:
+  #     - server
+  #   networks:
+  #     - bondma-network
 
 networks:
   bondma-network:
