@@ -65,9 +65,13 @@ export class ProjectService {
       name?: string;
       description?: string;
       languages?: string[];
+      url?: string;
     },
   ) {
-    return this.projectModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return this.projectModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .populate('tokens')
+      .exec();
   }
 
   async deleteProject(id: string) {
@@ -405,7 +409,11 @@ export class ProjectService {
         }
 
         // 解析导入的数据
-        const importData = parseImportData(data.content, data.format);
+        const importData = parseImportData(
+          data.content,
+          data.format,
+          data.language,
+        );
 
         if (!importData || Object.keys(importData).length === 0) {
           throw new BadRequestException('导入的文件不包含有效数据或格式不正确');

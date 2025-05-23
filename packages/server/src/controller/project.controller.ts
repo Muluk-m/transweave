@@ -69,6 +69,7 @@ export class ProjectController {
       name?: string;
       description?: string;
       languages?: string[];
+      url?: string;
     },
   ) {
     return this.projectService.updateProject(id, data);

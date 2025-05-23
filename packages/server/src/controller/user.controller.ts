@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Delete,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser } from '../jwt/current-user.decorator';
@@ -21,10 +28,11 @@ export class UserController {
     if (!user) {
       return { status: 404, message: 'User does not exist' };
     }
-    
+
     // Don't return sensitive information like password
-    const { password, ...userInfo } = user;
-    return userInfo;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    delete (user as any).password;
+    return user;
   }
 
   @Delete(':id')
@@ -43,7 +51,7 @@ export class UserController {
   async getMe(@CurrentUser() user: UserPayload) {
     return this.userService.findUserById(user.userId);
   }
-  
+
   // Search users
   @Get('search')
   @UseGuards(AuthGuard)

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Languages } from "@/constants";
 
 interface LanguageSelectorProps {
   selectedLanguages: string[];
@@ -16,16 +17,10 @@ export function LanguageSelector({ selectedLanguages, onChange }: LanguageSelect
   const t = useTranslations();
   const [customLanguage, setCustomLanguage] = useState("");
 
-  const commonLanguages = [
-    { id: "zh-CN", nameKey: "projects.languages.zhCN" },
-    { id: "en-US", nameKey: "projects.languages.enUS" },
-    { id: "ja-JP", nameKey: "projects.languages.jaJP" },
-    { id: "ko-KR", nameKey: "projects.languages.koKR" },
-    { id: "fr-FR", nameKey: "projects.languages.frFR" },
-    { id: "de-DE", nameKey: "projects.languages.deDE" },
-    { id: "es-ES", nameKey: "projects.languages.esES" },
-    { id: "ru-RU", nameKey: "projects.languages.ruRU" },
-  ];
+  const commonLanguages = Languages.toSelect().map(({ value, label }) => ({
+    id: value,
+    label: `${label}(${value})`
+  }))
 
   const handleLanguageChange = (language: string, checked: boolean) => {
     if (checked) {
@@ -48,7 +43,7 @@ export function LanguageSelector({ selectedLanguages, onChange }: LanguageSelect
 
   const getLocalizedLanguageName = (langId: string) => {
     const lang = commonLanguages.find(lang => lang.id === langId);
-    return lang ? t(lang.nameKey) : langId;
+    return lang ? lang.label : langId;
   };
 
   return (
@@ -71,12 +66,12 @@ export function LanguageSelector({ selectedLanguages, onChange }: LanguageSelect
             <Checkbox
               id={`lang-${lang.id}`}
               checked={selectedLanguages.includes(lang.id)}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 handleLanguageChange(lang.id, checked === true)
               }
             />
             <Label htmlFor={`lang-${lang.id}`} className="text-sm">
-              {t(lang.nameKey)}
+              {lang.label}
             </Label>
           </div>
         ))}
@@ -95,9 +90,9 @@ export function LanguageSelector({ selectedLanguages, onChange }: LanguageSelect
             }
           }}
         />
-        <Button 
-          type="button" 
-          size="sm" 
+        <Button
+          type="button"
+          size="sm"
           onClick={addCustomLanguage}
         >
           {t("common.add")}

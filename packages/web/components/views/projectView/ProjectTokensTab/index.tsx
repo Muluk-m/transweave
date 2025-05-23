@@ -4,10 +4,10 @@ import { Project, Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-    createToken, 
-    updateToken, 
-    deleteToken 
+import {
+    createToken,
+    updateToken,
+    deleteToken
 } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
@@ -31,7 +31,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [tokens, setTokens] = useState<Token[]>([]);
     const { toast } = useToast();
-    
+
     const [formData, setFormData] = useState<{
         key: string;
         tags: string;
@@ -43,7 +43,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         comment: '',
         translations: {}
     });
-    
+
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [currentTokenId, setCurrentTokenId] = useState<string | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
@@ -62,7 +62,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
             project.languages.forEach(lang => {
                 initialTranslations[lang] = '';
             });
-            
+
             setFormData(prev => ({
                 ...prev,
                 translations: initialTranslations
@@ -78,8 +78,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         return Array.from(new Set(tags));
     }, [tokens]);
 
+    console.log(selectedTag, 'tokens');
+
     // Form input handlers
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -105,18 +107,18 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
-            
+
             if (!project?.id) {
                 toast({
-                  title: t("errors.projectIdMissing"),
-                  variant: "destructive"
+                    title: t("errors.projectIdMissing"),
+                    variant: "destructive"
                 });
                 return;
             }
-            
+
             // Process tags, split string into array
             const tagArray = formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [];
-            
+
             if (isEditing && currentTokenId) {
                 // Update token and its translations
                 const updatedToken = await updateToken(currentTokenId, {
@@ -125,14 +127,14 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                     comment: formData.comment,
                     translations: formData.translations, // Pass translations object directly
                 });
-                
+
                 // Update local state
-                setTokens(prev => 
-                    prev.map(token => 
+                setTokens(prev =>
+                    prev.map(token =>
                         token.id === currentTokenId ? updatedToken : token
                     )
                 );
-                
+
                 toast({
                     title: t("success.tokenUpdated"),
                 });
@@ -144,35 +146,35 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                     comment: formData.comment,
                     translations: formData.translations, // Pass translations object directly
                 });
-                
+
                 setTokens(prev => [...prev, newToken]);
                 toast({
                     title: t("success.tokenCreated"),
                 });
             }
-            
+
             // Reset form
             resetForm();
             setIsDrawerOpen(false);
         } catch (error) {
             console.error('Error submitting form:', error);
             toast({
-              title: isEditing ? t("errors.updateFailed") : t("errors.createFailed"),
-              variant: "destructive"
+                title: isEditing ? t("errors.updateFailed") : t("errors.createFailed"),
+                variant: "destructive"
             });
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     // Edit token
     const handleEditToken = (token: Token) => {
         setIsEditing(true);
         setCurrentTokenId(token.id);
-        
+
         // Initialize translations object
         const translations: Record<string, string> = {};
-        
+
         // For each language supported by the project, set an empty string or existing translation
         if (project?.languages) {
             project.languages.forEach(lang => {
@@ -180,39 +182,39 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 translations[lang] = getTranslationText(token, lang);
             });
         }
-        
+
         setFormData({
             key: token.key,
             tags: token.tags.join(', '),
             comment: token.comment || '',
             translations
         });
-        
+
         setIsDrawerOpen(true);
     };
-    
+
     // Delete token
     const handleDeleteToken = async (tokenId: string) => {
         try {
             setIsLoading(true);
             await deleteToken(tokenId);
-            
+
             // Update local data
             setTokens(prev => prev.filter(token => token.id !== tokenId));
             toast({
-              title: t("success.tokenDeleted"),
+                title: t("success.tokenDeleted"),
             });
         } catch (error) {
             console.error('Error deleting token:', error);
             toast({
-              title: t("errors.deleteFailed"),
-              variant: "destructive"
+                title: t("errors.deleteFailed"),
+                variant: "destructive"
             });
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     // Reset form
     const resetForm = () => {
         const initialTranslations: Record<string, string> = {};
@@ -221,18 +223,18 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 initialTranslations[lang] = '';
             });
         }
-        
+
         setFormData({
             key: '',
             tags: '',
             comment: '',
             translations: initialTranslations
         });
-        
+
         setIsEditing(false);
         setCurrentTokenId(null);
     };
-    
+
     // Reset form when opening add drawer
     const handleOpenAddDrawer = () => {
         resetForm();
@@ -262,7 +264,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
     const filteredTokens = useMemo(() => {
         let filteredTokens = tokens || [];
-        if (selectedTag) {
+        if (selectedTag && selectedTag !== 'bondma-all') {
             filteredTokens = filteredTokens.filter(token => token.tags.includes(selectedTag));
         }
         if (searchTerm) {
@@ -271,10 +273,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 if (token.key.toLowerCase().includes(searchTerm.toLowerCase())) {
                     return true;
                 }
-                
+
                 // Search in translation content
                 const translations = token.translations as unknown as Record<string, string>;
-                return Object.values(translations).some(text => 
+                return Object.values(translations).some(text =>
                     text && text.toLowerCase().includes(searchTerm.toLowerCase())
                 );
             });
@@ -327,7 +329,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                     onSubmit={handleSubmit}
                     onAddNew={handleOpenAddDrawer}
                 />
-                <Button 
+                <Button
                     onClick={handleOpenAddDrawer}
                     className="ml-auto bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 active:transform active:scale-95 transition-all duration-150 text-sm mt-2 md:mt-0 flex items-center gap-1"
                 >
@@ -337,11 +339,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
             </div>
 
             <div className="flex flex-col md:flex-row mb-4 space-y-2 md:space-y-0 md:space-x-2">
-                <Input 
-                    value={searchTerm} 
-                    onChange={handleSearchChange} 
-                    placeholder={t("searchPlaceholder")} 
-                    className="flex-grow md:w-3/4 border border-gray-300 rounded-lg p-1 text-sm" 
+                <Input
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    placeholder={t("searchPlaceholder")}
+                    className="flex-grow md:w-3/4 border border-gray-300 rounded-lg p-1 text-sm"
                 />
                 <Select value={selectedTag || ''} onValueChange={handleTagChange}>
                     <SelectTrigger className="border border-gray-300 rounded-lg p-1 text-sm md:w-1/4">
@@ -358,11 +360,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 </Select>
             </div>
 
-            <TokenTable 
-                tokens={paginatedTokens} 
+            <TokenTable
+                tokens={paginatedTokens}
                 languages={project?.languages ?? []}
-                sortKey={sortKey} 
-                sortOrder={sortOrder} 
+                sortKey={sortKey}
+                sortOrder={sortOrder}
                 onEdit={handleEditToken}
                 onDelete={handleDeleteToken}
                 onSortChange={handleSortChange}

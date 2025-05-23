@@ -31,6 +31,7 @@
     "axios": "^1.8.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "enum-plus": "^2.2.11",
     "jotai": "^2.9.3",
     "lucide-react": "^0.428.0",
     "next": "15.2.0",

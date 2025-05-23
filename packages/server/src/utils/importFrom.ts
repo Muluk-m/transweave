@@ -1,13 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /**
  * Parse imported file content
  */
-export function parseImportData(content: string, format: 'json' | 'csv' | 'xml' | 'yaml'): Record<string, string> {
+export function parseImportData(
+  content: string,
+  format: 'json' | 'csv' | 'xml' | 'yaml',
+  language?: string,
+): Record<string, string> {
   try {
     switch (format) {
       case 'json':
         return parseJSON(content);
       case 'csv':
-        return parseCSV(content);
+        return parseCSV(content, language!);
       case 'xml':
         return parseXML(content);
       case 'yaml':
@@ -26,39 +32,64 @@ export function parseImportData(content: string, format: 'json' | 'csv' | 'xml' 
 function parseJSON(content: string): Record<string, string> {
   try {
     const data = JSON.parse(content);
-    
+
     // Validate data format
     if (typeof data !== 'object' || data === null) {
       throw new Error('Incorrect JSON format, should be a key-value object');
     }
-    
+
     // Convert to flat format key-value pairs
     const result: Record<string, string> = {};
     flattenObject(data, '', result);
-    
+
     return result;
   } catch (error) {
     throw new Error(`JSON parsing failed: ${error.message}`);
   }
 }
 
+function convertToLanguageKeyMap(
+  columnsList: string[][],
+): Record<string, Record<string, string>> {
+  const [headers, ...rows] = columnsList;
+  const result: Record<string, Record<string, string>> = {};
+
+  const keyIndex = headers.indexOf('key');
+  if (keyIndex === -1) throw new Error('Missing "key" column');
+
+  // 遍历每个语言列（跳过 "key"）
+  headers.forEach((lang, langIndex) => {
+    if (lang === 'key' || !lang.trim()) return;
+
+    const langKey = lang.trim();
+    result[langKey] = {};
+
+    for (const row of rows) {
+      const sourceKey = row[keyIndex]?.trim();
+      const translation = row[langIndex]?.trim();
+
+      if (sourceKey) {
+        result[langKey][sourceKey] = translation || '';
+      }
+    }
+  });
+
+  return result;
+}
+
 /**
  * Parse CSV format translation file
  * Assumes CSV format: first column is key, second column is value
  */
-function parseCSV(content: string): Record<string, string> {
+function parseCSV(content: string, language: string): Record<string, string> {
   try {
-    const result: Record<string, string> = {};
-    const lines = content.split('\n').filter(line => line.trim());
-    
-    // Skip header line
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      // Handle potential quotes and commas
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, ...lines] = content.split('\n').filter((line) => line.trim());
+
+    const columnsList = lines.map((line) => {
+      line = line.trim();
       let columns: string[];
-      
+
       if (line.includes('"')) {
         // Handle CSV with quotes
         columns = parseCSVLine(line);
@@ -66,17 +97,17 @@ function parseCSV(content: string): Record<string, string> {
         // Simple comma separation
         columns = line.split(',');
       }
-      
-      if (columns.length >= 2) {
-        const key = columns[0].trim();
-        const value = columns[1].trim();
-        if (key) {
-          result[key] = value;
-        }
-      }
+
+      return columns.map((column) => column.trim()).filter((column) => column);
+    });
+
+    const languageKeyMap = convertToLanguageKeyMap(columnsList);
+
+    if (languageKeyMap[language]) {
+      return languageKeyMap[language];
     }
-    
-    return result;
+
+    throw new Error(`Language "${language}" not found in CSV file`);
   } catch (error) {
     throw new Error(`CSV parsing failed: ${error.message}`);
   }
@@ -89,10 +120,10 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    
+
     if (char === '"') {
       if (inQuotes && line[i + 1] === '"') {
         // Handle double quote escape
@@ -109,7 +140,7 @@ function parseCSVLine(line: string): string[] {
       current += char;
     }
   }
-  
+
   // Add the last element
   result.push(current);
   return result;
@@ -122,17 +153,17 @@ function parseCSVLine(line: string): string[] {
 function parseXML(content: string): Record<string, string> {
   try {
     const result: Record<string, string> = {};
-    
+
     // Simple parsing of XML tags
     const regex = /<([^>]+)>([^<]*)<\/\1>/g;
     let match;
-    
+
     while ((match = regex.exec(content)) !== null) {
       const key = match[1].trim();
       const value = match[2].trim();
       result[key] = value;
     }
-    
+
     return result;
   } catch (error) {
     throw new Error(`XML parsing failed: ${error.message}`);
@@ -146,8 +177,10 @@ function parseXML(content: string): Record<string, string> {
 function parseYAML(content: string): Record<string, string> {
   try {
     const result: Record<string, string> = {};
-    const lines = content.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-    
+    const lines = content
+      .split('\n')
+      .filter((line) => line.trim() && !line.startsWith('#'));
+
     for (const line of lines) {
       const [key, ...valueParts] = line.split(':');
       if (key && valueParts.length > 0) {
@@ -155,7 +188,7 @@ function parseYAML(content: string): Record<string, string> {
         result[key.trim()] = value;
       }
     }
-    
+
     return result;
   } catch (error) {
     throw new Error(`YAML parsing failed: ${error.message}`);
@@ -168,19 +201,23 @@ function parseYAML(content: string): Record<string, string> {
  * Handling arrays: { a: ["value1", "value2"] } => { "a.0": "value1", "a.1": "value2" }
  * Special handling for complex nested array structures
  */
-function flattenObject(obj: any, prefix: string, result: Record<string, string>): void {
+function flattenObject(
+  obj: any,
+  prefix: string,
+  result: Record<string, string>,
+): void {
   // Handle null or undefined
   if (obj === null || obj === undefined) {
     result[prefix] = '';
     return;
   }
-  
+
   // Handle primitive types
   if (typeof obj !== 'object') {
     result[prefix] = String(obj);
     return;
   }
-  
+
   // Handle arrays
   if (Array.isArray(obj)) {
     // Empty array
@@ -188,7 +225,7 @@ function flattenObject(obj: any, prefix: string, result: Record<string, string>)
       // result[prefix] = '[]';
       return;
     }
-    
+
     // Traverse array elements
     obj.forEach((item, index) => {
       const newPrefix = prefix ? `${prefix}.${index}` : `${index}`;
@@ -196,7 +233,7 @@ function flattenObject(obj: any, prefix: string, result: Record<string, string>)
     });
     return;
   }
-  
+
   // Handle objects
   const keys = Object.keys(obj);
   if (keys.length === 0) {
@@ -204,7 +241,7 @@ function flattenObject(obj: any, prefix: string, result: Record<string, string>)
     // result[prefix] = '{}';
     return;
   }
-  
+
   for (const key of keys) {
     const value = obj[key];
     const newPrefix = prefix ? `${prefix}.${key}` : key;

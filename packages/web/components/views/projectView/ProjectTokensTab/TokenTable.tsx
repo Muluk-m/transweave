@@ -23,35 +23,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useTranslations } from "next-intl";
-
-// Common languages list
-const commonLanguages = [
-    { id: "zh-CN", name: "Chinese (Simplified)" },
-    { id: "en-US", name: "English (US)" },
-    { id: "ja-JP", name: "Japanese" },
-    { id: "ko-KR", name: "Korean" },
-    { id: "fr-FR", name: "French" },
-    { id: "de-DE", name: "German" },
-    { id: "es-ES", name: "Spanish" },
-    { id: "ru-RU", name: "Russian" },
-];
-
-// Language name mapping
-const languageNames: Record<string, string> = {
-    "zh-CN": "Chinese (Simplified)",
-    "en-US": "English (US)",
-    "ja-JP": "Japanese",
-    "ko-KR": "Korean",
-    "fr-FR": "French",
-    "de-DE": "German",
-    "es-ES": "Spanish",
-    "ru-RU": "Russian"
-};
-
-// Get language display name
-function getLanguageDisplayName(langCode: string): string {
-    return languageNames[langCode] || langCode;
-}
+import { Languages } from "@/constants";
 
 interface TokenTableProps {
     tokens: Token[];
@@ -73,15 +45,9 @@ export function TokenTable({
     onSortChange
 }: TokenTableProps) {
     const t = useTranslations('tokenTable');
-    const projectsT = useTranslations('projects.languages');
 
     // Get localized language names
-    const getLocalizedLanguageName = (langCode: string): string => {
-        // Convert format from "zh-CN" to "zhCN" for i18n keys
-        const formattedLang = langCode.replace(/-/g, '');
-        return projectsT(formattedLang);
-    };
-    
+    const getLocalizedLanguageName = (langCode: string): string => Languages.has(langCode) ? `${Languages.raw(langCode)?.label} (${langCode})` : langCode;
     // Get translation text for a specific language
     const getTranslationText = (token: Token, lang: string): string => {
         if (!token.translations) return '';
@@ -93,7 +59,7 @@ export function TokenTable({
             <Table className="w-full border border-gray-200 rounded-lg text-sm">
                 <TableHeader className="bg-gray-100">
                     <TableRow>
-                        <TableHead onClick={() => onSortChange('key')} className="cursor-pointer p-2 whitespace-nowrap">
+                        <TableHead onClick={() => onSortChange('key')} className="cursor-pointer p-2 whitespace-nowrap min-w-[100px]">
                             key {sortKey === 'key' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableHead>
 
@@ -110,7 +76,7 @@ export function TokenTable({
                         ))}
 
                         <TableHead className="p-2 whitespace-nowrap">{t('tags')}</TableHead>
-                        <TableHead className="p-2 whitespace-nowrap">{t('actions')}</TableHead>
+                        <TableHead sticky stickySide="right" className="p-2 whitespace-nowrap">{t('actions')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -138,7 +104,7 @@ export function TokenTable({
                                         ))}
                                     </div>
                                 </TableCell>
-                                <TableCell className="p-2 whitespace-nowrap">
+                                <TableCell className="p-2 whitespace-nowrap" sticky stickySide="right">
                                     <div className="flex items-center space-x-2">
                                         <Button
                                             variant="ghost"

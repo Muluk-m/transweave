@@ -35,6 +35,7 @@ export async function updateProject(id: string, data: {
   name?: string;
   description?: string;
   languages?: string[];
+  url?: string;
 }): Promise<Project> {
   return apiClient.put(`${API_BASE}/update/${id}`, data);
 }

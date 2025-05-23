@@ -1,0 +1,28 @@
+import { Enum } from 'enum-plus';
+
+export const Languages = Enum({
+  am: { value: 'am', label: '阿姆哈拉语' },
+  ar: { value: 'ar', label: '阿拉伯语' },
+  bn: { value: 'bn', label: '孟加拉语' },
+  de: { value: 'de', label: '德语' },
+  en: { value: 'en', label: '英语' },
+  es: { value: 'es', label: '西班牙语' },
+  fil: { value: 'fil', label: '菲律宾语' },
+  fr: { value: 'fr', label: '法语' },
+  hi: { value: 'hi', label: '印地语' },
+  id: { value: 'id', label: '印尼语' },
+  ja: { value: 'ja', label: '日语' },
+  km: { value: 'km', label: '高棉语' },
+  ko: { value: 'ko', label: '韩语' },
+  ms: { value: 'ms', label: '马来语' },
+  my: { value: 'my', label: '缅甸语' },
+  ne: { value: 'ne', label: '尼泊尔语' },
+  pt: { value: 'pt', label: '葡萄牙语' },
+  ru: { value: 'ru', label: '俄语' },
+  sw: { value: 'sw', label: '斯瓦希里语' },
+  th: { value: 'th', label: '泰语' },
+  tr: { value: 'tr', label: '土耳其语' },
+  ur: { value: 'ur', label: '乌尔都语' },
+  vi: { value: 'vi', label: '越南语' },
+  'zh-TW': { value: 'zh-TW', label: '中文，台湾' },
+} as const);

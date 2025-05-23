@@ -12,8 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash, Save, AlertTriangle, Settings, User2, Globe, FileText } from "lucide-react";
+import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Languages } from "@/constants";
+import { deleteProject, updateProject } from "@/api/project";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import { nowProjectAtom } from "@/jotai";
+import { useSetAtom } from "jotai";
 
 interface ProjectSettingTabProps {
     project: Project | null;
@@ -21,28 +27,28 @@ interface ProjectSettingTabProps {
 
 export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
     const t = useTranslations();
-    
+
+    const setNowProject = useSetAtom(nowProjectAtom);
     // Project basic information state
     const [projectName, setProjectName] = useState<string>(project?.name || "");
     const [projectDescription, setProjectDescription] = useState<string>(project?.description || "");
     const [projectUrl, setProjectUrl] = useState<string>(project?.url || "");
     const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
-    
+    const { toast } = useToast();
+
     // Project language management
-    const [availableLanguages, setAvailableLanguages] = useState<string[]>([
-        "zh-CN", "en-US", "ja-JP", "ko-KR", "fr-FR", "de-DE", "es-ES"
-    ]);
+    const availableLanguages = Languages.keys
     const [projectLanguages, setProjectLanguages] = useState<string[]>(
-        project?.languages || ["zh-CN", "en-US"]
+        project?.languages || ["en"]
     );
     const [newLanguage, setNewLanguage] = useState<string>("");
-    
+
     // Project advanced settings
     const [autoTranslate, setAutoTranslate] = useState<boolean>(false);
     const [enableVersioning, setEnableVersioning] = useState<boolean>(true);
     const [enableComments, setEnableComments] = useState<boolean>(true);
     const [publicProject, setPublicProject] = useState<boolean>(false);
-    
+
     // Add language
     const handleAddLanguage = () => {
         if (newLanguage && !projectLanguages.includes(newLanguage)) {
@@ -50,51 +56,75 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
             setNewLanguage("");
         }
     };
-    
+
+    const router = useRouter()
+
     // Remove language
     const handleRemoveLanguage = (language: string) => {
         setProjectLanguages(projectLanguages.filter(lang => lang !== language));
     };
-    
+
     // Save project settings
-    const handleSaveSettings = () => {
+    const handleSaveSettings = async () => {
+        if (!project) {
+            toast({
+                title: t('project.settings.error.projectNotFound'),
+                description: t('project.settings.error.projectNotFoundDescription'),
+                variant: 'destructive'
+            });
+            return;
+        }
         // Set save status to loading
         setSaveStatus("idle");
-        
+
         // Simulate API request
-        setTimeout(() => {
-            try {
-                // In a real application, this would be the logic to save to the backend
-                console.log("Saving project settings:", {
-                    id: project?.id,
-                    name: projectName,
-                    description: projectDescription,
-                    url: projectUrl,
-                    languages: projectLanguages,
-                    settings: {
-                        autoTranslate,
-                        enableVersioning,
-                        enableComments,
-                        publicProject
-                    }
-                });
-                
-                // Set save success
-                setSaveStatus("success");
-                
-                // Reset status after 3 seconds
-                setTimeout(() => setSaveStatus("idle"), 3000);
-            } catch (error) {
-                // Save failed
-                setSaveStatus("error");
-            }
-        }, 1000);
+        try {
+            console.log("Saving project settings:", {
+                // 暂未启用
+                settings: {
+                    autoTranslate,
+                    enableVersioning,
+                    enableComments,
+                    publicProject
+                }
+            });
+
+            const projectInfo = await updateProject(project?.id, {
+                name: projectName,
+                url: projectUrl,
+                description: projectDescription,
+                languages: projectLanguages,
+            })
+
+            setNowProject(projectInfo)
+
+            toast({
+                title: t('project.settings.saveSuccess'),
+            })
+            // Set save success
+            setSaveStatus("success");
+
+            // Reset status after 3 seconds
+            setTimeout(() => setSaveStatus("idle"), 3000);
+        } catch (error) {
+            // Save failed
+            setSaveStatus("error");
+        }
+
     };
-    
+
     // Delete project
-    const handleDeleteProject = () => {
+    const handleDeleteProject = async () => {
+        if (!project) {
+            toast({
+                title: t('project.settings.error.projectNotFound'),
+                description: t('project.settings.error.projectNotFoundDescription'),
+            });
+            return;
+        }
         // In a real application, this would call an API to delete the project
-        console.log("Deleting project:", project?.id);
+        await deleteProject(project.id)
+        router.push("/projects")
         // Could add navigation logic to project list here
     };
 
@@ -104,7 +134,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                 <h1 className="text-2xl font-bold mb-2">{t('project.tabs.setting')}</h1>
                 <p className="text-gray-600">{t('project.settings.description', { projectName: project?.name })}</p>
             </div>
-            
+
             <Tabs defaultValue="basic" className="space-y-6">
                 <TabsList>
                     <TabsTrigger value="basic" className="flex gap-2 items-center">
@@ -124,7 +154,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         {t('project.settings.tabs.danger')}
                     </TabsTrigger>
                 </TabsList>
-                
+
                 {/* Basic information settings */}
                 <TabsContent value="basic">
                     <Card>
@@ -135,30 +165,30 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="projectName">{t('project.settings.basic.name')}</Label>
-                                <Input 
-                                    id="projectName" 
-                                    value={projectName} 
+                                <Input
+                                    id="projectName"
+                                    value={projectName}
                                     onChange={(e) => setProjectName(e.target.value)}
                                     placeholder={t('project.settings.basic.namePlaceholder')}
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="projectDescription">{t('project.settings.basic.description')}</Label>
-                                <Textarea 
-                                    id="projectDescription" 
-                                    value={projectDescription} 
+                                <Textarea
+                                    id="projectDescription"
+                                    value={projectDescription}
                                     onChange={(e) => setProjectDescription(e.target.value)}
                                     placeholder={t('project.settings.basic.descriptionPlaceholder')}
                                     rows={4}
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="projectUrl">{t('project.settings.basic.url')}</Label>
-                                <Input 
-                                    id="projectUrl" 
-                                    value={projectUrl} 
+                                <Input
+                                    id="projectUrl"
+                                    value={projectUrl}
                                     onChange={(e) => setProjectUrl(e.target.value)}
                                     placeholder={t('project.settings.basic.urlPlaceholder')}
                                 />
@@ -170,7 +200,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 {saveStatus === "success" && t('project.settings.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
-                            <Button 
+                            <Button
                                 onClick={handleSaveSettings}
                                 className="flex items-center gap-2"
                             >
@@ -180,7 +210,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         </CardFooter>
                     </Card>
                 </TabsContent>
-                
+
                 {/* Language management */}
                 <TabsContent value="languages">
                     <Card>
@@ -194,8 +224,8 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 <div className="flex flex-wrap gap-2">
                                     {projectLanguages.map(lang => (
                                         <Badge key={lang} variant="outline" className="flex items-center gap-1 py-1.5">
-                                            {lang}
-                                            <button 
+                                            {Languages.has(lang) ? `${Languages.raw(lang)?.label} (${lang})` : lang}
+                                            <button
                                                 onClick={() => handleRemoveLanguage(lang)}
                                                 className="ml-1 text-gray-500 hover:text-red-500"
                                             >
@@ -208,17 +238,17 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     <p className="text-sm text-gray-500">{t('project.settings.languages.noLanguages')}</p>
                                 )}
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label>{t('project.settings.languages.add')}</Label>
                                 <div className="flex gap-2">
-                                    <Input 
+                                    <Input
                                         value={newLanguage}
                                         onChange={(e) => setNewLanguage(e.target.value)}
                                         placeholder={t('project.settings.languages.addPlaceholder')}
                                         className="flex-1"
                                     />
-                                    <Button 
+                                    <Button
                                         onClick={handleAddLanguage}
                                         className="flex items-center gap-1"
                                     >
@@ -227,13 +257,13 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     </Button>
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label>{t('project.settings.languages.common')}</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {availableLanguages.map(lang => (
-                                        <Badge 
-                                            key={lang} 
+                                        <Badge
+                                            key={lang}
                                             variant={projectLanguages.includes(lang) ? "default" : "outline"}
                                             className="cursor-pointer"
                                             onClick={() => {
@@ -244,7 +274,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                                 }
                                             }}
                                         >
-                                            {lang}
+                                            {`${Languages.raw(lang)?.label} (${lang})`}
                                         </Badge>
                                     ))}
                                 </div>
@@ -255,8 +285,8 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 {saveStatus === "success" && t('project.settings.languages.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
-                            <Button 
-                                onClick={handleSaveSettings} 
+                            <Button
+                                onClick={handleSaveSettings}
                                 className="flex items-center gap-2"
                             >
                                 <Save className="h-4 w-4" />
@@ -265,7 +295,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         </CardFooter>
                     </Card>
                 </TabsContent>
-                
+
                 {/* Advanced settings */}
                 <TabsContent value="advanced">
                     <Card>
@@ -279,50 +309,50 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     <Label htmlFor="autoTranslate" className="font-medium">{t('project.settings.advanced.autoTranslate.title')}</Label>
                                     <p className="text-sm text-gray-500">{t('project.settings.advanced.autoTranslate.description')}</p>
                                 </div>
-                                <Switch 
-                                    id="autoTranslate" 
+                                <Switch
+                                    id="autoTranslate"
                                     checked={autoTranslate}
                                     onCheckedChange={setAutoTranslate}
                                 />
                             </div>
-                            
+
                             <Separator />
-                            
+
                             <div className="flex items-center justify-between">
                                 <div>
                                     <Label htmlFor="enableVersioning" className="font-medium">{t('project.settings.advanced.versioning.title')}</Label>
                                     <p className="text-sm text-gray-500">{t('project.settings.advanced.versioning.description')}</p>
                                 </div>
-                                <Switch 
-                                    id="enableVersioning" 
+                                <Switch
+                                    id="enableVersioning"
                                     checked={enableVersioning}
                                     onCheckedChange={setEnableVersioning}
                                 />
                             </div>
-                            
+
                             <Separator />
-                            
+
                             <div className="flex items-center justify-between">
                                 <div>
                                     <Label htmlFor="enableComments" className="font-medium">{t('project.settings.advanced.comments.title')}</Label>
                                     <p className="text-sm text-gray-500">{t('project.settings.advanced.comments.description')}</p>
                                 </div>
-                                <Switch 
-                                    id="enableComments" 
+                                <Switch
+                                    id="enableComments"
                                     checked={enableComments}
                                     onCheckedChange={setEnableComments}
                                 />
                             </div>
-                            
+
                             <Separator />
-                            
+
                             <div className="flex items-center justify-between">
                                 <div>
                                     <Label htmlFor="publicProject" className="font-medium">{t('project.settings.advanced.public.title')}</Label>
                                     <p className="text-sm text-gray-500">{t('project.settings.advanced.public.description')}</p>
                                 </div>
-                                <Switch 
-                                    id="publicProject" 
+                                <Switch
+                                    id="publicProject"
                                     checked={publicProject}
                                     onCheckedChange={setPublicProject}
                                 />
@@ -333,7 +363,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 {saveStatus === "success" && t('project.settings.advanced.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
-                            <Button 
+                            <Button
                                 onClick={handleSaveSettings}
                                 className="flex items-center gap-2"
                             >
@@ -343,7 +373,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         </CardFooter>
                     </Card>
                 </TabsContent>
-                
+
                 {/* Danger zone */}
                 <TabsContent value="danger">
                     <Card className="border-red-200">
@@ -363,7 +393,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     {t('project.settings.danger.warning')}
                                 </AlertDescription>
                             </Alert>
-                            
+
                             <div className="p-4 border border-red-200 rounded-md">
                                 <h3 className="text-lg font-medium text-red-500 mb-2">{t('project.settings.danger.deleteProject')}</h3>
                                 <p className="text-sm text-gray-600 mb-4">
@@ -385,7 +415,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                            <AlertDialogAction 
+                                            <AlertDialogAction
                                                 onClick={handleDeleteProject}
                                                 className="bg-red-500 hover:bg-red-600"
                                             >

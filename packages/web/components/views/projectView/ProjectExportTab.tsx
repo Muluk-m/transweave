@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, FileJson, FileText, Table as TableIcon, Download, Settings2 } from "lucide-react";
+import { Languages } from "@/constants";
 import { exportProjectTokens } from "@/api/project";
 import { useTranslations } from "next-intl";
 
@@ -19,7 +20,7 @@ interface ProjectExportTabProps {
 
 export function ProjectExportTab({ project }: ProjectExportTabProps) {
     const t = useTranslations('project.export');
-    
+
     // File format selection
     const [fileFormat, setFileFormat] = useState<string>("json");
     // Export scope
@@ -34,7 +35,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
 
     // Project languages mock
-    const projectLanguages = ['zh-CN', 'en-US', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE', 'es-ES'];
+    const projectLanguages = project?.languages || [];
 
     // Handle language selection
     const toggleLanguage = (language: string) => {
@@ -48,9 +49,9 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
     // Handle download
     const handleExport = async () => {
         if (!project?.id) return;
-        
+
         setExportStatus('idle');
-        
+
         try {
             // Call API to export file
             const response = await exportProjectTokens(project.id, {
@@ -61,7 +62,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                 prettify,
                 includeMetadata
             });
-            
+
             // Create download link
             const url = window.URL.createObjectURL(new Blob([response as string | ArrayBuffer]));
             const link = document.createElement('a');
@@ -70,10 +71,10 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // Update status to success
             setExportStatus('success');
-            
+
             // Reset status
             setTimeout(() => {
                 setExportStatus('idle');
@@ -90,7 +91,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                 <h1 className="text-2xl font-bold mb-2">{t('title')}</h1>
                 <p className="text-gray-600">{t('description', { projectName: project?.name })}</p>
             </div>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>{t('settings')}</CardTitle>
@@ -108,13 +109,13 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                 {t('contentSettings')}
                             </TabsTrigger>
                         </TabsList>
-                        
+
                         <TabsContent value="format" className="space-y-6">
                             {/* File format selection */}
                             <div className="space-y-3">
                                 <label className="text-sm font-medium">{t('formatLabel')}</label>
-                                <RadioGroup 
-                                    value={fileFormat} 
+                                <RadioGroup
+                                    value={fileFormat}
                                     onValueChange={setFileFormat}
                                     className="grid grid-cols-2 gap-4 pt-2"
                                 >
@@ -124,21 +125,21 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                         <Label htmlFor="json" className="font-medium">{t('jsonFormat')}</Label>
                                         <span className="text-xs text-gray-500">{t('jsonDesc')}</span>
                                     </div>
-                                    
+
                                     <div className="flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
                                         <TableIcon className="h-8 w-8 text-green-500" />
                                         <RadioGroupItem value="csv" id="csv" className="sr-only" />
                                         <Label htmlFor="csv" className="font-medium">{t('csvFormat')}</Label>
                                         <span className="text-xs text-gray-500">{t('csvDesc')}</span>
                                     </div>
-                                    
+
                                     <div className="flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
                                         <FileText className="h-8 w-8 text-orange-500" />
                                         <RadioGroupItem value="xml" id="xml" className="sr-only" />
                                         <Label htmlFor="xml" className="font-medium">{t('xmlFormat')}</Label>
                                         <span className="text-xs text-gray-500">{t('xmlDesc')}</span>
                                     </div>
-                                    
+
                                     <div className="flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
                                         <FileText className="h-8 w-8 text-purple-500" />
                                         <RadioGroupItem value="yaml" id="yaml" className="sr-only" />
@@ -147,7 +148,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                     </div>
                                 </RadioGroup>
                             </div>
-                            
+
                             {/* Export scope selection */}
                             <div className="space-y-3">
                                 <label className="text-sm font-medium">{t('exportScope')}</label>
@@ -164,7 +165,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                 </Select>
                             </div>
                         </TabsContent>
-                        
+
                         <TabsContent value="content" className="space-y-6">
                             {/* Language selection */}
                             <div className="space-y-3">
@@ -177,17 +178,17 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                             size="sm"
                                             onClick={() => toggleLanguage(lang)}
                                         >
-                                            {lang}
+                                            {Languages.has(lang) ? `${Languages.raw(lang)?.label} (${lang})` : lang}
                                         </Button>
                                     ))}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {selectedLanguages.length 
-                                        ? t('languagesSelected', { count: selectedLanguages.length }) 
+                                    {selectedLanguages.length
+                                        ? t('languagesSelected', { count: selectedLanguages.length })
                                         : t('noLanguageSelected')}
                                 </p>
                             </div>
-                            
+
                             {/* Advanced settings */}
                             <div className="space-y-3">
                                 <label className="text-sm font-medium">{t('advancedOptions')}</label>
@@ -197,32 +198,32 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                                             <Label htmlFor="empty-translations" className="font-medium">{t('includeEmpty')}</Label>
                                             <p className="text-xs text-gray-500">{t('includeEmptyDesc')}</p>
                                         </div>
-                                        <Switch 
-                                            id="empty-translations" 
+                                        <Switch
+                                            id="empty-translations"
                                             checked={showEmptyTranslations}
                                             onCheckedChange={setShowEmptyTranslations}
                                         />
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <Label htmlFor="prettify" className="font-medium">{t('prettify')}</Label>
                                             <p className="text-xs text-gray-500">{t('prettifyDesc')}</p>
                                         </div>
-                                        <Switch 
-                                            id="prettify" 
+                                        <Switch
+                                            id="prettify"
                                             checked={prettify}
                                             onCheckedChange={setPrettify}
                                         />
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <Label htmlFor="metadata" className="font-medium">{t('metadata')}</Label>
                                             <p className="text-xs text-gray-500">{t('metadataDesc')}</p>
                                         </div>
-                                        <Switch 
-                                            id="metadata" 
+                                        <Switch
+                                            id="metadata"
                                             checked={includeMetadata}
                                             onCheckedChange={setIncludeMetadata}
                                         />
@@ -231,10 +232,10 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                             </div>
                         </TabsContent>
                     </Tabs>
-                    
+
                     {/* Export button */}
                     <div className="flex justify-end mt-8">
-                        <Button 
+                        <Button
                             onClick={handleExport}
                             className="flex items-center gap-2"
                         >
@@ -242,11 +243,11 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                             {t('downloadButton')}
                         </Button>
                     </div>
-                    
+
                     <p className="text-xs text-gray-500 mt-2 text-center">
                         {t('fileNote')}
                     </p>
-                    
+
                     {/* Success notification */}
                     {exportStatus === 'success' && (
                         <Alert variant="default" className="bg-green-50 border-green-200 mt-4">

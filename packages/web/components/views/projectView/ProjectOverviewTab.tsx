@@ -1,7 +1,6 @@
 'use client'
 import { useMemo } from "react";
 import { Project } from "@/jotai/types";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Clock, FileText, Globe, Percent, TagIcon, User, Users } from "lucide-react";
@@ -13,7 +12,7 @@ interface ProjectOverviewTabProps {
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     const t = useTranslations('project.overview');
-    
+
     // Calculate project statistics
     const projectStats = useMemo(() => {
         if (!project) return {
@@ -27,33 +26,33 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
         const tokens = project.tokens || [];
         const languages = project.languages || [];
-        
+
         // Calculate translation progress
         let totalTranslations = 0;
         let completedTranslations = 0;
-        
+
         tokens.forEach(token => {
             const expectedTranslations = languages.length;
             totalTranslations += expectedTranslations;
-            completedTranslations += token.translations.length;
+            completedTranslations += token.translations.length ?? 0;
         });
-        
-        const completionRate = totalTranslations > 0 
-            ? Math.round((completedTranslations / totalTranslations) * 100) 
+
+        const completionRate = totalTranslations > 0
+            ? Math.round((completedTranslations / totalTranslations) * 100)
             : 0;
-            
+
         // Collect all tags
         const allTags = new Set<string>();
         tokens.forEach(token => {
             token.tags.forEach(tag => allTags.add(tag));
         });
-        
+
         // Get team member count
         const teamMembers = project.memberIds?.length || 0;
-        
+
         // Mock last updated time
         const lastUpdated = t('today');
-        
+
         return {
             totalTokens: tokens.length,
             languages,
@@ -72,12 +71,12 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                     <p className="text-gray-600">{project?.description || t('noDescription')}</p>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('documentCount')}</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground"/>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{projectStats.totalTokens}</div>
@@ -86,11 +85,11 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         </p>
                     </CardContent>
                 </Card>
-                
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('supportedLanguages')}</CardTitle>
-                        <Globe className="h-4 w-4 text-muted-foreground"/>
+                        <Globe className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{projectStats.languages.length}</div>
@@ -99,22 +98,22 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         </p>
                     </CardContent>
                 </Card>
-                
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('translationProgress')}</CardTitle>
-                        <Percent className="h-4 w-4 text-muted-foreground"/>
+                        <Percent className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{projectStats.completionRate}%</div>
                         <Progress className="mt-2" value={projectStats.completionRate} />
                     </CardContent>
                 </Card>
-                
+
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t('teamMembers')}</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground"/>
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{projectStats.teamMembers}</div>
@@ -124,7 +123,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                     </CardContent>
                 </Card>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                 <Card>
                     <CardHeader>
@@ -134,7 +133,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                     <CardContent className="space-y-4">
                         <div className="flex items-center">
                             <div className="mr-4 rounded-full h-10 w-10 bg-blue-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-blue-600"/>
+                                <User className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-medium">{t('userAddedNewToken')}</p>
@@ -143,7 +142,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         </div>
                         <div className="flex items-center">
                             <div className="mr-4 rounded-full h-10 w-10 bg-green-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-green-600"/>
+                                <User className="h-5 w-5 text-green-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-medium">{t('userCompletedTranslations', { count: 3 })}</p>
@@ -152,7 +151,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         </div>
                         <div className="flex items-center">
                             <div className="mr-4 rounded-full h-10 w-10 bg-purple-100 flex items-center justify-center">
-                                <Users className="h-5 w-5 text-purple-600"/>
+                                <Users className="h-5 w-5 text-purple-600" />
                             </div>
                             <div>
                                 <p className="text-sm font-medium">{t('newMemberJoined')}</p>
@@ -161,7 +160,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         </div>
                     </CardContent>
                 </Card>
-                
+
                 <Card>
                     <CardHeader>
                         <CardTitle>{t('projectInfo')}</CardTitle>

@@ -1,5 +1,4 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<
@@ -66,31 +65,54 @@ const TableRow = React.forwardRef<
 ))
 TableRow.displayName = "TableRow"
 
+type StickyOptions = {
+  sticky?: boolean
+  stickySide?: "left" | "right"
+  stickyOffset?: number
+}
+
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-      className
-    )}
-    {...props}
-  />
-))
+  React.ThHTMLAttributes<HTMLTableCellElement> & StickyOptions
+>(({ className, sticky, stickySide = "left", stickyOffset = 0, ...props }, ref) => {
+  const stickyClass = sticky
+    ? `sticky ${stickySide}-${stickyOffset} z-10 bg-[#f1f2f4] before:content-[''] before:shadow-md before:shadow-gray-200 before:absolute before:inset-0 before:pointer-events-none before:touch-none`
+    : ""
+
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        "h-12 px-4 text-left border-r border-gray-200 align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        stickyClass,
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <td
-    ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
-    {...props}
-  />
-))
+  React.TdHTMLAttributes<HTMLTableCellElement> & StickyOptions
+>(({ className, sticky, stickySide = "left", stickyOffset = 0, ...props }, ref) => {
+  const stickyClass = sticky
+    ? `sticky ${stickySide}-${stickyOffset} bg-white z-10 before:content-[''] before:shadow-md before:shadow-gray-200 before:absolute before:inset-0 before:pointer-events-none before:touch-none`
+    : " "
+
+  return (
+    <td
+      ref={ref}
+      className={cn(
+        "p-4 align-middle border-r min-w-[120px] border-gray-200 [&:has([role=checkbox])]:pr-0",
+        stickyClass,
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TableCell.displayName = "TableCell"
 
 const TableCaption = React.forwardRef<
