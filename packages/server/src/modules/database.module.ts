@@ -11,6 +11,8 @@ import {
   ProjectSchema,
   Token,
   TokenSchema,
+  TokenHistory,
+  TokenHistorySchema,
 } from '../models';
 
 @Module({
@@ -31,6 +33,7 @@ import {
       { name: Membership.name, schema: MembershipSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: Token.name, schema: TokenSchema },
+      { name: TokenHistory.name, schema: TokenHistorySchema },
     ]),
   ],
   exports: [
@@ -40,6 +43,7 @@ import {
       { name: Membership.name, schema: MembershipSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: Token.name, schema: TokenSchema },
+      { name: TokenHistory.name, schema: TokenHistorySchema },
     ]),
   ],
 })

@@ -10,15 +10,15 @@ export async function getTeamProjects(teamId: string): Promise<Project[]> {
 }
 
 // Create new project
-export async function createProject(data: { 
-  name: string; 
+export async function createProject(data: {
+  name: string;
   teamId: string;
   description?: string;
   languages?: string[];
 }): Promise<Project> {
   // Auto-generate URL (can use pinyin or English conversion of project name)
   const url = data.name.toLowerCase().replace(/\s+/g, '-');
-  
+
   return apiClient.post(`${API_BASE}/create`, {
     ...data,
     url
@@ -111,8 +111,8 @@ export async function exportProjectTokens(projectId: string, options: {
 }) {
   // Use blob response type to handle file download
   return apiClient.post(
-    `${API_BASE}/export/${projectId}`, 
-    options, 
+    `${API_BASE}/export/${projectId}`,
+    options,
     { responseType: 'blob' }
   );
 }

@@ -23,8 +23,8 @@ export class Membership {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Team' })
   team: Team;
 
-  @Prop({ required: true })
-  role: string; // "owner", "manager", "member"
+  @Prop({ required: true, enum: ['owner', 'manager', 'member'] })
+  role: string;
 
   // 虚拟字段
   id: string;

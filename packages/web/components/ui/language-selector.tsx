@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
 import { Check, Globe } from "lucide-react";
-import { LANGUAGE_COOKIE_KEY, getUserLanguage, setUserLanguage } from "@/lib/cookies";
+import { getUserLanguage, setUserLanguage } from "@/lib/cookies";
 
 // 支持的语言列表
 const languages = [
@@ -21,9 +20,8 @@ const languages = [
 
 export function LanguageSelector() {
   const t = useTranslations();
-  const router = useRouter();
   const [currentLanguage, setCurrentLanguage] = useState("");
-  
+
   // 获取当前语言
   useEffect(() => {
     setCurrentLanguage(getUserLanguage());

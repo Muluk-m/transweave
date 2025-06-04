@@ -10,7 +10,7 @@ import { I18nClientProvider } from "@/components/i18n/client-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "QLJ I18N Manage",
+  title: "Qlj - I18N",
   description: "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
 };
 

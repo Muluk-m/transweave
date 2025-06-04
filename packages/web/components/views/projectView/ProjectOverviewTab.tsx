@@ -34,7 +34,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         tokens.forEach(token => {
             const expectedTranslations = languages.length;
             totalTranslations += expectedTranslations;
-            completedTranslations += token.translations.length ?? 0;
+            completedTranslations += token.translations?.length ?? 0;
         });
 
         const completionRate = totalTranslations > 0

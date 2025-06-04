@@ -162,7 +162,10 @@ export class ProjectController {
       );
     }
 
-    return this.projectService.createToken(data);
+    return this.projectService.createToken({
+      ...data,
+      userId: user.userId,
+    });
   }
 
   // Get token details
@@ -220,7 +223,10 @@ export class ProjectController {
       );
     }
 
-    return this.projectService.updateToken(tokenId, data);
+    return this.projectService.updateToken(tokenId, {
+      ...data,
+      userId: user.userId,
+    });
   }
 
   // Delete token

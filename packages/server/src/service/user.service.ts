@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../models';
-import { verifyPassword } from 'src/utils/crypto';
+import { verifyPassword } from '../utils/crypto';
 
 @Injectable()
 export class UserService {

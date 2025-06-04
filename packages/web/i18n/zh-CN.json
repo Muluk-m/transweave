@@ -593,7 +593,10 @@
       "projectIdMissing": "项目ID不存在",
       "createFailed": "添加文案失败",
       "updateFailed": "更新文案失败",
-      "deleteFailed": "删除文案失败"
+      "deleteFailed": "删除文案失败",
+      "invalidKey": "key 格式不正确，请输入有效的 key",
+      "noLanguageToTranslate": "没有可翻译的语言",
+      "translateFailed": "翻译失败"
     }
   },
   "tokenForm": {

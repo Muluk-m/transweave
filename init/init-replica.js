@@ -1,13 +1,8 @@
-db = db.getSiblingDB("admin");
+const rsStatus = rs.status();
 
-const host = "host.docker.internal:27017";
-
-rs.initiate({
-  _id: "rs0",
-  members: [
-    {
-      _id: 0,
-      host: host
-    }
-  ]
-});
+if (rsStatus.ok === 0 || rsStatus.members.length === 1) {
+  rs.initiate({
+    _id: 'rs0',
+    members: [{ _id: 0, host: 'localhost:27017' }],
+  });
+}

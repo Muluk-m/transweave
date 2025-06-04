@@ -593,7 +593,8 @@
       "projectIdMissing": "Project ID is missing",
       "createFailed": "Failed to add translation",
       "updateFailed": "Failed to update translation",
-      "deleteFailed": "Failed to delete translation"
+      "deleteFailed": "Failed to delete translation",
+      "invalidKey": "Invalid key format, please enter a valid key"
     }
   },
   "tokenForm": {

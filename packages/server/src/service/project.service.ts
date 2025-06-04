@@ -1,18 +1,22 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Project, ProjectDocument, Token, TokenDocument } from '../models';
+import { Model, Types } from 'mongoose';
+import {
+  Project,
+  ProjectDocument,
+  Token,
+  TokenDocument,
+  TokenHistory,
+} from '../models';
 import { MembershipService } from './membership.service';
 import { createZipWithLanguageFiles } from 'src/utils/exportTo';
 import { parseImportData } from 'src/utils/importFrom';
 import { MongooseService } from './mongoose.service';
+import { diffObject } from 'src/utils/object';
 
 @Injectable()
 export class ProjectService {
@@ -52,7 +56,16 @@ export class ProjectService {
   }
 
   async findProjectById(id: string) {
-    return this.projectModel.findById(id).populate('tokens').exec();
+    return this.projectModel
+      .findById(id)
+      .populate({
+        path: 'tokens',
+        populate: {
+          path: 'history.user',
+          select: 'name email id',
+        },
+      })
+      .exec();
   }
 
   async findProjectsByTeamId(teamId: string) {
@@ -145,7 +158,13 @@ export class ProjectService {
 
   // 获取项目中的所有令牌
   async getProjectTokens(projectId: string) {
-    return this.tokenModel.find({ projectId }).exec();
+    return this.tokenModel
+      .find({ projectId })
+      .populate({
+        path: 'history.user',
+        select: 'name email id',
+      })
+      .exec();
   }
 
   // 创建新令牌
@@ -155,10 +174,11 @@ export class ProjectService {
     tags?: string[];
     comment?: string;
     translations?: Record<string, string>;
+    userId: string;
   }) {
     const session = await this.mongooseService.getConnection().startSession();
     try {
-      let result: any = null;
+      let result: TokenDocument | null = null;
       await session.withTransaction(async () => {
         // 检查key是否已存在
         const existingToken = await this.tokenModel
@@ -180,6 +200,13 @@ export class ProjectService {
           tags: data.tags || [],
           comment: data.comment || '',
           translations: data.translations || {},
+          history: [
+            {
+              user: new Types.ObjectId(data.userId),
+              translations: data.translations,
+              createdAt: new Date(),
+            },
+          ],
         });
 
         await token.save({ session });
@@ -193,7 +220,14 @@ export class ProjectService {
           )
           .exec();
 
-        result = token;
+        result = await this.tokenModel
+          .findById(token._id)
+          .populate({
+            path: 'history.user',
+            select: 'name email id',
+          })
+          .session(session)
+          .exec();
       });
       return result;
     } finally {
@@ -203,7 +237,10 @@ export class ProjectService {
 
   // 获取单个令牌
   async getTokenById(tokenId: string) {
-    const token = await this.tokenModel.findById(tokenId).exec();
+    const token = await this.tokenModel
+      .findById(tokenId)
+      .populate('history.user', 'name email id')
+      .exec();
 
     if (!token) {
       throw new NotFoundException(`令牌 ${tokenId} 不存在`);
@@ -220,8 +257,9 @@ export class ProjectService {
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>;
+      userId: string;
     },
-  ) {
+  ): Promise<TokenDocument | null> {
     // 获取令牌以确认它存在
     const token = await this.getTokenById(tokenId);
 
@@ -241,7 +279,7 @@ export class ProjectService {
     }
 
     // 准备更新数据
-    const updateData: any = {};
+    const updateData = {} as TokenDocument;
     if (data.key !== undefined) updateData.key = data.key;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.comment !== undefined) updateData.comment = data.comment;
@@ -256,11 +294,27 @@ export class ProjectService {
         ...currentTranslations,
         ...data.translations,
       };
+
+      if (!diffObject(updateData.translations, token.translations)) {
+        // 添加历史记录
+        updateData.history = [
+          ...token.history,
+          {
+            createdAt: new Date(),
+            translations: data.translations,
+            user: new Types.ObjectId(data.userId),
+          } as unknown as TokenHistory,
+        ];
+      }
     }
 
     // 执行更新
     return this.tokenModel
       .findByIdAndUpdate(tokenId, updateData, { new: true })
+      .populate({
+        path: 'history.user',
+        select: 'name email id',
+      })
       .exec();
   }
 

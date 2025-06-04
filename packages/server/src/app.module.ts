@@ -14,11 +14,15 @@ import { JwtStrategy } from './jwt/strategy';
 import { PassportModule } from '@nestjs/passport';
 import { MembershipService } from './service/membership.service';
 import { DatabaseModule } from './modules/database.module';
+import { HttpModule } from '@nestjs/axios';
+import { AiService } from './service/ai.service';
+import { AiController } from './controller/ai.controller';
 
 @Module({
   imports: [
     PassportModule,
     DatabaseModule,
+    HttpModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'your-secret-key',
@@ -29,6 +33,7 @@ import { DatabaseModule } from './modules/database.module';
     AppController,
     UserController,
     AuthController,
+    AiController,
     TeamController,
     ProjectController,
     UserController,
@@ -41,6 +46,7 @@ import { DatabaseModule } from './modules/database.module';
     ProjectService,
     JwtStrategy,
     MembershipService,
+    AiService,
   ],
 })
 export class AppModule {}

@@ -128,6 +128,12 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
         // Could add navigation logic to project list here
     };
 
+    const sortedLanguages = projectLanguages.sort((a, b) => {
+        if (a === "en") return -1;
+        if (b === "en") return 1;
+        return a.localeCompare(b);
+    });
+
     return (
         <div className="space-y-6">
             <div>
@@ -222,15 +228,18 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             <div className="space-y-2">
                                 <Label>{t('project.settings.languages.current')}</Label>
                                 <div className="flex flex-wrap gap-2">
-                                    {projectLanguages.map(lang => (
+                                    {sortedLanguages.map(lang => (
                                         <Badge key={lang} variant="outline" className="flex items-center gap-1 py-1.5">
                                             {Languages.has(lang) ? `${Languages.raw(lang)?.label} (${lang})` : lang}
-                                            <button
-                                                onClick={() => handleRemoveLanguage(lang)}
-                                                className="ml-1 text-gray-500 hover:text-red-500"
-                                            >
-                                                <Trash className="h-3 w-3" />
-                                            </button>
+                                            {
+                                                lang !== "en" && (
+                                                    <button
+                                                        onClick={() => handleRemoveLanguage(lang)}
+                                                        className="ml-1 text-gray-500 hover:text-red-500"
+                                                    >
+                                                        <Trash className="h-3 w-3" />
+                                                    </button>)
+                                            }
                                         </Badge>
                                     ))}
                                 </div>

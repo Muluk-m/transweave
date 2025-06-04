@@ -29,7 +29,7 @@ export function NewProjectDialog({
     const t = useTranslations();
     const [newProjectName, setNewProjectName] = useState("");
     const [newProjectDescription, setNewProjectDescription] = useState("");
-    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["zh-CN"]);
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["en"]);
     const [isCreatingProject, setIsCreatingProject] = useState(false);
     const { toast } = useToast();
 
@@ -64,7 +64,7 @@ export function NewProjectDialog({
             onOpenChange(false);
             setNewProjectName("");
             setNewProjectDescription("");
-            setSelectedLanguages(["zh-CN"]);
+            setSelectedLanguages(["en"]);
             toast({
                 title: t('projects.createSuccess'),
                 variant: "default",
@@ -109,8 +109,8 @@ export function NewProjectDialog({
                     <div>
                         <Label>{t('projects.create.languages')}</Label>
                         <LanguageSelector
-                          selectedLanguages={selectedLanguages}
-                          onChange={setSelectedLanguages}
+                            selectedLanguages={selectedLanguages}
+                            onChange={setSelectedLanguages}
                         />
                     </div>
                 </div>

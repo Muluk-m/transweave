@@ -46,12 +46,19 @@ export interface Project {
   updatedAt?: number;
 }
 
+export interface TokenHistory {
+  user?: User;
+  translations: Record<string, any>;
+  createdAt: string;
+}
+
 export interface Token {
   id: string;
   key: string;
   translations: Translation[];
   tags: string[];
   comment?: string;
+  history?: TokenHistory[];
 }
 
 export interface Translation {
