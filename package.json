@@ -7,8 +7,7 @@
   "license": "MIT",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:web": "cd packages/web && npm run build",
-    "postinstall": "chmod 400 conf/mongo-keyfile"
+    "build:web": "cd packages/web && npm run build"
   },
   "keywords": [],
   "author": "",
