@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { ArrowLeft, Loader2, LogIn } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -21,9 +21,7 @@ const feishuState = 'qiliangjia-i18n'
 
 export default function LoginPage() {
   const t = useTranslations();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const code = searchParams.get('code');
   const [isLoading, setIsLoading] = useState(false);
   const { loginWithFeishu } = useAuth();
 
@@ -56,10 +54,12 @@ export default function LoginPage() {
   }, [loginWithFeishu, router, t]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
     if (code) {
       handleLogin(code);
     }
-  }, [code, handleLogin]);
+  }, [handleLogin]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4">
