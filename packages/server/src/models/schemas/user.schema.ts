@@ -13,14 +13,26 @@ export class User {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
+  @Prop()
   password: string;
+
+  @Prop()
+  avatar: string;
 
   @Prop({ required: true, unique: true })
   email: string;
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Membership' }] })
   memberships: Membership[];
+
+  @Prop({ unique: true })
+  feishuId: string;
+
+  @Prop({ unique: true })
+  feishuUnionId: string;
+
+  @Prop({ required: true, enum: ['local', 'feishu'] })
+  loginProvider: 'local' | 'feishu';
 
   @Prop()
   createdAt: Date;

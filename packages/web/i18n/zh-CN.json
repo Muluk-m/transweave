@@ -130,6 +130,7 @@
     "noAccount": "还没有账户?",
     "register": "立即注册",
     "backToHome": "返回首页",
+    "feishuLogin": "飞书登录",
     "errors": {
       "requiredFields": "请填写所有必填字段",
       "loginFailed": "登录失败",
@@ -423,7 +424,7 @@
     "form": {
       "username": "用户名",
       "email": "电子邮箱",
-      "avatarUrl": "头像URL",
+      "avatar": "头像URL",
       "avatarPlaceholder": "https://example.com/avatar.jpg",
       "saveChanges": "保存更改",
       "saving": "保存中...",

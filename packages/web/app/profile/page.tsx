@@ -33,7 +33,7 @@ import { useTranslations } from "next-intl";
 const profileFormSchema = (t: any) => z.object({
   name: z.string().min(2, { message: t('profile.form.validation.nameRequired') }),
   email: z.string().email({ message: t('profile.form.validation.emailInvalid') }),
-  avatarUrl: z.string().url({ message: t('profile.form.validation.avatarUrlInvalid') }).optional().or(z.literal(''))
+  avatar: z.string().url({ message: t('profile.form.validation.avatarUrlInvalid') }).optional().or(z.literal(''))
 });
 
 type ProfileFormValues = z.infer<ReturnType<typeof profileFormSchema>>;
@@ -50,7 +50,7 @@ export default function ProfilePage() {
     defaultValues: {
       name: "",
       email: "",
-      avatarUrl: ""
+      avatar: ""
     }
   });
 
@@ -60,7 +60,7 @@ export default function ProfilePage() {
       form.reset({
         name: user.name,
         email: user.email,
-        avatarUrl: user.avatarUrl || ""
+        avatar: user.avatar || ""
       });
     }
   }, [user, form]);
@@ -74,7 +74,7 @@ export default function ProfilePage() {
       await updateUserProfile(user.userId, {
         name: data.name,
         email: data.email,
-        avatarUrl: data.avatarUrl || undefined
+        avatar: data.avatar || undefined
       });
 
       toast({
@@ -121,7 +121,7 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center mb-8">
           <Avatar className="h-20 w-20 mr-6">
-            <AvatarImage src={user.avatarUrl || "https://github.com/shadcn.png"} />
+            <AvatarImage src={user.avatar || "https://github.com/shadcn.png"} />
             <AvatarFallback className="text-lg">{user.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
@@ -170,10 +170,10 @@ export default function ProfilePage() {
                 
                 <FormField
                   control={form.control}
-                  name="avatarUrl"
+                  name="avatar"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('profile.form.avatarUrl')}</FormLabel>
+                      <FormLabel>{t('profile.form.avatar')}</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder={t('profile.form.avatarPlaceholder')} />
                       </FormControl>

@@ -45,10 +45,10 @@ import { useTranslations } from "next-intl";
 export function TeamSettingsView() {
   const t = useTranslations("teams.settings");
   const commonT = useTranslations("common");
-  
+
   const [teams, setTeams] = useAtom(teamsAtom);
   const [currentTeam, setCurrentTeam] = useAtom(nowTeamAtom);
-  
+
   const [teamName, setTeamName] = useState(currentTeam?.name || "");
   const [teamUrl, setTeamUrl] = useState(currentTeam?.url || "");
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -116,10 +116,10 @@ export function TeamSettingsView() {
 
   const handleSaveTeamSettings = () => {
     if (!canSave) return;
-    
+
     // Logic to update team information
     if (currentTeam) {
-      const updatedTeams = teams.map(team => 
+      const updatedTeams = teams.map(team =>
         team.id === currentTeam.id ? { ...team, name: teamName, url: teamUrl } : team
       );
       setTeams(updatedTeams);
@@ -129,7 +129,7 @@ export function TeamSettingsView() {
 
   const handleDeleteTeam = () => {
     if (!isDeleteConfirmValid) return;
-    
+
     // Logic to delete the team
     const updatedTeams = teams.filter(team => team.id !== currentTeam?.id);
     setTeams(updatedTeams);
@@ -139,7 +139,7 @@ export function TeamSettingsView() {
 
   const handleAddMember = () => {
     if (!newMemberEmail) return;
-    
+
     // Logic to add a team member
     const newMember = {
       id: Date.now(),
@@ -148,7 +148,7 @@ export function TeamSettingsView() {
       role: newMemberRole === "admin" ? t("members.roles.admin") : t("members.roles.member"),
       avatar: "https://github.com/shadcn.png"
     };
-    
+
     setMembers([...members, newMember]);
     setNewMemberEmail("");
     setNewMemberRole("member");
@@ -176,9 +176,9 @@ export function TeamSettingsView() {
 
   // Mock team member data
   const teamMembers = [
-    { id: "1", name: "John Doe", email: "john@example.com", role: t("members.roles.admin"), avatarUrl: "https://github.com/shadcn.png" },
-    { id: "2", name: "Sarah Smith", email: "sarah@example.com", role: t("members.roles.editor"), avatarUrl: "" },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", role: t("members.roles.readonly"), avatarUrl: "" },
+    { id: "1", name: "John Doe", email: "john@example.com", role: t("members.roles.admin"), avatar: "https://github.com/shadcn.png" },
+    { id: "2", name: "Sarah Smith", email: "sarah@example.com", role: t("members.roles.editor"), avatar: "" },
+    { id: "3", name: "Mike Johnson", email: "mike@example.com", role: t("members.roles.readonly"), avatar: "" },
   ];
 
   if (!currentTeam) {
@@ -205,27 +205,27 @@ export function TeamSettingsView() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="teamName">{t("general.name")}</Label>
-                <Input 
-                  id="teamName" 
-                  value={teamName} 
-                  onChange={handleTeamNameChange} 
-                  placeholder={t("general.namePlaceholder")} 
+                <Input
+                  id="teamName"
+                  value={teamName}
+                  onChange={handleTeamNameChange}
+                  placeholder={t("general.namePlaceholder")}
                   maxLength={12}
                 />
                 <p className={`text-xs ${teamName.length > 12 ? "text-red-500" : "text-gray-500"}`}>
                   {teamName.length}/12 {t("general.characters")}
                 </p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="teamUrl">{t("general.url")}</Label>
                 <div className="flex items-center">
                   <span className="mr-1 text-gray-500">{t("general.urlPrefix")}</span>
-                  <Input 
-                    id="teamUrl" 
-                    value={teamUrl} 
-                    onChange={handleTeamUrlChange} 
-                    placeholder={t("general.urlPlaceholder")} 
+                  <Input
+                    id="teamUrl"
+                    value={teamUrl}
+                    onChange={handleTeamUrlChange}
+                    placeholder={t("general.urlPlaceholder")}
                     maxLength={24}
                     className={!isUrlValid && teamUrl ? "border-red-500" : ""}
                   />
@@ -242,7 +242,7 @@ export function TeamSettingsView() {
               <Button onClick={handleSaveTeamSettings} disabled={!canSave}>{t("general.saveSettings")}</Button>
             </CardFooter>
           </Card>
-          
+
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-red-600">{t("danger.title")}</CardTitle>
@@ -283,7 +283,7 @@ export function TeamSettingsView() {
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="members">
           <Card>
             <CardHeader>
@@ -292,15 +292,15 @@ export function TeamSettingsView() {
             </CardHeader>
             <CardContent>
               <div className="flex gap-2 mb-6">
-                <Input 
-                  placeholder={t("members.addPlaceholder")} 
+                <Input
+                  placeholder={t("members.addPlaceholder")}
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   className="flex-1"
                 />
                 <Button onClick={addTeamMember}>{t("members.add")}</Button>
               </div>
-              
+
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -315,7 +315,7 @@ export function TeamSettingsView() {
                     <TableRow key={member.id}>
                       <TableCell className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.avatarUrl} />
+                          <AvatarImage src={member.avatar} />
                           <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
                         </Avatar>
                         {member.name}
@@ -345,7 +345,7 @@ export function TeamSettingsView() {
                               {t("members.dropdown.setReadonly")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => removeMember(member.id)}
                             >
@@ -361,7 +361,7 @@ export function TeamSettingsView() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="billing">
           <Card>
             <CardHeader>
@@ -381,7 +381,7 @@ export function TeamSettingsView() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-medium">{t("billing.resourceUsage")}</h3>
                 <div className="mt-2 space-y-4">
@@ -394,7 +394,7 @@ export function TeamSettingsView() {
                       <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">{t("billing.members")}</span>
@@ -404,7 +404,7 @@ export function TeamSettingsView() {
                       <div className="bg-blue-500 h-2 rounded-full" style={{ width: '30%' }}></div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">{t("billing.storage")}</span>
@@ -416,7 +416,7 @@ export function TeamSettingsView() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-medium">{t("billing.planComparison")}</h3>
                 <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -431,7 +431,7 @@ export function TeamSettingsView() {
                     </ul>
                     <Button variant="outline" className="mt-4 w-full">{t("billing.currentPlanButton")}</Button>
                   </div>
-                  
+
                   <div className="border rounded-lg p-4 border-blue-500">
                     <h4 className="font-medium">{t("billing.proTier")}</h4>
                     <p className="text-gray-600 mb-2">{t("billing.perMonth", { price: 99 })}</p>
@@ -444,7 +444,7 @@ export function TeamSettingsView() {
                     </ul>
                     <Button className="mt-4 w-full">{t("billing.upgradeToProButton")}</Button>
                   </div>
-                  
+
                   <div className="border rounded-lg p-4">
                     <h4 className="font-medium">{t("billing.enterpriseTier")}</h4>
                     <p className="text-gray-600 mb-2">{t("billing.perMonth", { price: 299 })}</p>

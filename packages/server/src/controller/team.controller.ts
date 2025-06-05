@@ -92,7 +92,7 @@ export class TeamController {
   @Get('list')
   @UseGuards(AuthGuard)
   async findMyTeams(@CurrentUser() user: UserPayload) {
-    return this.teamService.findTeamsByUserId(user.userId);
+    return this.teamService.findTeamsByUserId(user.userId)
   }
 
   @Post('addmember/:id')

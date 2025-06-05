@@ -4,22 +4,18 @@ import {
   Body,
   HttpException,
   HttpStatus,
-  UnauthorizedException,
   Get,
   UseGuards,
   Request,
   Logger,
 } from '@nestjs/common';
-import { UserService } from '../service/user.service';
-import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '../jwt/guard';
-import { hashPassword, verifyPassword } from 'src/utils/crypto';
+import { AuthService } from '../service/auth.service';
 
 @Controller('api/auth')
 export class AuthController {
   constructor(
-    private readonly userService: UserService,
-    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
   @Get('status')
@@ -33,34 +29,15 @@ export class AuthController {
 
   @Post('register')
   async register(
-    @Body() data: { name: string; email: string; password: string },
+    @Body() data: { name: string; email: string; password: string; avatar: string },
   ) {
     try {
-      // Check if email is already registered
-      const existingUser = await this.userService.findUserByEmail(data.email);
-      if (existingUser) {
-        throw new HttpException(
-          'Email is already registered',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      // Password encryption
-      const hashedPassword = hashPassword(data.password);
-
-      // Create new user
-      const newUser = await this.userService.createUser({
-        name: data.name,
-        email: data.email,
-        password: hashedPassword,
-      });
-
-      // Return user information without password
-      const { password: _, ...result } = newUser;
+      const user = await this.authService.register(data);
+      
       return {
         success: true,
         message: 'Registration successful',
-        user: result,
+        user,
       };
     } catch (error) {
       Logger.log('zws register error', error);
@@ -77,41 +54,47 @@ export class AuthController {
   @Post('login')
   async login(@Body() data: { email: string; password: string }) {
     try {
-      // Find user
-      const user = await this.userService.findUserByEmail(data.email);
-      if (!user) {
-        throw new UnauthorizedException('Email or password incorrect');
-      }
-
-      // Verify password
-      const isPasswordValid = verifyPassword(data.password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Email or password incorrect');
-      }
-
-      // Create JWT
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        name: user.name,
-      };
-
-      const token = this.jwtService.sign(payload);
+      const { token, user } = await this.authService.login(data);
 
       return {
         success: true,
         message: 'Login successful',
         token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
+        user
       };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
+      throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('login_feishu')
+  async loginWithFeishu(@Body() data: { code: string }, @Request() req) {
+    try {
+      const referer = req.headers.referer || '';
+      const origin = referer ? new URL(referer).origin : '';
+      const redirectUri = `${origin}/login`;
+      
+      const { token, user } = await this.authService.loginWithFeishu(data.code, redirectUri);
+
+      return {
+        success: true,
+        message: 'Login successful',
+        token,
+        user,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      if (error instanceof Error) {
+        error.message = 'Login failed';
+        throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
       throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

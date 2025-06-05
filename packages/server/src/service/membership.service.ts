@@ -1,27 +1,43 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, DeleteResult } from 'mongoose';
-import { Membership, MembershipDocument } from '../models';
+import { Membership, MembershipDocument, Team, TeamDocument, User, UserDocument } from '../models';
+import { MongooseService } from './mongoose.service';
 
 @Injectable()
 export class MembershipService {
   constructor(
     @InjectModel(Membership.name)
     private membershipModel: Model<MembershipDocument>,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
+    @InjectModel(Team.name)
+    private teamModel: Model<TeamDocument>,
+    private mongooseService: MongooseService,
   ) {}
 
-  async createMembership(data: {
-    userId: string;
-    teamId: string;
-    role: string;
-  }) {
-    const membership = new this.membershipModel({
-      userId: data.userId,
-      teamId: data.teamId,
-      role: data.role,
-    });
+  async createMembership(data: { userId: string; teamId: string; role: string }) {
+    const session = await this.mongooseService.getConnection().startSession();
+    let membership: MembershipDocument;
 
-    await membership.save();
+    try {
+      membership = new this.membershipModel({
+        userId: data.userId,
+        user: data.userId,
+        teamId: data.teamId,
+        role: data.role,
+      });
+
+      await membership.save({ session });
+
+      await this.teamModel.findByIdAndUpdate(data.teamId, { $addToSet: { memberships: membership._id } }, { session });
+
+      await this.userModel
+        .findByIdAndUpdate(data.userId, { $addToSet: { memberships: membership._id } })
+        .session(session);
+    } finally {
+      session.endSession();
+    }
 
     return this.membershipModel
       .findById(membership._id)

@@ -52,10 +52,14 @@ export function LanguageSelector({ selectedLanguages, onChange }: LanguageSelect
         {selectedLanguages.map((lang) => (
           <Badge key={lang} variant="secondary" className="gap-1">
             {getLocalizedLanguageName(lang)}
-            <X
-              className="h-3 w-3 cursor-pointer"
-              onClick={() => removeLanguage(lang)}
-            />
+            {
+              lang !== "en" && (
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => removeLanguage(lang)}
+                />
+              )
+            }
           </Badge>
         ))}
       </div>

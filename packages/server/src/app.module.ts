@@ -17,6 +17,7 @@ import { DatabaseModule } from './modules/database.module';
 import { HttpModule } from '@nestjs/axios';
 import { AiService } from './service/ai.service';
 import { AiController } from './controller/ai.controller';
+import { AuthService } from './service/auth.service';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AiController } from './controller/ai.controller';
   ],
   providers: [
     AppService,
+    AuthService,
     UserService,
     TeamService,
     MongooseService,

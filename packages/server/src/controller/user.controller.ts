@@ -18,7 +18,26 @@ interface UserPayload {
 
 @Controller('api/user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
+  
+   // Current user information
+   @Get('me')
+   @UseGuards(AuthGuard)
+   async getMe(@CurrentUser() user: UserPayload) {
+     return this.userService.findUserById(user.userId);
+   }
+ 
+   // Search users
+   @Get('search')
+   @UseGuards(AuthGuard)
+   async searchUsers(@Query('keyword') keyword: string) {
+     try {
+       return this.userService.searchUsers(keyword);
+     } catch (error) {
+       console.error(error);
+       return { status: 500, message: 'Failed to search users' };
+     }
+   }
 
   // Get specific user information
   @Get(':id')
@@ -43,19 +62,5 @@ export class UserController {
       return { status: 403, message: 'You can only delete your own account' };
     }
     return this.userService.deleteUser(id);
-  }
-
-  // Current user information
-  @Get('me')
-  @UseGuards(AuthGuard)
-  async getMe(@CurrentUser() user: UserPayload) {
-    return this.userService.findUserById(user.userId);
-  }
-
-  // Search users
-  @Get('search')
-  @UseGuards(AuthGuard)
-  async searchUsers(@Query('keyword') keyword: string) {
-    return this.userService.searchUsers(keyword);
   }
 }

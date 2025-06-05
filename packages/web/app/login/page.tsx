@@ -1,47 +1,44 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/auth/auth-context";
-import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogIn } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/lib/auth/auth-context";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "@/hooks/use-toast";
+
+const feishuClientId = 'cli_a6123d158e73500e';
+const feishuState = 'qiliangjia-i18n'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const { toast } = useToast();
-  const router = useRouter();
   const t = useTranslations();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const code = searchParams.get('code');
+  const [isLoading, setIsLoading] = useState(false);
+  const { loginWithFeishu } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast({
-        title: t("login.errors.loginFailed"),
-        description: t("login.errors.requiredFields"),
-        variant: "destructive"
-      });
-      return;
-    }
+  const onFeishuLogin = () => {
+    const redirectUri = new URL(window.location.href);
+    redirectUri.search = ''
+    const redirectUriStr = redirectUri.toString();
 
+    window.location.href = `https://accounts.feishu.cn/open-apis/authen/v1/authorize?client_id=${feishuClientId}&redirect_uri=${redirectUriStr}&state=${feishuState}`
+  }
+
+  const handleLogin = useCallback(async (code: string) => {
     try {
-      setLoading(true);
-      await login(email, password);
+      setIsLoading(true);
+      await loginWithFeishu(code);
       toast({
         title: t("login.success.title"),
         description: t("login.success.description")
@@ -54,9 +51,15 @@ export default function LoginPage() {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [loginWithFeishu, router, t]);
+
+  useEffect(() => {
+    if (code) {
+      handleLogin(code);
+    }
+  }, [code, handleLogin]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4">
@@ -77,58 +80,20 @@ export default function LoginPage() {
             {t("login.description")}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("login.email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t("login.password")}</Label>
-                <Link 
-                  href="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
-                >
-                  {t("login.forgotPassword")}
-                </Link>
+        <CardContent className="space-y-4">
+          {
+            isLoading ?
+              <div className="flex justify-center items-center h-full">
+                <Loader2 className="h-4 w-4 animate-spin" />
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("login.loginInProgress")}
-                </>
-              ) : (
-                t("login.loginButton")
-              )}
-            </Button>
-            <div className="text-center text-sm">
-              {t("login.noAccount")}{" "}
-              <Link href="/signup" className="text-primary hover:underline">
-                {t("login.register")}
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+              :
+              <Button variant="outline" className="w-full bg-[#1e92ff] text-white" onClick={onFeishuLogin}>
+                <LogIn className="mr-2 h-4 w-4" />
+                {t("login.feishuLogin")}
+              </Button>
+          }
+        </CardContent>
+
       </Card>
     </div>
   );

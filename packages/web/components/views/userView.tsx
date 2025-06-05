@@ -16,17 +16,17 @@ import { User as UserType } from "@/jotai/types";
 import { getUserById } from "@/api/user";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useAtomValue } from "jotai";
-import { 
-  AtSign, 
-  Calendar, 
-  Edit2, 
-  ExternalLink, 
-  Github, 
-  Globe, 
+import {
+  AtSign,
+  Calendar,
+  Edit2,
+  ExternalLink,
+  Github,
+  Globe,
   Layers,
-  MessageSquare, 
-  MoreHorizontal, 
-  Users 
+  MessageSquare,
+  MoreHorizontal,
+  Users
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
@@ -43,7 +43,7 @@ export default function UserView() {
   const teams = useAtomValue(teamsAtom);
   const projects = useAtomValue(projectsAtom);
   const t = useTranslations();
-  
+
   // Get user data
   useEffect(() => {
     const fetchUserData = async () => {
@@ -60,13 +60,13 @@ export default function UserView() {
         setLoading(false);
       }
     };
-    
+
     fetchUserData();
   }, [userId, currentUser]);
-  
+
   // Check if this is the user's own profile page
   const isOwnProfile = currentUser?.userId === userId;
-  
+
   // Display loading state if loading
   if (loading) {
     return (
@@ -79,7 +79,7 @@ export default function UserView() {
       </div>
     );
   }
-  
+
   // Display error message if user doesn't exist
   if (!user) {
     return (
@@ -92,7 +92,7 @@ export default function UserView() {
       </div>
     );
   }
-  
+
   // User activity data (mocked)
   const userActivities = [
     {
@@ -118,13 +118,13 @@ export default function UserView() {
       date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
     },
   ];
-  
+
   // Mocked user team data
   const userTeams = teams.filter((_, index) => index < 3); // For demonstration, show max 3 teams
-  
+
   // Mocked user project data
   const userProjects = projects.filter((_, index) => index < 4); // For demonstration, show max 4 projects
-  
+
   return (
     <div className="container mx-auto py-10 px-4 md:px-6">
       {/* User info top card */}
@@ -132,10 +132,10 @@ export default function UserView() {
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
             <Avatar className="w-24 h-24 border-4 border-background">
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
+              <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -149,15 +149,15 @@ export default function UserView() {
                     <span>{t('user.joinedAt', { date: new Date(user.createdAt || 0).toLocaleDateString() })}</span>
                   </div>
                 </div>
-                
-                {isOwnProfile && (
+
+                {/* {isOwnProfile && (
                   <Button className="self-start" onClick={() => router.push('/settings/profile')}>
                     <Edit2 className="mr-2 h-4 w-4" />
                     {t('user.editProfile')}
                   </Button>
-                )}
+                )} */}
               </div>
-              
+
               <div className="flex flex-wrap gap-2 mt-4">
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
@@ -167,18 +167,12 @@ export default function UserView() {
                   <Layers className="h-3 w-3" />
                   {t('user.projectsCount', { count: userProjects.length })}
                 </Badge>
-                {isOwnProfile && (
-                  <Badge variant="outline" className="flex items-center gap-1 cursor-pointer" onClick={() => router.push('/settings/integrations')}>
-                    <Github className="h-3 w-3" />
-                    {t('user.connectGitHub')}
-                  </Badge>
-                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Main content tabs */}
       <Tabs defaultValue="overview" className="space-y-8">
         <TabsList>
@@ -187,7 +181,7 @@ export default function UserView() {
           <TabsTrigger value="projects">{t('user.tabs.projects')}</TabsTrigger>
           {isOwnProfile && <TabsTrigger value="settings">{t('user.tabs.settings')}</TabsTrigger>}
         </TabsList>
-        
+
         {/* Overview tab content */}
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -211,10 +205,10 @@ export default function UserView() {
                           <p className="text-sm text-muted-foreground">
                             {activity.type === 'project_created' && t('user.projectName', { name: activity.projectName })}
                             {activity.type === 'team_joined' && t('user.teamName', { name: activity.teamName })}
-                            {activity.type === 'translation_completed' && 
-                              t('user.translationCount', { 
-                                count: activity.count, 
-                                project: activity.projectName 
+                            {activity.type === 'translation_completed' &&
+                              t('user.translationCount', {
+                                count: activity.count,
+                                project: activity.projectName
                               })
                             }
                           </p>
@@ -232,7 +226,7 @@ export default function UserView() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="space-y-6">
               {/* Personal statistics */}
               <Card>
@@ -258,7 +252,7 @@ export default function UserView() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Contact information */}
               {isOwnProfile && (
                 <Card>
@@ -270,29 +264,29 @@ export default function UserView() {
                       <AtSign className="h-4 w-4 text-muted-foreground" />
                       <span>{user.email}</span>
                     </div>
-                    <div className="flex items-center justify-between mt-2">
+                    {/* <div className="flex items-center justify-between mt-2">
                       <Button variant="outline" size="sm">
                         {t('user.addSocialAccount')}
                       </Button>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               )}
             </div>
           </div>
         </TabsContent>
-        
+
         {/* Teams tab content */}
         <TabsContent value="teams">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userTeams.length > 0 ? (
               userTeams.map(team => (
-                <Card key={team.id} className="cursor-pointer hover:shadow-md transition-shadow" 
-                      onClick={() => router.push(`/teams/${team.id}`)}>
+                <Card key={team.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => router.push(`/teams/${team.id}`)}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl flex items-center justify-between">
                       {team.name}
-                      <Button variant="ghost" size="icon" className="rounded-full" onClick={(e) => { 
+                      <Button variant="ghost" size="icon" className="rounded-full" onClick={(e) => {
                         e.stopPropagation();
                         // Handle more actions
                       }}>
@@ -332,10 +326,10 @@ export default function UserView() {
                 )}
               </div>
             )}
-            
+
             {isOwnProfile && userTeams.length > 0 && (
               <Card className="border-dashed flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                   onClick={() => router.push('/teams/new')}>
+                onClick={() => router.push('/teams/new')}>
                 <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
@@ -347,14 +341,14 @@ export default function UserView() {
             )}
           </div>
         </TabsContent>
-        
+
         {/* Projects tab content */}
         <TabsContent value="projects">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userProjects.length > 0 ? (
               userProjects.map(project => (
                 <Card key={project.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => router.push(`/projects/${project.id}`)}>
+                  onClick={() => router.push(`/projects/${project.id}`)}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl flex items-center justify-between">
                       {project.name}
@@ -395,10 +389,10 @@ export default function UserView() {
                 )}
               </div>
             )}
-            
+
             {isOwnProfile && userProjects.length > 0 && (
               <Card className="border-dashed flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-muted/50 transition-colors"
-                   onClick={() => router.push('/projects/new')}>
+                onClick={() => router.push('/projects/new')}>
                 <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
                   <Layers className="h-6 w-6 text-primary" />
                 </div>
@@ -410,14 +404,14 @@ export default function UserView() {
             )}
           </div>
         </TabsContent>
-        
+
         {/* Settings tab content - only visible to the user themselves */}
         {isOwnProfile && (
           <TabsContent value="settings">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Profile settings */}
               <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => router.push('/settings/profile')}>
+                onClick={() => router.push('/settings/profile')}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
@@ -428,10 +422,10 @@ export default function UserView() {
                   </CardDescription>
                 </CardHeader>
               </Card>
-              
+
               {/* Security settings */}
               <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => router.push('/settings/security')}>
+                onClick={() => router.push('/settings/security')}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Lock className="h-5 w-5" />
@@ -442,10 +436,10 @@ export default function UserView() {
                   </CardDescription>
                 </CardHeader>
               </Card>
-              
+
               {/* Integration settings */}
               <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => router.push('/settings/integrations')}>
+                onClick={() => router.push('/settings/integrations')}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Github className="h-5 w-5" />
@@ -456,10 +450,10 @@ export default function UserView() {
                   </CardDescription>
                 </CardHeader>
               </Card>
-              
+
               {/* Notification settings */}
               <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => router.push('/settings/notifications')}>
+                onClick={() => router.push('/settings/notifications')}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Bell className="h-5 w-5" />

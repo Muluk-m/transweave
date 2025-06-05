@@ -1,11 +1,12 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, login as apiLogin, register as apiRegister, checkAuthStatus } from '@/api/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { User, login as apiLogin, register as apiRegister, checkAuthStatus, loginWithFeishu as apiLoginWithFeishu } from '@/api/auth';
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithFeishu: (code: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -49,6 +50,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const loginWithFeishu = useCallback(async (code: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiLoginWithFeishu(code);
+      setUser(response.user);
+      localStorage.setItem('authToken', response.token);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'login failed');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -76,6 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         isLoading,
         login,
+        loginWithFeishu,
         register,
         logout,
         isAuthenticated: !!user,

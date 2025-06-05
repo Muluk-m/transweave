@@ -22,6 +22,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { CircleHelp, History, LanguagesIcon, RotateCcw } from "lucide-react"
 import { Token, TokenHistory } from "@/jotai/types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Avatar } from "@/components/ui/avatar"
+import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 
 interface TokenFormDrawerProps {
   isOpen: boolean
@@ -225,6 +227,9 @@ function TokenHistorySheet({ history, lang, onRollback }: { history: TokenHistor
                   </SheetClose>
                 </div>
                 <div className="flex items-center gap-2 text-[12px] text-gray-500">
+                  <Avatar>
+                    <AvatarImage src={item.user?.avatar ?? 'https://github.com/shadcn.png'} />
+                  </Avatar>
                   <span>{item.user?.name ?? 'unknown'}</span>
                   <span>{formatDate(item.createdAt)}</span>
                 </div>

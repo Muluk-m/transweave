@@ -29,8 +29,8 @@ export function TeamMembersDialog({
     const { toast } = useToast();
     const t = useTranslations("teams");
     const [searchUserTerm, setSearchUserTerm] = useState("");
-    const [searchUserResults, setSearchUserResults] = useState<Array<{id: string, name: string, email: string}>>([]);
-    const [teamMembers, setTeamMembers] = useState<Array<{id: string, name: string, email: string, role: string}>>([]);
+    const [searchUserResults, setSearchUserResults] = useState<Array<{ id: string, name: string, email: string }>>([]);
+    const [teamMembers, setTeamMembers] = useState<Array<{ id: string, name: string, email: string, role: string, avatar: string }>>([]);
     const [selectedRole, setSelectedRole] = useState("member");
     const [selectedUserId, setSelectedUserId] = useState("");
     const [isSearchingUser, setIsSearchingUser] = useState(false);
@@ -39,7 +39,7 @@ export function TeamMembersDialog({
 
     const handleSearchUser = async (keyword: string) => {
         setSearchUserTerm(keyword);
-        
+
         if (keyword.trim().length < 2) {
             setSearchUserResults([]);
             return;
@@ -48,7 +48,7 @@ export function TeamMembersDialog({
         setIsSearchingUser(true);
         try {
             const users = await searchUsers(keyword);
-            const filteredUsers = users.filter(user => 
+            const filteredUsers = users.filter(user =>
                 !teamMembers.some(member => member.id === user.id)
             );
             setSearchUserResults(filteredUsers);
@@ -78,13 +78,13 @@ export function TeamMembersDialog({
                 userId: selectedUserId,
                 role: selectedRole
             });
-            
+
             await loadTeamMembers();
-            
+
             setSelectedUserId("");
             setSearchUserTerm("");
             setSearchUserResults([]);
-            
+
             toast({
                 title: t("members.success.memberAdded"),
                 variant: "default",
@@ -105,6 +105,7 @@ export function TeamMembersDialog({
         setIsLoadingMembers(true);
         try {
             const members = await getTeamMembers(team.id);
+            console.log("members", members);
             setTeamMembers(members);
         } catch (error) {
             console.error("loading team member error:", error);
@@ -137,7 +138,7 @@ export function TeamMembersDialog({
                         {t("members.description")}
                     </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="space-y-4">
                     <div className="bg-muted/40 p-4 rounded-lg">
                         <h3 className="text-sm font-medium mb-3">{t("members.addNew")}</h3>
@@ -165,9 +166,9 @@ export function TeamMembersDialog({
                                     <SelectItem value="member">{t("members.roles.member")}</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Button 
-                                size="sm" 
-                                disabled={!selectedUserId || isAddingMember} 
+                            <Button
+                                size="sm"
+                                disabled={!selectedUserId || isAddingMember}
                                 onClick={handleAddMember}
                             >
                                 {isAddingMember ? (
@@ -178,17 +179,16 @@ export function TeamMembersDialog({
                                 {t("members.addButton")}
                             </Button>
                         </div>
-                        
+
                         {searchUserResults.length > 0 && (
                             <ScrollArea className="h-32 rounded-md border">
                                 <div className="p-2 space-y-1">
                                     {searchUserResults.map(user => (
-                                        <div 
+                                        <div
                                             key={user.id}
                                             onClick={() => setSelectedUserId(user.id)}
-                                            className={`p-2 rounded-md cursor-pointer flex justify-between items-center ${
-                                                selectedUserId === user.id ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                                            }`}
+                                            className={`p-2 rounded-md cursor-pointer flex justify-between items-center ${selectedUserId === user.id ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                }`}
                                         >
                                             <div>
                                                 <div className="font-medium">{user.name}</div>
@@ -202,12 +202,12 @@ export function TeamMembersDialog({
                                 </div>
                             </ScrollArea>
                         )}
-                        
+
                         {searchUserTerm.length > 0 && searchUserResults.length === 0 && !isSearchingUser && (
                             <div className="text-sm text-muted-foreground py-2">{t("members.noUsersFound")}</div>
                         )}
                     </div>
-                    
+
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-medium">{t("members.membersList", { count: teamMembers.length })}</h3>
@@ -226,8 +226,8 @@ export function TeamMembersDialog({
                                 ) : (
                                     <div className="space-y-1 py-2">
                                         {teamMembers.map(member => (
-                                            <div 
-                                                key={member.id} 
+                                            <div
+                                                key={member.id}
                                                 className="p-2 rounded-md hover:bg-muted flex justify-between items-center"
                                             >
                                                 <div>
@@ -245,7 +245,7 @@ export function TeamMembersDialog({
                         )}
                     </div>
                 </div>
-                
+
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         {t("members.close")}

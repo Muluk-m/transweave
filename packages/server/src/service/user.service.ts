@@ -9,22 +9,29 @@ export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   // Create user
-  async createUser(data: {
-    name: string;
-    email: string;
-    password: string;
-  }): Promise<User> {
-    const createdUser = new this.userModel({
+  async createUser(data: Partial<Omit<User, '_id' | 'memberships'>>): Promise<User> {
+    const createdUser = await new this.userModel({
       name: data.name,
       email: data.email,
       password: data.password,
-    });
-    return createdUser.save();
+      avatar: data.avatar,
+      feishuId: data.feishuId,
+      feishuUnionId: data.feishuUnionId,
+      loginProvider: data.loginProvider,
+    }).save();
+    const safeUser = createdUser.toObject();
+    delete safeUser.password;
+    return safeUser;
   }
 
   // Query all users
   async findAllUsers(): Promise<User[]> {
     return this.userModel.find().exec();
+  }
+
+  // Query user by Feishu ID
+  async findUserByFeishuId(feishuId: string): Promise<User | null> {
+    return this.userModel.findOne({ feishuId }).lean();
   }
 
   // Query user by ID

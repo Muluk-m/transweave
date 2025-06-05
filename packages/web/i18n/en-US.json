@@ -423,7 +423,7 @@
     "form": {
       "username": "Username",
       "email": "Email",
-      "avatarUrl": "Avatar URL",
+      "avatar": "Avatar URL",
       "avatarPlaceholder": "https://example.com/avatar.jpg",
       "saveChanges": "Save Changes",
       "saving": "Saving...",

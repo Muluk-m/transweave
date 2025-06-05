@@ -25,4 +25,5 @@ export const Languages = Enum({
   ur: { value: 'ur', label: '乌尔都语' },
   vi: { value: 'vi', label: '越南语' },
   'zh-TW': { value: 'zh-TW', label: '中文，台湾' },
+  'zh-CN': { value: 'zh-CN', label: '中文，中国' },
 } as const);

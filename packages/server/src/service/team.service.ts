@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Team, TeamDocument, Membership, MembershipDocument } from '../models';
+import { Model, Types } from 'mongoose';
+import { Team, TeamDocument, Membership, MembershipDocument, UserDocument, User } from '../models';
 import { MongooseService } from './mongoose.service';
 
 @Injectable()
 export class TeamService {
   constructor(
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Membership.name)
     private membershipModel: Model<MembershipDocument>,
     private mongooseService: MongooseService,
@@ -32,6 +33,7 @@ export class TeamService {
         // 创建会员关系
         const membership = new this.membershipModel({
           userId: data.userId,
+          user: data.userId,
           teamId: team._id,
           role: 'owner',
         });
@@ -41,6 +43,13 @@ export class TeamService {
         team.memberships.push(membership);
 
         await team.save({ session }); // 保存修改
+
+        await this.userModel.findByIdAndUpdate(
+          data.userId,
+          { $addToSet: { memberships: membership._id } },
+          { session },
+        )
+          .session(session);
 
         // 查询团队并填充成员信息
         result = await this.teamModel
@@ -78,7 +87,7 @@ export class TeamService {
         path: 'memberships',
         populate: {
           path: 'user',
-          select: 'id name email',
+          select: 'id name email avatar',
         },
       })
       .exec();
@@ -91,7 +100,7 @@ export class TeamService {
         path: 'memberships',
         populate: {
           path: 'user',
-          select: 'id name email',
+          select: 'id name email avatar',
         },
       })
       .exec();
@@ -119,10 +128,10 @@ export class TeamService {
         path: 'memberships',
         populate: {
           path: 'user',
-          select: 'id name email',
+          select: 'id name email avatar',
         },
       })
-      .exec();
+      .lean();
 
     if (!team || !team.memberships) {
       return [];

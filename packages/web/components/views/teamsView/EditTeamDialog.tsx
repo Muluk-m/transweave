@@ -34,7 +34,7 @@ export function EditTeamDialog({
   isLoading,
 }: EditTeamDialogProps) {
   const t = useTranslations("teams");
-    
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -44,28 +44,31 @@ export function EditTeamDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-team-name" className="text-right">
+            <Label htmlFor="edit-team-name" className="text-right col-span-1">
               {t("edit.name")}
             </Label>
-            <Input
-              id="edit-team-name"
-              value={teamName}
-              onChange={(e) => onTeamNameChange(e.target.value)}
-              className="col-span-3"
-              placeholder={t("edit.namePlaceholder")}
-            />
+            <div className="col-span-3">
+              <Input
+                id="edit-team-name"
+                value={teamName}
+                onChange={(e) => onTeamNameChange(e.target.value)}
+                placeholder={t("edit.namePlaceholder")}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-team-url" className="text-right">
+            <Label htmlFor="edit-team-url" className="text-right col-span-1">
               {t("edit.url")}
             </Label>
-            <Input
-              id="edit-team-url"
-              value={teamUrl}
-              onChange={(e) => onTeamUrlChange(e.target.value)}
-              className="col-span-3"
-              placeholder={t("edit.urlPlaceholder")}
-            />
+            <div className="col-span-3">
+              <Input
+                id="edit-team-url"
+                value={teamUrl}
+                onChange={(e) => onTeamUrlChange(e.target.value)}
+                className="col-span-3"
+                placeholder={t("edit.urlPlaceholder")}
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>

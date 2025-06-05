@@ -8,7 +8,7 @@ export interface User {
   userId: string;
   name: string;
   email: string;
-  avatarUrl?: string;
+  avatar: string;
 }
 
 // Login response type
@@ -40,6 +40,15 @@ export async function login(email: string, password: string): Promise<LoginRespo
     email,
     password
   }, {
+    requireAuth: false // Login doesn't require authentication header
+  });
+}
+
+/**
+ * User login with Feishu
+ */
+export async function loginWithFeishu(code: string): Promise<LoginResponse> {
+  return apiClient.post<LoginResponse>(`${API_BASE}/login_feishu`, { code }, {
     requireAuth: false // Login doesn't require authentication header
   });
 }
@@ -78,7 +87,7 @@ export async function getCurrentUser(): Promise<User> {
 export async function updateUserProfile(userId: string, data: {
   name?: string;
   email?: string;
-  avatarUrl?: string;
+  avatar?: string;
 }): Promise<User> {
   return apiClient.put<User>(`/api/users/${userId}`, data);
 }
