@@ -28,6 +28,7 @@ interface UserPayload {
   userId: string;
   email: string;
   name: string;
+  avatar: string;
 }
 
 @Controller('api/project')

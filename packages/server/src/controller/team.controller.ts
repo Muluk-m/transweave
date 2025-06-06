@@ -49,6 +49,12 @@ export class TeamController {
     return memberships.map((membership) => membership.team);
   }
 
+  @Get('all_entire')
+  @UseGuards(AuthGuard)
+  async findAllEntireTeams() {
+    return this.teamService.findAllTeams()
+  }
+
   @Get('find/:id')
   @UseGuards(AuthGuard)
   async findTeamById(

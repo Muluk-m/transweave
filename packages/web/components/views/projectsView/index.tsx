@@ -18,7 +18,7 @@ export function ProjectsView() {
   const [teams] = useAtom(teamsAtom);
   const [nowTeam, setNowTeam] = useAtom(nowTeamAtom);
   const router = useRouter();
-  
+
   // 当当前团队变化时，获取该团队的所有项目
   useEffect(() => {
     if (nowTeam?.id) {
@@ -31,14 +31,14 @@ export function ProjectsView() {
           console.error("获取团队项目失败:", error);
         }
       };
-      
+
       loadTeamProjects();
     } else {
       // 如果没有选择团队，清空项目列表
       setProjects([]);
     }
   }, [nowTeam, setProjects]);
-  
+
   const handleProjectClick = (project: Project) => {
     setNowProject(project);
     // 跳转到项目详情页
@@ -55,18 +55,21 @@ export function ProjectsView() {
         <TabsTrigger value="projects">{t("tabs.projects")}</TabsTrigger>
         <TabsTrigger value="setting">{t("tabs.settings")}</TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="projects">
-        <ProjectsList 
+        <ProjectsList
           projects={projects}
           onProjectClick={handleProjectClick}
           onCreateProject={handleCreateProject}
           teamId={nowTeam?.id}
         />
       </TabsContent>
-      
+
       <TabsContent value="setting">
-        <TeamSettingsView />
+        <TeamSettingsView
+          projects={projects}
+          teamId={nowTeam?.id}
+        />
       </TabsContent>
     </Tabs>
   );

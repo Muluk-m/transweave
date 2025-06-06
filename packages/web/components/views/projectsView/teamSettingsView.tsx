@@ -41,8 +41,13 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
+import { Project } from "@/jotai/types";
 
-export function TeamSettingsView() {
+interface TeamSettingsViewProps {
+  teamId?: string;
+}
+
+export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
   const t = useTranslations("teams.settings");
   const commonT = useTranslations("common");
 
@@ -58,6 +63,8 @@ export function TeamSettingsView() {
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
   const [nameError, setNameError] = useState("");
   const [urlError, setUrlError] = useState("");
+  console.log(currentTeam);
+
 
   // Example team member data
   const [members, setMembers] = useState([
@@ -374,10 +381,9 @@ export function TeamSettingsView() {
                 <div className="mt-2 p-4 border rounded-lg">
                   <div className="flex justify-between items-center">
                     <div>
-                      <Badge>{t("billing.free")}</Badge>
+                      <Badge>{t("billing.freeTier")}</Badge>
                       <p className="mt-1 text-sm text-gray-600">{t("billing.freePlanDesc")}</p>
                     </div>
-                    <Button>{t("billing.upgradePro")}</Button>
                   </div>
                 </div>
               </div>
@@ -413,50 +419,6 @@ export function TeamSettingsView() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-blue-500 h-2 rounded-full" style={{ width: '25%' }}></div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium">{t("billing.planComparison")}</h3>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium">{t("billing.freeTier")}</h4>
-                    <p className="text-gray-600 mb-2">{t("billing.perMonth", { price: 0 })}</p>
-                    <ul className="text-sm space-y-1">
-                      <li>{t("billing.freeTierFeatures.projects")}</li>
-                      <li>{t("billing.freeTierFeatures.members")}</li>
-                      <li>{t("billing.freeTierFeatures.storage")}</li>
-                      <li>{t("billing.freeTierFeatures.support")}</li>
-                    </ul>
-                    <Button variant="outline" className="mt-4 w-full">{t("billing.currentPlanButton")}</Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 border-blue-500">
-                    <h4 className="font-medium">{t("billing.proTier")}</h4>
-                    <p className="text-gray-600 mb-2">{t("billing.perMonth", { price: 99 })}</p>
-                    <ul className="text-sm space-y-1">
-                      <li>{t("billing.proTierFeatures.projects")}</li>
-                      <li>{t("billing.proTierFeatures.members")}</li>
-                      <li>{t("billing.proTierFeatures.storage")}</li>
-                      <li>{t("billing.proTierFeatures.advancedFeatures")}</li>
-                      <li>{t("billing.proTierFeatures.prioritySupport")}</li>
-                    </ul>
-                    <Button className="mt-4 w-full">{t("billing.upgradeToProButton")}</Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium">{t("billing.enterpriseTier")}</h4>
-                    <p className="text-gray-600 mb-2">{t("billing.perMonth", { price: 299 })}</p>
-                    <ul className="text-sm space-y-1">
-                      <li>{t("billing.enterpriseTierFeatures.projects")}</li>
-                      <li>{t("billing.enterpriseTierFeatures.members")}</li>
-                      <li>{t("billing.enterpriseTierFeatures.storage")}</li>
-                      <li>{t("billing.enterpriseTierFeatures.advancedFeatures")}</li>
-                      <li>{t("billing.enterpriseTierFeatures.prioritySupport")}</li>
-                      <li>{t("billing.enterpriseTierFeatures.customDomain")}</li>
-                    </ul>
-                    <Button variant="outline" className="mt-4 w-full">{t("billing.upgradeToEnterpriseButton")}</Button>
                   </div>
                 </div>
               </div>

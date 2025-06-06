@@ -19,9 +19,8 @@ export class UserService {
       feishuUnionId: data.feishuUnionId,
       loginProvider: data.loginProvider,
     }).save();
-    const safeUser = createdUser.toObject();
-    delete safeUser.password;
-    return safeUser;
+    const { password:_, ...user } = createdUser.toObject();
+    return { ...user, userId: user.id }
   }
 
   // Query all users
@@ -31,7 +30,11 @@ export class UserService {
 
   // Query user by Feishu ID
   async findUserByFeishuId(feishuId: string): Promise<User | null> {
-    return this.userModel.findOne({ feishuId }).lean();
+    const user = await this.userModel.findOne({ feishuId }).exec();
+    if (!user) {
+      return null;
+    }
+    return { ...user.toObject(), userId: user.id }
   }
 
   // Query user by ID

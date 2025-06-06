@@ -26,6 +26,12 @@ export class AiService {
     - Text: "${text}"
     - Source Language (ISO 639-1): ${from}
     - Target Languages (ISO 639-1): [${to.join(', ')}]
+
+    Output Requirements:
+    - Only return a valid JSON object as plain text.
+    - Do not include any comments, explanations, or Markdown code blocks.
+    - The result must be strictly parsable with JSON.parse() in JavaScript.
+    - Ensure all characters are properly escaped to conform to JSON syntax.
     
     Output the result in JSON format as:
     {

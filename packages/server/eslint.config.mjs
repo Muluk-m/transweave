@@ -24,6 +24,8 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    plugins: ['prettier'],
+    extends: ['plugin:prettier/recommended'],
   },
   {
     rules: {

@@ -266,7 +266,7 @@
       "title": "团队设置",
       "tabs": {
         "general": "基本设置",
-        "billing": "付费与用量",
+        "billing": "用量与计划",
         "members": "成员管理"
       },
       "general": {
@@ -313,6 +313,7 @@
         "roles": {
           "admin": "管理员",
           "editor": "编辑",
+          "member": "成员",
           "readonly": "只读"
         },
         "dropdown": {
@@ -325,7 +326,7 @@
         "noTeamSelected": "请先选择一个团队"
       },
       "billing": {
-        "title": "付费计划与用量",
+        "title": "用量与计划",
         "description": "管理您的付费计划和查看资源使用情况",
         "currentPlan": "当前计划",
         "free": "免费版",

@@ -243,6 +243,8 @@
       "selectRole": "Select role",
       "roles": {
         "admin": "Admin",
+        "editor": "Editor",
+        "readonly": "Read-only",
         "member": "Member"
       },
       "addButton": "Add",

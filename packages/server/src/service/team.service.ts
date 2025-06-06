@@ -71,7 +71,13 @@ export class TeamService {
   }
 
   async findAllTeams() {
-    return this.teamModel.find().exec();
+    return this.teamModel.find().populate({
+      path: 'memberships',
+      populate: {
+        path: 'user',
+        select: 'id name email avatar',
+      },
+    }).exec();
   }
 
   async findTeamsByUserId(userId: string) {

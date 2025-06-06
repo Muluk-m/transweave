@@ -5,6 +5,7 @@ import { UserService } from './user.service';
 import { hashPassword, verifyPassword } from 'src/utils/crypto';
 import { User } from '../models';
 import { JwtService } from '@nestjs/jwt';
+import { MembershipService } from './membership.service';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,7 @@ export class AuthService {
     private readonly httpService: HttpService,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly membershipService: MembershipService,
   ) {}
 
   private readonly clientId = process.env.FEISHU_CLIENT_ID;
@@ -24,10 +26,10 @@ export class AuthService {
 
   createJwtToken(user: User) {
     const payload = {
-      sub: user.id,
       email: user.email,
       name: user.name,
       avatar: user.avatar,
+      userId: user.id,
     };
 
     return {
@@ -120,6 +122,7 @@ export class AuthService {
     if (existingUser) {
       // 如果用户存在，则直接登录
       const { token } = this.createJwtToken(existingUser);
+      await this.joinDefaultTeam(existingUser.id);
 
       return {
         token,
@@ -139,9 +142,26 @@ export class AuthService {
 
     const { token } = this.createJwtToken(newUser);
 
+    await this.joinDefaultTeam(newUser.id);
+
     return {
       token,
       user: this.withoutPassword(newUser),
     };
+  }
+
+  async joinDefaultTeam(userId: string) {
+    const defaultTeam = '680f39ddddef3c5e631920e8'
+    const isMember = await this.membershipService.isMember(defaultTeam, userId);
+
+    if (isMember) {
+      return;
+    }
+
+    return this.membershipService.createMembership({
+      teamId: defaultTeam,
+      userId,
+      role: 'member',
+    });
   }
 }

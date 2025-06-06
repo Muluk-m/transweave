@@ -15,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // if the token is valid, it will reach here, otherwise it will directly go to 401
   async validate(payload: any) {
     return {
-      userId: payload.sub,
+      userId: payload.userId,
       email: payload.email,
       name: payload.name,
       avatar: payload.avatar,
