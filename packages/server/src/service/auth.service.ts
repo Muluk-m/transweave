@@ -161,7 +161,7 @@ export class AuthService {
     return this.membershipService.createMembership({
       teamId: defaultTeam,
       userId,
-      role: 'member',
+      role: 'admin',
     });
   }
 }
