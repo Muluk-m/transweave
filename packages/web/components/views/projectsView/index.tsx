@@ -67,7 +67,6 @@ export function ProjectsView() {
 
       <TabsContent value="setting">
         <TeamSettingsView
-          projects={projects}
           teamId={nowTeam?.id}
         />
       </TabsContent>
