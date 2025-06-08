@@ -8,12 +8,14 @@ import {
   Body,
   UseGuards,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { TeamService } from '../service/team.service';
 import { MembershipService } from '../service/membership.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser } from '../jwt/current-user.decorator';
 import { DeleteResult } from 'mongoose';
+import { isSuperAdmin } from 'src/utils/superAdmin';
 
 interface UserPayload {
   userId: string;
@@ -49,9 +51,14 @@ export class TeamController {
     return memberships.map((membership) => membership.team);
   }
 
-  @Get('all_entire')
+  @Get('all')
   @UseGuards(AuthGuard)
-  async findAllEntireTeams() {
+  async findAllEntireTeams(
+    @CurrentUser() user: UserPayload,
+  ) {
+    if (!isSuperAdmin(user.name)) {
+      throw new UnauthorizedException()
+    }
     return this.teamService.findAllTeams()
   }
 
@@ -133,17 +140,17 @@ export class TeamController {
   }
 
   // Update member role
-  @Put('updatemember/:id/:userId')
+  @Put('updatemember/:id/:memberId')
   @UseGuards(AuthGuard)
   async updateMemberRole(
     @Param('id') teamId: string,
-    @Param('userId') memberId: string,
+    @Param('memberId') memberId: string,
     @Body() data: { role: string },
     @CurrentUser() user: UserPayload,
   ) {
     // Ensure only team owners can update roles
     const isOwner = await this.membershipService.isOwner(teamId, user.userId);
-    if (!isOwner) {
+    if (!isOwner && !isSuperAdmin(user.email)) {
       throw new ForbiddenException('Only team owners can update member roles');
     }
 

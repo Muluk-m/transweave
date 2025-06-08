@@ -18,4 +18,21 @@ export class AiController {
 
     return result;
   }
+
+  @Post('generate/key')
+  async generateKey(@Body() data: { remark: string; }) {
+    const result = await this.aiService.generateTokenKey(data.remark);
+    
+    if (!result) { 
+      throw new HttpException(
+        'Failed to translate',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      success: true,
+      data: result
+    };
+  }
 }

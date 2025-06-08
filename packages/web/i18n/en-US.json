@@ -242,10 +242,10 @@
       "searchPlaceholder": "Search users...",
       "selectRole": "Select role",
       "roles": {
-        "admin": "Admin",
-        "editor": "Editor",
-        "readonly": "Read-only",
-        "member": "Member"
+        "manager": "Manager",
+        "owner": "Owner",
+        "member": "Member",
+        "viewer": "Viewer"
       },
       "addButton": "Add",
       "selected": "Selected",
@@ -312,15 +312,16 @@
           "actions": "Actions"
         },
         "roles": {
-          "admin": "Admin",
-          "editor": "Editor",
-          "readonly": "Read-only"
+          "manager": "Manager",
+          "owner": "Owner",
+          "member": "Member",
+          "viewer": "Viewer"
         },
         "dropdown": {
           "actions": "Actions",
-          "setAdmin": "Set as Admin",
-          "setEditor": "Set as Editor",
-          "setReadonly": "Set as Read-only",
+          "setManager": "Set as Manager",
+          "setOwner": "Set as Owner",
+          "setMember": "Set as Member",
           "remove": "Remove Member"
         },
         "noTeamSelected": "Please select a team first"

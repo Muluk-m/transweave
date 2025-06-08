@@ -128,7 +128,7 @@ export class TeamService {
 
   // Get all member information for a specific team
   async getTeamMembers(teamId: string) {
-    const team = await this.teamModel
+    const result = await this.teamModel
       .findById(teamId)
       .populate({
         path: 'memberships',
@@ -137,13 +137,15 @@ export class TeamService {
           select: 'id name email avatar',
         },
       })
-      .lean();
+      .exec();
+    
+    const team = result?.toObject()
 
     if (!team || !team.memberships) {
       return [];
-    }
-
-    return team?.memberships.map((membership) => ({
+    }    
+    
+    return team.memberships.map((membership) => ({
       ...membership.user,
       role: membership.role,
     }));

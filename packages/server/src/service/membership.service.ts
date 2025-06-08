@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, DeleteResult } from 'mongoose';
 import { Membership, MembershipDocument, Team, TeamDocument, User, UserDocument } from '../models';
 import { MongooseService } from './mongoose.service';
+import { withTransaction } from 'src/utils/transaction';
 
 @Injectable()
 export class MembershipService {
@@ -17,35 +18,31 @@ export class MembershipService {
   ) {}
 
   async createMembership(data: { userId: string; teamId: string; role: string }) {
-    const session = await this.mongooseService.getConnection().startSession();
-    let membership: MembershipDocument;
-
-    try {
-      membership = new this.membershipModel({
-        userId: data.userId,
-        user: data.userId,
-        teamId: data.teamId,
-        role: data.role,
-      });
-
-      await membership.save({ session });
+    return withTransaction(this.mongooseService.getConnection(), async (session) => {
+      const membership = await this.membershipModel.findOneAndUpdate(
+        { userId: data.userId, teamId: data.teamId },
+        {
+          userId: data.userId,
+          user: data.userId,
+          teamId: data.teamId,
+          role: data.role,
+        },
+        {
+          new: true,
+          upsert: true,
+          session,
+        },
+      );
 
       await this.teamModel.findByIdAndUpdate(data.teamId, { $addToSet: { memberships: membership._id } }, { session });
 
-      await this.userModel
-        .findByIdAndUpdate(data.userId, { $addToSet: { memberships: membership._id } })
-        .session(session);
-    } finally {
-      session.endSession();
-    }
+      await this.userModel.findByIdAndUpdate(data.userId, { $addToSet: { memberships: membership._id } }, { session });
 
-    return this.membershipModel
-      .findById(membership._id)
-      .populate({
-        path: 'user',
-        select: 'id name email',
-      })
-      .exec();
+      return this.membershipModel
+        .findById(membership._id)
+        .session(session)
+        .populate({ path: 'user', select: 'id name email' });
+    });
   }
 
   // Check if user is a team member
@@ -119,12 +116,12 @@ export class MembershipService {
   }
 
   // Update member role
-  async updateMemberRole(teamId: string, userId: string, newRole: string) {
+  async updateMemberRole(teamId: string, memberId: string, newRole: string) {
     return this.membershipModel
       .updateMany(
         {
           teamId,
-          userId,
+          _id: memberId,
         },
         {
           role: newRole,

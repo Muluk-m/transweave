@@ -62,7 +62,7 @@ export class ProjectService {
         path: 'tokens',
         populate: {
           path: 'history.user',
-          select: 'name email id',
+          select: 'name email id avatar',
         },
       })
       .exec();
@@ -162,7 +162,7 @@ export class ProjectService {
       .find({ projectId })
       .populate({
         path: 'history.user',
-        select: 'name email id',
+        select: 'name email id avatar',
       })
       .exec();
   }
@@ -224,7 +224,7 @@ export class ProjectService {
           .findById(token._id)
           .populate({
             path: 'history.user',
-            select: 'name email id',
+            select: 'name email id avatar',
           })
           .session(session)
           .exec();
@@ -239,7 +239,7 @@ export class ProjectService {
   async getTokenById(tokenId: string) {
     const token = await this.tokenModel
       .findById(tokenId)
-      .populate('history.user', 'name email id')
+      .populate('history.user', 'name email id avatar')
       .exec();
 
     if (!token) {
@@ -313,7 +313,7 @@ export class ProjectService {
       .findByIdAndUpdate(tokenId, updateData, { new: true })
       .populate({
         path: 'history.user',
-        select: 'name email id',
+        select: 'name email id avatar',
       })
       .exec();
   }

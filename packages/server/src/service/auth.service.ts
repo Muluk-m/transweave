@@ -24,7 +24,7 @@ export class AuthService {
     return result;
   }
 
-  createJwtToken(user: User) {
+  createJwtToken(user: User, expiresIn = '15d') {
     const payload = {
       email: user.email,
       name: user.name,
@@ -33,7 +33,7 @@ export class AuthService {
     };
 
     return {
-      token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload, { expiresIn }),
       payload,
     };
   }
@@ -151,7 +151,7 @@ export class AuthService {
   }
 
   async joinDefaultTeam(userId: string) {
-    const defaultTeam = '680f39ddddef3c5e631920e8'
+    const defaultTeam = '680f557b932fa3656cbae929'
     const isMember = await this.membershipService.isMember(defaultTeam, userId);
 
     if (isMember) {

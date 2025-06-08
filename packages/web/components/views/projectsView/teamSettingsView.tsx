@@ -1,11 +1,18 @@
-'use client'
-import { useState } from "react";
-import { useAtom, useAtomValue } from "jotai";
+"use client";
+import { useMemo, useState } from "react";
+import { useAtom } from "jotai";
 import { nowTeamAtom, teamsAtom } from "@/jotai";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -22,13 +29,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,8 +43,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  getTeamById,
+  updateMemberRole as updateMemberRoleApi,
+} from "@/api/team";
 import { useTranslations } from "next-intl";
-import { Project } from "@/jotai/types";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TeamSettingsViewProps {
   teamId?: string;
@@ -63,15 +70,11 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
   const [nameError, setNameError] = useState("");
   const [urlError, setUrlError] = useState("");
-  console.log(currentTeam);
+  const { toast } = useToast();
 
-
-  // Example team member data
-  const [members, setMembers] = useState([
-    { id: 1, name: "John", email: "john@example.com", role: t("members.roles.admin"), avatar: "https://github.com/shadcn.png" },
-    { id: 2, name: "Sarah", email: "sarah@example.com", role: t("members.roles.member"), avatar: "https://github.com/shadcn.png" },
-    { id: 3, name: "Mike", email: "mike@example.com", role: t("members.roles.member"), avatar: "https://github.com/shadcn.png" },
-  ]);
+  const teamMembers = useMemo(() => {
+    return currentTeam?.memberships || [];
+  }, [currentTeam]);
 
   // Validate team name
   const isNameValid = teamName.length <= 12 && teamName.length > 0;
@@ -126,8 +129,10 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
 
     // Logic to update team information
     if (currentTeam) {
-      const updatedTeams = teams.map(team =>
-        team.id === currentTeam.id ? { ...team, name: teamName, url: teamUrl } : team
+      const updatedTeams = teams.map((team) =>
+        team.id === currentTeam.id
+          ? { ...team, name: teamName, url: teamUrl }
+          : team
       );
       setTeams(updatedTeams);
       setCurrentTeam({ ...currentTeam, name: teamName, url: teamUrl });
@@ -138,10 +143,16 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
     if (!isDeleteConfirmValid) return;
 
     // Logic to delete the team
-    const updatedTeams = teams.filter(team => team.id !== currentTeam?.id);
+    const updatedTeams = teams.filter((team) => team.id !== currentTeam?.id);
     setTeams(updatedTeams);
     setCurrentTeam(updatedTeams[0] || null);
     setShowDeleteDialog(false);
+  };
+
+  const refetchTeam = async () => {
+    if (!currentTeam) return;
+    const res = await getTeamById(currentTeam?.id);
+    setCurrentTeam(res);
   };
 
   const handleAddMember = () => {
@@ -150,20 +161,22 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
     // Logic to add a team member
     const newMember = {
       id: Date.now(),
-      name: newMemberEmail.split('@')[0],
+      name: newMemberEmail.split("@")[0],
       email: newMemberEmail,
-      role: newMemberRole === "admin" ? t("members.roles.admin") : t("members.roles.member"),
-      avatar: "https://github.com/shadcn.png"
+      role:
+        newMemberRole === "admin"
+          ? t("members.roles.admin")
+          : t("members.roles.member"),
+      avatar: "https://github.com/shadcn.png",
     };
 
-    setMembers([...members, newMember]);
     setNewMemberEmail("");
     setNewMemberRole("member");
     setShowAddMemberDialog(false);
   };
 
   const handleRemoveMember = (id: number) => {
-    setMembers(members.filter(member => member.id !== id));
+    // setMembers(members.filter(member => member.id !== id));
   };
 
   const addTeamMember = () => {
@@ -176,17 +189,19 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
     if (!currentTeam) return;
   };
 
-  const updateMemberRole = (memberId: string, newRole: string) => {
+  const updateMemberRole = async (memberId: string, newRole: string) => {
     // Logic to update a team member's role
     if (!currentTeam) return;
-  };
 
-  // Mock team member data
-  const teamMembers = [
-    { id: "1", name: "John Doe", email: "john@example.com", role: t("members.roles.admin"), avatar: "https://github.com/shadcn.png" },
-    { id: "2", name: "Sarah Smith", email: "sarah@example.com", role: t("members.roles.editor"), avatar: "" },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", role: t("members.roles.readonly"), avatar: "" },
-  ];
+    await updateMemberRoleApi(currentTeam.id, memberId, {
+      role: newRole,
+    });
+    await refetchTeam();
+
+    toast({
+      title: t("members.roles.updated"),
+    });
+  };
 
   if (!currentTeam) {
     return <div className="p-4">{t("members.noTeamSelected")}</div>;
@@ -219,7 +234,11 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                   placeholder={t("general.namePlaceholder")}
                   maxLength={12}
                 />
-                <p className={`text-xs ${teamName.length > 12 ? "text-red-500" : "text-gray-500"}`}>
+                <p
+                  className={`text-xs ${
+                    teamName.length > 12 ? "text-red-500" : "text-gray-500"
+                  }`}
+                >
                   {teamName.length}/12 {t("general.characters")}
                 </p>
               </div>
@@ -227,7 +246,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
               <div className="space-y-2">
                 <Label htmlFor="teamUrl">{t("general.url")}</Label>
                 <div className="flex items-center">
-                  <span className="mr-1 text-gray-500">{t("general.urlPrefix")}</span>
+                  <span className="mr-1 text-gray-500">
+                    {t("general.urlPrefix")}
+                  </span>
                   <Input
                     id="teamUrl"
                     value={teamUrl}
@@ -238,7 +259,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                   />
                 </div>
                 {!isUrlValid && teamUrl && (
-                  <p className="text-xs text-red-500">{t("danger.urlValidation")}</p>
+                  <p className="text-xs text-red-500">
+                    {t("danger.urlValidation")}
+                  </p>
                 )}
                 <p className="text-xs text-gray-500">
                   {teamUrl.length}/24 {t("general.characters")}
@@ -246,13 +269,17 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button onClick={handleSaveTeamSettings} disabled={!canSave}>{t("general.saveSettings")}</Button>
+              <Button onClick={handleSaveTeamSettings} disabled={!canSave}>
+                {t("general.saveSettings")}
+              </Button>
             </CardFooter>
           </Card>
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle className="text-red-600">{t("danger.title")}</CardTitle>
+              <CardTitle className="text-red-600">
+                {t("danger.title")}
+              </CardTitle>
               <CardDescription>{t("danger.description")}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -265,20 +292,35 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
               </Alert>
             </CardContent>
             <CardFooter>
-              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <Dialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+              >
                 <DialogTrigger asChild>
-                  <Button variant="destructive">{t("danger.deleteTeam")}</Button>
+                  <Button variant="destructive">
+                    {t("danger.deleteTeam")}
+                  </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>{t("danger.confirmDelete")}</DialogTitle>
                     <DialogDescription>
-                      {t("danger.confirmDeleteDescription", { teamName: currentTeam.name })}
+                      {t("danger.confirmDeleteDescription", {
+                        teamName: currentTeam.name,
+                      })}
                     </DialogDescription>
                   </DialogHeader>
-                  <Input placeholder={t("danger.confirmDeletePlaceholder", { teamName: currentTeam.name })} className="mt-4" />
+                  <Input
+                    placeholder={t("danger.confirmDeletePlaceholder", {
+                      teamName: currentTeam.name,
+                    })}
+                    className="mt-4"
+                  />
                   <DialogFooter className="mt-4">
-                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDeleteDialog(false)}
+                    >
                       {t("danger.cancel")}
                     </Button>
                     <Button variant="destructive" onClick={handleDeleteTeam}>
@@ -314,7 +356,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                     <TableHead>{t("members.tableHeaders.member")}</TableHead>
                     <TableHead>{t("members.tableHeaders.email")}</TableHead>
                     <TableHead>{t("members.tableHeaders.role")}</TableHead>
-                    <TableHead className="w-[100px]">{t("members.tableHeaders.actions")}</TableHead>
+                    <TableHead className="w-[100px]">
+                      {t("members.tableHeaders.actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -322,15 +366,25 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                     <TableRow key={member.id}>
                       <TableCell className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                          <AvatarImage src={member.user?.avatar || ""} />
+                          <AvatarFallback>
+                            {member.user?.name?.substring(0, 2)}
+                          </AvatarFallback>
                         </Avatar>
-                        {member.name}
+                        {member.user?.name}
                       </TableCell>
-                      <TableCell>{member.email}</TableCell>
+                      <TableCell>{member.user?.email}</TableCell>
                       <TableCell>
-                        <Badge variant={member.role === t("members.roles.admin") ? "default" : member.role === t("members.roles.editor") ? "outline" : "secondary"}>
-                          {member.role}
+                        <Badge
+                          variant={
+                            member.role === t("members.roles.owner")
+                              ? "default"
+                              : member.role === t("members.roles.manager")
+                              ? "outline"
+                              : "secondary"
+                          }
+                        >
+                          {t(`members.roles.${member.role}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -341,15 +395,29 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{t("members.dropdown.actions")}</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => updateMemberRole(member.id, t("members.roles.admin"))}>
-                              {t("members.dropdown.setAdmin")}
+                            <DropdownMenuLabel>
+                              {t("members.dropdown.actions")}
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                updateMemberRole(member.id, "owner")
+                              }
+                            >
+                              {t("members.dropdown.setOwner")}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateMemberRole(member.id, t("members.roles.editor"))}>
-                              {t("members.dropdown.setEditor")}
+                            <DropdownMenuItem
+                              onClick={() =>
+                                updateMemberRole(member.id, "manager")
+                              }
+                            >
+                              {t("members.dropdown.setManager")}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateMemberRole(member.id, t("members.roles.readonly"))}>
-                              {t("members.dropdown.setReadonly")}
+                            <DropdownMenuItem
+                              onClick={() =>
+                                updateMemberRole(member.id, "member")
+                              }
+                            >
+                              {t("members.dropdown.setMember")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -377,19 +445,25 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium">{t("billing.currentPlan")}</h3>
+                <h3 className="text-lg font-medium">
+                  {t("billing.currentPlan")}
+                </h3>
                 <div className="mt-2 p-4 border rounded-lg">
                   <div className="flex justify-between items-center">
                     <div>
                       <Badge>{t("billing.freeTier")}</Badge>
-                      <p className="mt-1 text-sm text-gray-600">{t("billing.freePlanDesc")}</p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {t("billing.freePlanDesc")}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-medium">{t("billing.resourceUsage")}</h3>
+                <h3 className="text-lg font-medium">
+                  {t("billing.resourceUsage")}
+                </h3>
                 <div className="mt-2 space-y-4">
                   <div>
                     <div className="flex justify-between mb-1">
@@ -397,7 +471,10 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">3/5</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+                      <div
+                        className="bg-blue-500 h-2 rounded-full"
+                        style={{ width: "60%" }}
+                      ></div>
                     </div>
                   </div>
 
@@ -407,7 +484,10 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">3/10</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: '30%' }}></div>
+                      <div
+                        className="bg-blue-500 h-2 rounded-full"
+                        style={{ width: "30%" }}
+                      ></div>
                     </div>
                   </div>
 
@@ -417,7 +497,10 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">256MB/1GB</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+                      <div
+                        className="bg-blue-500 h-2 rounded-full"
+                        style={{ width: "25%" }}
+                      ></div>
                     </div>
                   </div>
                 </div>

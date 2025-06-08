@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../jwt/guard';
 import { AuthService } from '../service/auth.service';
+import { isSuperAdmin } from 'src/utils/superAdmin';
 
 @Controller('api/auth')
 export class AuthController {
@@ -33,7 +34,7 @@ export class AuthController {
   ) {
     try {
       const user = await this.authService.register(data);
-      
+
       return {
         success: true,
         message: 'Registration successful',
@@ -76,7 +77,7 @@ export class AuthController {
       const referer = req.headers.referer || '';
       const origin = referer ? new URL(referer).origin : '';
       const redirectUri = `${origin}/login`;
-      
+
       const { token, user } = await this.authService.loginWithFeishu(data.code, redirectUri);
 
       return {
@@ -97,5 +98,16 @@ export class AuthController {
 
       throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  @Post('token')
+  @UseGuards(AuthGuard)
+  async getToken(@Request() req) {
+    const { token } = this.authService.createJwtToken({ ...req.user,id: req.userId }, '9y');
+    return {
+      success: true,
+      message: 'Token generated',
+      token,
+    };
   }
 }

@@ -28,6 +28,7 @@ export interface Membership {
     id: string;
     name: string;
     email: string;
+    avatar?: string;
   };
 }
 
@@ -39,7 +40,7 @@ export interface Project {
   tokens: Token[];
   ownerId: string;
   teamId: string;
-  memberIds: string[];
+  memberships: Membership[];
   description?: string;
   languages: string[];
   createdAt?: number;

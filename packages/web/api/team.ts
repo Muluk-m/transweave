@@ -40,8 +40,8 @@ export async function addTeamMember(teamId: string, data: { userId: string; role
 }
 
 // Update member role
-export async function updateMemberRole(teamId: string, userId: string, data: { role: string }): Promise<any> {
-  return apiClient.put(`${API_BASE}/updatemember/${teamId}/${userId}`, data);
+export async function updateMemberRole(teamId: string, memberId: string, data: { role: string }): Promise<any> {
+  return apiClient.put(`${API_BASE}/updatemember/${teamId}/${memberId}`, data);
 }
 
 // Remove team member
