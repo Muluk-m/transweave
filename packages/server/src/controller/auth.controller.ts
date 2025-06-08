@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../jwt/guard';
 import { AuthService } from '../service/auth.service';
-import { isSuperAdmin } from 'src/utils/superAdmin';
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 
 @Controller('api/auth')
 export class AuthController {
@@ -102,8 +102,8 @@ export class AuthController {
 
   @Post('token')
   @UseGuards(AuthGuard)
-  async getToken(@Request() req) {
-    const { token } = this.authService.createJwtToken({ ...req.user,id: req.userId }, '9y');
+  async getToken(@CurrentUser() user) {
+    const { token } = this.authService.createJwtToken({ ...user, id: user.userId }, '9y');
     return {
       success: true,
       message: 'Token generated',

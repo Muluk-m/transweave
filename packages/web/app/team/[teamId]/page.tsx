@@ -13,49 +13,48 @@ import { useTranslations } from "next-intl";
 
 export default function TeamDetailPage() {
   const [nowTeam, setNowTeam] = useAtom(nowTeamAtom);
-  const [nowProject, setNowProject] = useAtom(nowProjectAtom);
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isCheckingPermission, setIsCheckingPermission] = useState(true);
   const t = useTranslations();
-  
+
   const teamId = (params.teamId as string) || "";
 
   const check = async () => {
     try {
-        const response = await checkTeamPermission(teamId);
-        if (response) {
-          // Get current team based on teamId
-          const team = await getTeamById(teamId);
-          setNowTeam(team);
-          setHasPermission(true);
-        } else {
-          setHasPermission(false);
-        }
-    } catch (error) {
-        console.error("Permission check failed:", error);
+      const response = await checkTeamPermission(teamId);
+      if (response) {
+        // Get current team based on teamId
+        const team = await getTeamById(teamId);
+        setNowTeam(team);
+        setHasPermission(true);
+      } else {
         setHasPermission(false);
-      } finally {
-        setIsCheckingPermission(false);
       }
+    } catch (error) {
+      console.error("Permission check failed:", error);
+      setHasPermission(false);
+    } finally {
+      setIsCheckingPermission(false);
+    }
   }
-  
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace("/");
     }
     check();
   }, [user, isLoading, teamId, setNowTeam]);
-  
+
   if (isLoading || isCheckingPermission) {
     return <LoadingView />;
   }
-  
+
   if (hasPermission === false) {
     return <NoPermissionView teamId={teamId} />;
   }
-  
+
   return <ProjectsView />;
 }

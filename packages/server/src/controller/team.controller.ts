@@ -51,12 +51,14 @@ export class TeamController {
     return memberships.map((membership) => membership.team);
   }
 
-  @Get('all')
+  @Get('all/superadmin')
   @UseGuards(AuthGuard)
   async findAllEntireTeams(
     @CurrentUser() user: UserPayload,
   ) {
-    if (!isSuperAdmin(user.name)) {
+    console.log('zws findAllEntireTeams', user);
+
+    if (!isSuperAdmin(user.email)) {
       throw new UnauthorizedException()
     }
     return this.teamService.findAllTeams()
@@ -158,11 +160,11 @@ export class TeamController {
   }
 
   // Remove team member
-  @Delete('removemembers/:id/:userId')
+  @Delete('removemembers/:id/:memberId')
   @UseGuards(AuthGuard)
   async removeMember(
     @Param('id') teamId: string,
-    @Param('userId') memberId: string,
+    @Param('memberId') memberId: string,
     @CurrentUser() user: UserPayload,
   ): Promise<DeleteResult> {
     // Ensure only team owners or managers can remove members

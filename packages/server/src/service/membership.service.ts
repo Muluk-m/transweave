@@ -131,11 +131,11 @@ export class MembershipService {
   }
 
   // Remove membership
-  async removeMember(teamId: string, userId: string): Promise<DeleteResult> {
+  async removeMember(teamId: string, memberId: string): Promise<DeleteResult> {
     return this.membershipModel
       .deleteMany({
         teamId,
-        userId,
+        _id: memberId,
       })
       .exec();
   }

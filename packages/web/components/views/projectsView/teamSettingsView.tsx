@@ -45,6 +45,7 @@ import { MoreHorizontal, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   getTeamById,
+  removeMember,
   updateMemberRole as updateMemberRoleApi,
 } from "@/api/team";
 import { useTranslations } from "next-intl";
@@ -175,18 +176,11 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
     setShowAddMemberDialog(false);
   };
 
-  const handleRemoveMember = (id: number) => {
-    // setMembers(members.filter(member => member.id !== id));
-  };
-
-  const addTeamMember = () => {
-    // In a real scenario, this would send an invite email or add the user to the team
-    setNewMemberEmail("");
-  };
-
-  const removeMember = (memberId: string) => {
-    // Logic to remove a team member
+  const handleRemoveMember = async (memberId: string) => {
     if (!currentTeam) return;
+
+    await removeMember(currentTeam.id, memberId)
+    await refetchTeam();
   };
 
   const updateMemberRole = async (memberId: string, newRole: string) => {
@@ -235,9 +229,8 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                   maxLength={12}
                 />
                 <p
-                  className={`text-xs ${
-                    teamName.length > 12 ? "text-red-500" : "text-gray-500"
-                  }`}
+                  className={`text-xs ${teamName.length > 12 ? "text-red-500" : "text-gray-500"
+                    }`}
                 >
                   {teamName.length}/12 {t("general.characters")}
                 </p>
@@ -347,7 +340,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   className="flex-1"
                 />
-                <Button onClick={addTeamMember}>{t("members.add")}</Button>
+                <Button onClick={handleAddMember}>{t("members.add")}</Button>
               </div>
 
               <Table>
@@ -377,11 +370,11 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <TableCell>
                         <Badge
                           variant={
-                            member.role === t("members.roles.owner")
+                            member.role === "owner"
                               ? "default"
-                              : member.role === t("members.roles.manager")
-                              ? "outline"
-                              : "secondary"
+                              : member.role === "manager"
+                                ? "outline"
+                                : "secondary"
                           }
                         >
                           {t(`members.roles.${member.role}`)}
@@ -422,7 +415,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600"
-                              onClick={() => removeMember(member.id)}
+                              onClick={() => handleRemoveMember(member.id)}
                             >
                               {t("members.dropdown.remove")}
                             </DropdownMenuItem>

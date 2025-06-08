@@ -20,17 +20,10 @@ import {
 } from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
 import { AuthGuard } from '../jwt/guard';
-import { CurrentUser } from '../jwt/current-user.decorator';
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { Response } from 'express';
 import { UserService } from 'src/service/user.service';
 import { TeamService } from 'src/service/team.service';
-
-interface UserPayload {
-  userId: string;
-  email: string;
-  name: string;
-  avatar: string;
-}
 
 @Controller('api/project')
 export class ProjectController {

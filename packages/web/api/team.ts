@@ -45,8 +45,8 @@ export async function updateMemberRole(teamId: string, memberId: string, data: {
 }
 
 // Remove team member
-export async function removeMember(teamId: string, userId: string): Promise<void> {
-  return apiClient.delete(`${API_BASE}/removemembers/${teamId}/${userId}`);
+export async function removeMember(teamId: string, memberId: string): Promise<void> {
+  return apiClient.delete(`${API_BASE}/removemembers/${teamId}/${memberId}`);
 }
 
 // Get team member list
