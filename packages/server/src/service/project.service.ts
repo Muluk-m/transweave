@@ -437,76 +437,61 @@ export class ProjectService {
       mode: 'append' | 'replace'; // 导入模式
     },
   ) {
-    const session = await this.mongooseService.getConnection().startSession();
-    try {
-      const stats = {
-        added: 0, // 添加的新令牌数量
-        updated: 0, // 更新的令牌数量
-        unchanged: 0, // 未更改的令牌数量
-        total: 0, // 处理的令牌总数
-      };
+    const stats = {
+      added: 0, // 添加的新令牌数量
+      updated: 0, // 更新的令牌数量
+      unchanged: 0, // 未更改的令牌数量
+      total: 0, // 处理的令牌总数
+    };
 
-      await session.withTransaction(async () => {
-        // 获取项目信息
-        const project = await this.projectModel
-          .findById(projectId)
-          .session(session)
-          .exec();
+    // 先进行数据验证和解析，避免在事务中进行
+    const project = await this.projectModel.findById(projectId).exec();
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
 
-        if (!project) {
-          throw new NotFoundException('项目不存在');
-        }
+    // 验证语言是否在项目的支持语言列表中
+    if (!project.languages.includes(data.language)) {
+      throw new BadRequestException(`项目不支持"${data.language}"语言`);
+    }
 
-        // 验证语言是否在项目的支持语言列表中
-        if (!project.languages.includes(data.language)) {
-          throw new BadRequestException(`项目不支持"${data.language}"语言`);
-        }
+    // 解析导入的数据
+    const importData = parseImportData(
+      data.content,
+      data.format,
+      data.language,
+    );
 
-        // 解析导入的数据
-        const importData = parseImportData(
-          data.content,
-          data.format,
-          data.language,
-        );
+    if (!importData || Object.keys(importData).length === 0) {
+      throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
+    }
 
-        if (!importData || Object.keys(importData).length === 0) {
-          throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
-        }
+    // 获取项目的所有当前令牌（在事务外执行）
+    const existingTokens = await this.tokenModel
+      .find({ projectId })
+      .lean()
+      .exec();
 
-        // 获取项目的所有当前令牌
-        const existingTokens = await this.tokenModel
-          .find({ projectId })
-          .session(session)
-          .exec();
+    // 统计信息
+    stats.total = Object.keys(importData).length;
 
-        // 统计信息
-        stats.total = Object.keys(importData).length;
-
-        // 根据导入模式处理数据
-        if (data.mode === 'replace') {
-          // 替换模式：首先清除此语言的所有现有翻译
-          await Promise.all(
-            existingTokens.map(async (token) => {
-              const translations = token.translations || {};
-              // 删除此语言的翻译
-              delete translations[data.language];
-
-              // 更新令牌
-              await this.tokenModel
-                .findByIdAndUpdate(token._id, { translations })
-                .session(session)
-                .exec();
-            }),
-          );
-
-          // 然后导入新数据
-          for (const key of Object.keys(importData)) {
+    // 分批处理数据以避免事务过大
+    const BATCH_SIZE = 50;
+    const importKeys = Object.keys(importData);
+    
+    for (let i = 0; i < importKeys.length; i += BATCH_SIZE) {
+      const batch = importKeys.slice(i, i + BATCH_SIZE);
+      const session = await this.mongooseService.getConnection().startSession();
+      
+      try {
+        await session.withTransaction(async () => {
+          for (const key of batch) {
             const value = importData[key];
             const existingToken = existingTokens.find((t) => t.key === key);
 
-            if (existingToken) {
-              // 更新现有令牌的翻译
-              const translations = existingToken.translations || {};
+            if (data.mode === 'replace' && existingToken) {
+              // 替换模式：先清除此语言的翻译，然后设置新值
+              const translations = { ...(existingToken.translations || {}) };
               translations[data.language] = value;
 
               await this.tokenModel
@@ -515,42 +500,9 @@ export class ProjectService {
                 .exec();
 
               stats.updated++;
-            } else {
-              // 创建新令牌
-              const translations: Record<string, string> = {};
-              translations[data.language] = value;
-
-              const newToken = new this.tokenModel({
-                projectId,
-                key,
-                tags: [],
-                comment: '',
-                translations,
-              });
-
-              await newToken.save({ session });
-
-              // 将新令牌添加到项目中
-              await this.projectModel
-                .findByIdAndUpdate(
-                  projectId,
-                  { $push: { tokens: newToken._id } },
-                  { session },
-                )
-                .exec();
-
-              stats.added++;
-            }
-          }
-        } else {
-          // 追加模式：保留现有翻译，仅更新或添加新的
-          for (const key of Object.keys(importData)) {
-            const value = importData[key];
-            const existingToken = existingTokens.find((t) => t.key === key);
-
-            if (existingToken) {
-              // 获取现有翻译
-              const translations = existingToken.translations || {};
+            } else if (existingToken) {
+              // 追加模式或替换模式下的现有令牌
+              const translations = { ...(existingToken.translations || {}) };
 
               // 检查是否需要更新
               if (translations[data.language] !== value) {
@@ -590,18 +542,53 @@ export class ProjectService {
                 .exec();
 
               stats.added++;
+              // 将新令牌添加到现有令牌列表中，以便后续批次能够找到它
+              existingTokens.push({
+                _id: newToken._id,
+                key,
+                translations,
+                projectId,
+                tags: [],
+                comment: '',
+              } as any);
             }
           }
-        }
-      });
-
-      return {
-        stats,
-        message: `导入完成：${stats.added}个已添加，${stats.updated}个已更新，${stats.unchanged}个未更改`,
-      };
-    } finally {
-      session.endSession();
+        });
+      } finally {
+        session.endSession();
+      }
     }
+
+    // 如果是替换模式，需要单独处理清除其他令牌的此语言翻译
+    if (data.mode === 'replace') {
+      const session = await this.mongooseService.getConnection().startSession();
+      try {
+        await session.withTransaction(async () => {
+          // 找出不在导入数据中但存在于项目中的令牌，清除它们的此语言翻译
+          const importKeySet = new Set(Object.keys(importData));
+          const tokensToUpdate = existingTokens.filter(
+            (token) => !importKeySet.has(token.key) && token.translations?.[data.language]
+          );
+
+                     for (const token of tokensToUpdate) {
+             const translations = { ...(token.translations || {}) };
+             delete translations[data.language];
+
+             await this.tokenModel
+               .findByIdAndUpdate(token._id, { translations })
+               .session(session)
+               .exec();
+           }
+        });
+      } finally {
+        session.endSession();
+      }
+    }
+
+    return {
+      stats,
+      message: `导入完成：${stats.added}个已添加，${stats.updated}个已更新，${stats.unchanged}个未更改`,
+    };
   }
 
   // Filter tokens by scope
