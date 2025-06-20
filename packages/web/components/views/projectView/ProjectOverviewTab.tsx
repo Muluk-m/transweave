@@ -49,7 +49,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     tokens.forEach((token) => {
       const expectedTranslations = languages.length;
       totalTranslations += expectedTranslations;
-      completedTranslations += token.translations?.length ?? 0;
+      completedTranslations += Object.keys(token.translations || {}).length;
     });
 
     const completionRate =
