@@ -1,157 +1,307 @@
-'use client'
-import React from "react";
+"use client";
+import React, { useMemo, useState } from "react";
 import { Token } from "@/jotai/types";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Pencil, Trash2 } from "lucide-react";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useTranslations } from "next-intl";
 import { Languages } from "@/constants";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useDataTable } from "@/hooks/use-data-table";
+import type { Column, ColumnDef } from "@tanstack/react-table";
+import { Text } from "lucide-react";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { useQueryState } from "nuqs";
+import { parseAsInteger } from "nuqs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DataTableActionBar,
+  DataTableActionBarAction,
+  DataTableActionBarSelection,
+} from "@/components/data-table/data-table-action-bar";
+import { Separator } from "@/components/ui/separator";
 
 interface TokenTableProps {
-    tokens: Token[];
-    languages: string[];
-    sortKey: string;
-    sortOrder: 'asc' | 'desc';
-    onEdit: (token: Token) => void;
-    onDelete: (tokenId: string) => void;
-    onSortChange: (key: string) => void;
+  tokens: Token[];
+  languages: string[];
+  onEdit: (token: Token) => void;
+  onDelete: (tokenId: string) => void;
+  onDeleteSelected: (selected: string[]) => void;
+}
+
+function TipsCopyableCell({
+  children,
+  value,
+}: {
+  children: React.ReactNode;
+  value: string;
+}) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent className="text-xs p-2 max-w-[200px] gap-2">
+          <span className="break-words inline">
+            <span className="inline mr-2">{value}</span>
+            {isCopied ? (
+              <Check className="w-4 h-4 cursor-pointer inline" color="green" />
+            ) : (
+              <Copy
+                className="w-4 h-4 cursor-pointer inline"
+                onClick={() => {
+                  navigator.clipboard.writeText(value);
+                  setIsCopied(true);
+                  setTimeout(() => {
+                    setIsCopied(false);
+                  }, 1000);
+                }}
+              />
+            )}
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 export function TokenTable({
-    tokens,
-    languages,
-    sortKey,
-    sortOrder,
-    onEdit,
-    onDelete,
-    onSortChange
+  tokens,
+  languages,
+  onEdit,
+  onDelete,
+  onDeleteSelected,
 }: TokenTableProps) {
-    const t = useTranslations('tokenTable');
+  const t = useTranslations("tokenTable");
+  const [page] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
 
-    // Get localized language names
-    const getLocalizedLanguageName = (langCode: string): string => Languages.has(langCode) ? `${Languages.raw(langCode)?.label} (${langCode})` : langCode;
-    // Get translation text for a specific language
-    const getTranslationText = (token: Token, lang: string): string => {
-        if (!token.translations) return '';
-        return (token.translations as unknown as Record<string, string>)[lang] || '';
-    };
+  // Get localized language names
+  const getLocalizedLanguageName = (langCode: string): string =>
+    Languages.has(langCode)
+      ? `${Languages.raw(langCode)?.label} (${langCode})`
+      : langCode;
 
-    return (
-        <div className="overflow-x-auto">
-            <Table className="w-full border border-gray-200 rounded-lg text-sm">
-                <TableHeader className="bg-gray-100">
-                    <TableRow>
-                        <TableHead onClick={() => onSortChange('key')} className="cursor-pointer p-2 whitespace-nowrap min-w-[100px]">
-                            key {sortKey === 'key' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
+  const data = useMemo(
+    () =>
+      tokens.map((token) => ({
+        id: token.id,
+        key: token.key,
+        tags: token.tags || [],
+        ...token.translations,
+      })),
+    [tokens]
+  );
 
-                        {/* Dynamically generate language headers */}
-                        {languages?.map((lang) => (
-                            <TableHead
-                                key={lang}
-                                onClick={() => onSortChange(`lang_${lang}`)}
-                                className="cursor-pointer p-2 whitespace-nowrap"
-                            >
-                                {getLocalizedLanguageName(lang)}{' '}
-                                {sortKey === `lang_${lang}` && (sortOrder === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                        ))}
+  const getToken = (id: string) => {
+    return tokens.find((token) => token.id === id);
+  };
 
-                        <TableHead className="p-2 whitespace-nowrap">{t('tags')}</TableHead>
-                        <TableHead sticky stickySide="right" className="p-2 whitespace-nowrap">{t('actions')}</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {tokens.length > 0 ? (
-                        tokens.map((token, i) => (
-                            <TableRow key={i} className="hover:bg-gray-50">
-                                <TableCell className="font-medium p-2 whitespace-nowrap">{token.key}</TableCell>
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    return data.slice(start, end);
+  }, [data, page, perPage]);
 
-                                {/* Dynamically generate translations for each row */}
-                                {languages?.map((lang) => (
-                                    <TableCell key={lang} className="p-2">
-                                        {getTranslationText(token, lang)}
-                                    </TableCell>
-                                ))}
+  const pageCount = useMemo(
+    () => Math.ceil(data.length / perPage),
+    [data.length, perPage]
+  );
 
-                                <TableCell className="p-2">
-                                    <div className="flex flex-wrap gap-1">
-                                        {token.tags.map((tag, j) => (
-                                            <span
-                                                key={j}
-                                                className="bg-gray-100 text-xs px-2 py-0.5 rounded-full"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="p-2 whitespace-nowrap" sticky stickySide="right">
-                                    <div className="flex items-center space-x-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => onEdit(token)}
-                                            className="p-1"
-                                        >
-                                            <Pencil size={16} />
-                                        </Button>
+  const columns = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      size: 32,
+    },
+    {
+      id: "key",
+      accessorKey: "key",
+      header: ({ column }: { column: Column<Token, unknown> }) => (
+        <DataTableColumnHeader
+          className="whitespace-nowrap"
+          column={column}
+          title="Key"
+        />
+      ),
+      cell: ({ cell }) => (
+        <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
+          <div className="bg-white line-clamp-2 text-ellipsis">
+            {cell.getValue<Token["key"]>()}
+          </div>
+        </TipsCopyableCell>
+      ),
+      meta: {
+        label: "Key",
+      },
+      size: 250,
+    },
+    ...(languages.map((lang) => ({
+      id: lang,
+      accessorKey: lang,
+      header: ({ column }: { column: Column<any, unknown> }) => (
+        <DataTableColumnHeader
+          className="whitespace-nowrap"
+          column={column}
+          title={getLocalizedLanguageName(lang)}
+        />
+      ),
+      cell: ({ cell }) => (
+        <TipsCopyableCell value={cell.getValue<string>()}>
+          <div className="bg-white line-clamp-2">{cell.getValue<string>()}</div>
+        </TipsCopyableCell>
+      ),
+      meta: {
+        label: getLocalizedLanguageName(lang),
+        icon: Text,
+      },
+      size: 300,
+      enableSorting: false,
+    })) as ColumnDef<Token>[]),
+    {
+      id: "tags",
+      accessorKey: "tags",
+      header: ({ column }: { column: Column<Token, unknown> }) => (
+        <DataTableColumnHeader column={column} title="Tags" />
+      ),
+      cell: ({ cell }) => <div>{cell.getValue<string[]>()}</div>,
+    },
+    {
+      id: "actions",
+      header: ({ column }: { column: Column<Token, unknown> }) => (
+        <DataTableColumnHeader column={column} title={t("actions")} />
+      ),
+      cell: function Cell({ row }) {
+        const token = getToken(row.id);
+        return (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(token!)}
+              className="p-1"
+            >
+              <Pencil size={16} />
+            </Button>
 
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="p-1 text-red-500">
-                                                    <Trash2 size={16} />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        {t('deleteConfirmDescription')}
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                                                    <AlertDialogAction
-                                                        onClick={() => onDelete(token.id)}
-                                                        className="bg-red-500 text-white hover:bg-red-600"
-                                                    >
-                                                        {t('delete')}
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={languages ? languages.length + 3 : 5} className="text-center py-4">
-                                {t('noData')}
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </div>
-    );
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-1 text-red-500">
+                  <Trash2 size={16} />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("deleteConfirmDescription")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDelete(row.id)}
+                    className="bg-red-500 text-white hover:bg-red-600"
+                  >
+                    {t("delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      },
+      size: 100,
+    },
+  ] as ColumnDef<Token>[];
+
+  const { table } = useDataTable({
+    data: paginatedData as unknown as Token[],
+    columns,
+    pageCount: pageCount,
+    rowCount: tokens.length,
+    initialState: {
+      columnPinning: { left: ["select", "key"], right: ["actions"] },
+      sorting: [
+        {
+          id: "key",
+          desc: true,
+        },
+      ],
+    },
+    defaultColumn: {
+      size: 300,
+      minSize: 50,
+      maxSize: 500,
+    },
+    getRowId: (row) => row.id,
+  });
+
+  return (
+    <div className="overflow-x-auto w-full">
+      <DataTable
+        table={table}
+        actionBar={
+          <DataTableActionBar table={table}>
+            <DataTableActionBarSelection table={table} />
+            <Separator
+              orientation="vertical"
+              className="hidden data-[orientation=vertical]:h-5 sm:block"
+            />
+            <div className="flex items-center gap-1.5">
+              <DataTableActionBarAction
+                size="icon"
+                tooltip="删除选中"
+                onClick={() => {
+                  onDeleteSelected(
+                    table
+                      .getFilteredSelectedRowModel()
+                      .rows.map((row) => row.id)
+                  );
+                }}
+              >
+                <Trash2 />
+              </DataTableActionBarAction>
+            </div>
+          </DataTableActionBar>
+        }
+      >
+        <DataTableToolbar table={table} />
+      </DataTable>
+    </div>
+  );
 }

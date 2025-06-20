@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import "./globals.css";
 import { HeaderView } from "@/components/views/headerView";
@@ -23,21 +24,23 @@ export default function Layout({
   return (
     <html suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <I18nClientProvider>
-              <HeaderManager>
-                <HeaderView />
-              </HeaderManager>
-              <main className="flex-1">
-                {children}
-              </main>
-            </I18nClientProvider>
-            <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center">
-              <Toaster />
+        <NuqsAdapter>
+          <AuthProvider>
+            <div className="min-h-screen flex flex-col">
+              <I18nClientProvider>
+                <HeaderManager>
+                  <HeaderView />
+                </HeaderManager>
+                <main className="flex-1">
+                  {children}
+                </main>
+              </I18nClientProvider>
+              <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center">
+                <Toaster />
+              </div>
             </div>
-          </div>
-        </AuthProvider>
+          </AuthProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

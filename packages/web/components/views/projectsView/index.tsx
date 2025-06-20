@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAtom } from "jotai";
 import { nowProjectAtom, nowTeamAtom, projectsAtom, teamsAtom } from "@/jotai";
 import { TeamSettingsView } from "./teamSettingsView";
@@ -50,7 +50,10 @@ export function ProjectsView() {
   };
 
   return (
-    <Tabs defaultValue="projects" className="w-full max-w-4xl mx-auto p-4 bg-white rounded-lg mt-6">
+    <Tabs
+      defaultValue="projects"
+      className="w-full max-w-6xl mx-auto p-4 bg-white rounded-lg mt-6"
+    >
       <TabsList className="mb-4 grid grid-cols-2 gap-2">
         <TabsTrigger value="projects">{t("tabs.projects")}</TabsTrigger>
         <TabsTrigger value="setting">{t("tabs.settings")}</TabsTrigger>
@@ -66,9 +69,7 @@ export function ProjectsView() {
       </TabsContent>
 
       <TabsContent value="setting">
-        <TeamSettingsView
-          teamId={nowTeam?.id}
-        />
+        <TeamSettingsView teamId={nowTeam?.id} />
       </TabsContent>
     </Tabs>
   );

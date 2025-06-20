@@ -7,6 +7,7 @@ on:
       - develop
       - test
       - main-1
+      - master
 
 jobs:
   check-lock-file:
@@ -25,4 +26,3 @@ jobs:
             echo "未在任何子目录下发现锁文件，合并被阻止。"
             exit 1
           fi
-

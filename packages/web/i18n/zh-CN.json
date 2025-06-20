@@ -626,6 +626,7 @@
     "deleteConfirmDescription": "此操作无法撤销，删除后将永久移除该文案数据。",
     "cancel": "取消",
     "delete": "删除",
+    "edit": "编辑",
     "noData": "暂无数据"
   },
   "project": {

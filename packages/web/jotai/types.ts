@@ -56,13 +56,12 @@ export interface TokenHistory {
 export interface Token {
   id: string;
   key: string;
-  translations: Translation[];
+  translations: Translation;
   tags: string[];
   comment?: string;
   history?: TokenHistory[];
 }
 
 export interface Translation {
-  lang: string;
-  text: string;
+  [key: string]: string;
 }

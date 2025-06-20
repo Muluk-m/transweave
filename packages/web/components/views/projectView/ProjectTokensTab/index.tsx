@@ -1,37 +1,41 @@
-'use client'
+"use client";
 import { useMemo, useState, useEffect } from "react";
 import { Project, Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  createToken,
-  updateToken,
-  deleteToken
-} from "@/api/project";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createToken, updateToken, deleteToken } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
 import { TokenTable } from "./TokenTable";
-import { TokenPagination } from "./TokenPagination";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { translateWithAi } from "@/api/ai";
+import { useQueryState } from "nuqs";
+import { getSortingStateParser } from "@/lib/parsers";
 
 interface ProjectTokensTabProps {
   project: Project | null;
 }
 
 export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
-  const t = useTranslations('projectTokens');
+  const t = useTranslations("projectTokens");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortKey, setSortKey] = useState<string>('key');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [tokens, setTokens] = useState<Token[]>([]);
   const { toast } = useToast();
+
+  const [sorting] = useQueryState(
+    "sort",
+    getSortingStateParser<Token>().withDefault([{ id: "key", desc: true }])
+  );
 
   const [formData, setFormData] = useState<{
     key: string;
@@ -39,10 +43,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     comment: string;
     translations: Record<string, string>;
   }>({
-    key: '',
-    tags: '',
-    comment: '',
-    translations: {}
+    key: "",
+    tags: "",
+    comment: "",
+    translations: {},
   });
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -61,50 +65,102 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   useEffect(() => {
     if (project?.languages) {
       const initialTranslations: Record<string, string> = {};
-      project.languages.forEach(lang => {
-        initialTranslations[lang] = '';
+      project.languages.forEach((lang) => {
+        initialTranslations[lang] = "";
       });
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        translations: initialTranslations
+        translations: initialTranslations,
       }));
     }
   }, [project?.languages]);
 
   const allTags = useMemo(() => {
     let tags: string[] = [];
-    tokens?.forEach(token => {
+    tokens?.forEach((token) => {
       tags = [...tags, ...token.tags];
     });
     return Array.from(new Set(tags));
   }, [tokens]);
 
+  const filteredAndSortedTokens = useMemo(() => {
+    let result = [...tokens];
+
+    // Filter by tag
+    if (selectedTag) {
+      result = result.filter((token) => token.tags.includes(selectedTag));
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      result = result.filter(
+        (token) =>
+          token.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          Object.values(token.translations || {}).some((t) =>
+            t.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+      );
+    }
+
+    // Sort
+    if (sorting.length > 0) {
+      const sort = sorting[0];
+      if (sort) {
+        result.sort((a, b) => {
+          let aValue: any;
+          let bValue: any;
+          if (sort.id === "key" || sort.id === "tags") {
+            aValue = a[sort.id];
+            bValue = b[sort.id];
+          } else {
+            aValue = a.translations?.[sort.id] || "";
+            bValue = b.translations?.[sort.id] || "";
+          }
+
+          if (aValue < bValue) {
+            return sort.desc ? 1 : -1;
+          }
+          if (aValue > bValue) {
+            return sort.desc ? -1 : 1;
+          }
+          return 0;
+        });
+      }
+    }
+
+    return result;
+  }, [tokens, selectedTag, searchTerm, sorting]);
+
   const isValidKey = (key: string) => {
     return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
-  }
+  };
 
   // Form input handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Translation field handlers
   const handleTranslationChange = (lang: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       translations: {
         ...prev.translations,
-        [lang]: value
-      }
+        [lang]: value,
+      },
     }));
   };
 
   // Get translation text for a specific language
   const getTranslationText = (token: Token, lang: string): string => {
-    if (!token.translations) return '';
-    return (token.translations as unknown as Record<string, string>)[lang] || '';
+    if (!token.translations) return "";
+    return token.translations[lang] || "";
   };
 
   // Submit form
@@ -113,7 +169,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       toast({
         title: t("errors.invalidKey"),
         variant: "destructive",
-        duration: 2000
+        duration: 2000,
       });
       return;
     }
@@ -123,13 +179,15 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       if (!project?.id) {
         toast({
           title: t("errors.projectIdMissing"),
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
 
       // Process tags, split string into array
-      const tagArray = formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [];
+      const tagArray = formData.tags
+        ? formData.tags.split(",").map((tag) => tag.trim())
+        : [];
 
       if (isEditing && currentTokenId) {
         // Update token and its translations
@@ -141,9 +199,9 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         });
 
         // Update local state
-        setTokens(prev =>
-          prev.map(token =>
-            token.id === currentTokenId ? updatedToken : token
+        setTokens((prev) =>
+          prev.map((token) =>
+            token.id === currentTokenId ? { ...token, ...updatedToken } : token
           )
         );
 
@@ -159,7 +217,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
           translations: formData.translations, // Pass translations object directly
         });
 
-        setTokens(prev => [...prev, newToken]);
+        setTokens((prev) => [...prev, newToken]);
         toast({
           title: t("success.tokenCreated"),
         });
@@ -169,10 +227,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       resetForm();
       setIsDrawerOpen(false);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
       toast({
         title: isEditing ? t("errors.updateFailed") : t("errors.createFailed"),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -181,8 +239,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   const handleTranslate = async () => {
     setIsTranslating(true);
-    let from = '';
-    const to: string[] = []
+    let from = "";
+    const to: string[] = [];
 
     for (const [key, value] of Object.entries(formData.translations)) {
       if (!value) {
@@ -198,33 +256,36 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       toast({
         title: t("errors.noLanguageToTranslate"),
         variant: "destructive",
-        duration: 2000
+        duration: 2000,
       });
       setIsTranslating(false);
       return;
     }
-    const result = await translateWithAi(formData.translations[from], from, to).catch(error => {
-      console.error('Error translating:', error);
+    const result = await translateWithAi(
+      formData.translations[from],
+      from,
+      to
+    ).catch((error) => {
+      console.error("Error translating:", error);
       toast({
         title: t("errors.translateFailed"),
         variant: "destructive",
-        duration: 2000
+        duration: 2000,
       });
     });
 
     setIsTranslating(false);
 
     if (result) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         translations: {
           ...prev.translations,
-          ...result
-        }
+          ...result,
+        },
       }));
     }
-  }
-
+  };
 
   // Edit token
   const handleEditToken = (token: Token) => {
@@ -236,7 +297,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
     // For each language supported by the project, set an empty string or existing translation
     if (project?.languages) {
-      project.languages.forEach(lang => {
+      project.languages.forEach((lang) => {
         // Get translation for each language from token.translations JSON
         translations[lang] = getTranslationText(token, lang);
       });
@@ -244,34 +305,27 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
     setFormData({
       key: token.key,
-      tags: token.tags.join(', '),
-      comment: token.comment || '',
-      translations
+      tags: token.tags.join(", "),
+      comment: token.comment || "",
+      translations,
     });
 
     setIsDrawerOpen(true);
   };
 
-
   // Delete token
   const handleDeleteToken = async (tokenId: string) => {
     try {
-      setIsLoading(true);
       await deleteToken(tokenId);
-
-      // Update local data
-      setTokens(prev => prev.filter(token => token.id !== tokenId));
+      setTokens((prev) => prev.filter((token) => token.id !== tokenId));
       toast({
         title: t("success.tokenDeleted"),
       });
     } catch (error) {
-      console.error('Error deleting token:', error);
       toast({
         title: t("errors.deleteFailed"),
-        variant: "destructive"
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -279,16 +333,16 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const resetForm = () => {
     const initialTranslations: Record<string, string> = {};
     if (project?.languages) {
-      project.languages.forEach(lang => {
-        initialTranslations[lang] = '';
+      project.languages.forEach((lang) => {
+        initialTranslations[lang] = "";
       });
     }
 
     setFormData({
-      key: '',
-      tags: '',
-      comment: '',
-      translations: initialTranslations
+      key: "",
+      tags: "",
+      comment: "",
+      translations: initialTranslations,
     });
 
     setIsEditing(false);
@@ -302,122 +356,72 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   };
 
   const handleTagChange = (tag: string) => {
-    setSelectedTag(tag);
+    setSelectedTag(tag === "all" ? null : tag);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSortChange = (key: string) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortOrder('asc');
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const filteredTokens = useMemo(() => {
-    let filteredTokens = tokens || [];
-    if (selectedTag && selectedTag !== 'bondma-all') {
-      filteredTokens = filteredTokens.filter(token => token.tags.includes(selectedTag));
-    }
-    if (searchTerm) {
-      filteredTokens = filteredTokens.filter(token => {
-        // Search in key
-        if (token.key.toLowerCase().includes(searchTerm.toLowerCase())) {
-          return true;
-        }
-
-        // Search in translation content
-        const translations = token.translations as unknown as Record<string, string>;
-        return Object.values(translations).some(text =>
-          text && text.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+  const handleDeleteSelected = async (selected: string[]) => {
+    try {
+      await Promise.all(selected.map((id) => deleteToken(id)));
+      setTokens((prev) => prev.filter((token) => !selected.includes(token.id)));
+      toast({
+        title: t("success.tokensDeleted"),
+      });
+    } catch (error) {
+      toast({
+        title: t("errors.deleteFailed"),
+        variant: "destructive",
       });
     }
-    filteredTokens = filteredTokens.sort((a, b) => {
-      if (sortOrder === 'asc') {
-        if (sortKey === 'key') return a.key > b.key ? 1 : -1;
-        // Sort by language
-        if (sortKey.startsWith('lang_')) {
-          const lang = sortKey.replace('lang_', '');
-          const textA = getTranslationText(a, lang);
-          const textB = getTranslationText(b, lang);
-          return textA > textB ? 1 : -1;
-        }
-        return 0;
-      } else {
-        if (sortKey === 'key') return a.key < b.key ? 1 : -1;
-        if (sortKey.startsWith('lang_')) {
-          const lang = sortKey.replace('lang_', '');
-          const textA = getTranslationText(a, lang);
-          const textB = getTranslationText(b, lang);
-          return textA < textB ? 1 : -1;
-        }
-        return 0;
-      }
-    });
-    return filteredTokens;
-  }, [tokens, selectedTag, searchTerm, sortKey, sortOrder]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredTokens.length / itemsPerPage);
-  const paginatedTokens = filteredTokens.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  };
 
   const currentToken = useMemo(() => {
-    return paginatedTokens.find(token => token.id === currentTokenId);
-  }, [paginatedTokens, currentTokenId]);
+    return filteredAndSortedTokens.find((token) => token.id === currentTokenId);
+  }, [filteredAndSortedTokens, currentTokenId]);
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
-        <TokenFormDrawer
-          isOpen={isDrawerOpen}
-          onOpenChange={(open) => setIsDrawerOpen(open)}
-          isEditing={isEditing}
-          isLoading={isLoading}
-          isTranslating={isTranslating}
-          formData={formData}
-          languages={project?.languages}
-          currentToken={currentToken}
-          onInputChange={handleInputChange}
-          onTranslationChange={handleTranslationChange}
-          onSubmit={handleSubmit}
-          onAddNew={handleOpenAddDrawer}
-          onTranslate={handleTranslate}
-        />
-        <Button
-          onClick={handleOpenAddDrawer}
-          className="ml-auto bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 active:transform active:scale-95 transition-all duration-150 text-sm mt-2 md:mt-0 flex items-center gap-1"
-        >
-          <Plus size={16} />
+    <div className="p-4 bg-white rounded-lg shadow">
+      <TokenFormDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={(open) => setIsDrawerOpen(open)}
+        isEditing={isEditing}
+        isLoading={isLoading}
+        isTranslating={isTranslating}
+        formData={formData}
+        languages={project?.languages}
+        currentToken={currentToken}
+        onInputChange={handleInputChange}
+        onTranslationChange={handleTranslationChange}
+        onSubmit={handleSubmit}
+        onAddNew={handleOpenAddDrawer}
+        onTranslate={handleTranslate}
+      />
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">{t("title")}</h2>
+        <Button onClick={handleOpenAddDrawer}>
+          <Plus size={16} className="mr-2" />
           {t("addToken")}
         </Button>
       </div>
 
       <div className="flex flex-col md:flex-row mb-4 space-y-2 md:space-y-0 md:space-x-2">
-        <Input
-          value={searchTerm}
-          onChange={handleSearchChange}
-          placeholder={t("searchPlaceholder")}
-          className="flex-grow md:w-3/4 border border-gray-300 rounded-lg p-1 text-sm"
-        />
-        <Select value={selectedTag || ''} onValueChange={handleTagChange}>
-          <SelectTrigger className="border border-gray-300 rounded-lg p-1 text-sm md:w-1/4">
-            <SelectValue placeholder={t("selectTag")} />
+        <div className="flex-grow">
+          <Input
+            placeholder={t("searchPlaceholder")}
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+        <Select value={selectedTag || "all"} onValueChange={handleTagChange}>
+          <SelectTrigger className="w-full md:w-1/4">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="bondma-all">{t("allTags")}</SelectItem>
+            <SelectItem value="all">{t("allTags")}</SelectItem>
             {allTags.map((tag, index) => (
               <SelectItem key={index} value={tag}>
                 {tag}
@@ -428,19 +432,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       </div>
 
       <TokenTable
-        tokens={paginatedTokens}
-        languages={project?.languages ?? []}
-        sortKey={sortKey}
-        sortOrder={sortOrder}
+        tokens={filteredAndSortedTokens}
+        languages={project?.languages || []}
         onEdit={handleEditToken}
         onDelete={handleDeleteToken}
-        onSortChange={handleSortChange}
-      />
-
-      <TokenPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
+        onDeleteSelected={handleDeleteSelected}
       />
     </div>
   );
