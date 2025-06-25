@@ -44,6 +44,7 @@ interface TokenTableProps {
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
   onDeleteSelected: (selected: string[]) => void;
+  toolBar: React.ReactNode;
 }
 
 function TipsCopyableCell({
@@ -86,6 +87,7 @@ function TipsCopyableCell({
 export function TokenTable({
   tokens,
   languages,
+  toolBar,
   onEdit,
   onDelete,
   onDeleteSelected,
@@ -300,7 +302,7 @@ export function TokenTable({
           </DataTableActionBar>
         }
       >
-        <DataTableToolbar table={table} />
+        <DataTableToolbar table={table}>{toolBar}</DataTableToolbar>
       </DataTable>
     </div>
   );

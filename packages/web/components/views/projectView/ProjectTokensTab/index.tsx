@@ -408,35 +408,40 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         </Button>
       </div>
 
-      <div className="flex flex-col md:flex-row mb-4 space-y-2 md:space-y-0 md:space-x-2">
-        <div className="flex-grow">
-          <Input
-            placeholder={t("searchPlaceholder")}
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </div>
-        <Select value={selectedTag || "all"} onValueChange={handleTagChange}>
-          <SelectTrigger className="w-full md:w-1/4">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allTags")}</SelectItem>
-            {allTags.map((tag, index) => (
-              <SelectItem key={index} value={tag}>
-                {tag}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       <TokenTable
         tokens={filteredAndSortedTokens}
         languages={project?.languages || []}
         onEdit={handleEditToken}
         onDelete={handleDeleteToken}
         onDeleteSelected={handleDeleteSelected}
+        toolBar={
+          <div className="flex gap-2 items-center w-full">
+            <div className="flex-1">
+              <Input
+                className="h-[32px]"
+                placeholder={t("searchPlaceholder")}
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </div>
+            <Select
+              value={selectedTag || "all"}
+              onValueChange={handleTagChange}
+            >
+              <SelectTrigger className="w-full md:w-1/4 h-[32px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allTags")}</SelectItem>
+                {allTags.map((tag, index) => (
+                  <SelectItem key={index} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
       />
     </div>
   );
