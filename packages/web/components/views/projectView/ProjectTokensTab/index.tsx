@@ -415,10 +415,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onDelete={handleDeleteToken}
         onDeleteSelected={handleDeleteSelected}
         toolBar={
-          <div className="flex gap-2 items-center w-full">
+          <div className="flex gap-2 items-center justify-between w-full">
             <div className="flex-1">
               <Input
-                className="h-[32px]"
+                className="w-[400px]"
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={handleSearchChange}
@@ -428,7 +428,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
               value={selectedTag || "all"}
               onValueChange={handleTagChange}
             >
-              <SelectTrigger className="w-full md:w-1/4 h-[32px]">
+              <SelectTrigger className="h-[32px] w-fit">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
