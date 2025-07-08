@@ -23,6 +23,7 @@ import { useDataTable } from "@/hooks/use-data-table";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { Text } from "lucide-react";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { formatDate } from "@/lib/format";
 import { useQueryState } from "nuqs";
 import { parseAsInteger } from "nuqs";
 import {
@@ -60,24 +61,29 @@ function TipsCopyableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className="text-xs p-2 max-w-[200px] gap-2">
-          <span className="break-words inline">
-            <span className="inline mr-2">{value}</span>
-            {isCopied ? (
-              <Check className="w-4 h-4 cursor-pointer inline" color="green" />
-            ) : (
-              <Copy
-                className="w-4 h-4 cursor-pointer inline"
-                onClick={() => {
-                  navigator.clipboard.writeText(value);
-                  setIsCopied(true);
-                  setTimeout(() => {
-                    setIsCopied(false);
-                  }, 1000);
-                }}
-              />
-            )}
-          </span>
+        <TooltipContent
+          className="text-xs p-2 max-w-[200px] gap-2 break-before-auto"
+          style={
+            {
+              textWrap: "auto",
+            } as any
+          }
+        >
+          <span className="mr-2">{value}</span>
+          {isCopied ? (
+            <Check className="w-4 h-4 cursor-pointer inline" color="green" />
+          ) : (
+            <Copy
+              className="w-4 h-4 cursor-pointer inline"
+              onClick={() => {
+                navigator.clipboard.writeText(value);
+                setIsCopied(true);
+                setTimeout(() => {
+                  setIsCopied(false);
+                }, 1000);
+              }}
+            />
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -108,6 +114,7 @@ export function TokenTable({
         id: token.id,
         key: token.key,
         tags: token.tags || [],
+        createdAt: token.createdAt,
         ...token.translations,
       })),
     [tokens]
@@ -162,7 +169,7 @@ export function TokenTable({
       ),
       cell: ({ cell }) => (
         <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
-          <div className="bg-white line-clamp-2 text-ellipsis">
+          <div className="bg-white line-clamp-2 text-ellipsis w-fit">
             {cell.getValue<Token["key"]>()}
           </div>
         </TipsCopyableCell>
@@ -184,7 +191,9 @@ export function TokenTable({
       ),
       cell: ({ cell }) => (
         <TipsCopyableCell value={cell.getValue<string>()}>
-          <div className="bg-white line-clamp-2">{cell.getValue<string>()}</div>
+          <div className="bg-white line-clamp-2 w-fit">
+            {cell.getValue<string>()}
+          </div>
         </TipsCopyableCell>
       ),
       meta: {
@@ -201,6 +210,29 @@ export function TokenTable({
         <DataTableColumnHeader column={column} title="Tags" />
       ),
       cell: ({ cell }) => <div>{cell.getValue<string[]>()}</div>,
+    },
+    {
+      id: "createdAt",
+      accessorKey: "createdAt",
+      header: ({ column }: { column: Column<Token, unknown> }) => (
+        <DataTableColumnHeader column={column} title="创建时间" />
+      ),
+      cell: ({ cell }) => (
+        <div>
+          {formatDate(
+            cell.getValue<string>(),
+            {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            },
+            "zh-CN"
+          )}
+        </div>
+      ),
+      size: 200,
     },
     {
       id: "actions",
@@ -260,7 +292,7 @@ export function TokenTable({
       columnPinning: { left: ["select", "key"], right: ["actions"] },
       sorting: [
         {
-          id: "key",
+          id: "createdAt",
           desc: true,
         },
       ],

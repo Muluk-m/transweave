@@ -110,7 +110,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         result.sort((a, b) => {
           let aValue: any;
           let bValue: any;
-          if (sort.id === "key" || sort.id === "tags") {
+          if (
+            sort.id === "key" ||
+            sort.id === "tags" ||
+            sort.id === "createdAt"
+          ) {
             aValue = a[sort.id];
             bValue = b[sort.id];
           } else {

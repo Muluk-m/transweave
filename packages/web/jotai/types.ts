@@ -60,6 +60,8 @@ export interface Token {
   tags: string[];
   comment?: string;
   history?: TokenHistory[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Translation {
