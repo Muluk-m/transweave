@@ -168,11 +168,11 @@ export function TokenTable({
         />
       ),
       cell: ({ cell }) => (
-        <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
-          <div className="bg-white line-clamp-2 text-ellipsis">
-            {cell.getValue<Token["key"]>()}
-          </div>
-        </TipsCopyableCell>
+        <div className="bg-white line-clamp-2 text-ellipsis">
+          <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
+            <span>{cell.getValue<Token["key"]>()}</span>
+          </TipsCopyableCell>
+        </div>
       ),
       meta: {
         label: "Key",
@@ -190,9 +190,11 @@ export function TokenTable({
         />
       ),
       cell: ({ cell }) => (
-        <TipsCopyableCell value={cell.getValue<string>()}>
-          <div className="bg-white line-clamp-2">{cell.getValue<string>()}</div>
-        </TipsCopyableCell>
+        <div className="bg-white line-clamp-2">
+          <TipsCopyableCell value={cell.getValue<string>()}>
+            <span>{cell.getValue<string>()}</span>
+          </TipsCopyableCell>
+        </div>
       ),
       meta: {
         label: getLocalizedLanguageName(lang),

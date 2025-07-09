@@ -11,8 +11,9 @@ import { I18nClientProvider } from "@/components/i18n/client-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Qlj - I18N",
-  description: "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
+  title: "多语言管理平台",
+  description:
+    "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
 };
 
 export default function Layout({
@@ -20,7 +21,6 @@ export default function Layout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html suppressHydrationWarning>
       <body className={inter.className}>
@@ -31,9 +31,7 @@ export default function Layout({
                 <HeaderManager>
                   <HeaderView />
                 </HeaderManager>
-                <main className="flex-1">
-                  {children}
-                </main>
+                <main className="flex-1">{children}</main>
               </I18nClientProvider>
               <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center">
                 <Toaster />
