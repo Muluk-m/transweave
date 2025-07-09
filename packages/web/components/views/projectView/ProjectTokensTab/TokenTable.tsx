@@ -115,7 +115,7 @@ export function TokenTable({
         key: token.key,
         tags: token.tags || [],
         createdAt: token.createdAt,
-        ...token.translations,
+        translations: token.translations,
       })),
     [tokens]
   );
@@ -189,10 +189,10 @@ export function TokenTable({
           title={getLocalizedLanguageName(lang)}
         />
       ),
-      cell: ({ cell }) => (
+      cell: ({ row }) => (
         <div className="bg-white line-clamp-2">
-          <TipsCopyableCell value={cell.getValue<string>()}>
-            <span>{cell.getValue<string>()}</span>
+          <TipsCopyableCell value={row.original.translations[lang]}>
+            <span>{row.original.translations[lang]}</span>
           </TipsCopyableCell>
         </div>
       ),
