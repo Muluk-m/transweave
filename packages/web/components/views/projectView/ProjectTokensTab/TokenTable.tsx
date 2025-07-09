@@ -69,7 +69,7 @@ function TipsCopyableCell({
             } as any
           }
         >
-          <span className="mr-2">{value}</span>
+          <span className="mr-2 break-all">{value}</span>
           {isCopied ? (
             <Check className="w-4 h-4 cursor-pointer inline" color="green" />
           ) : (
@@ -169,7 +169,7 @@ export function TokenTable({
       ),
       cell: ({ cell }) => (
         <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
-          <div className="bg-white line-clamp-2 text-ellipsis w-fit">
+          <div className="bg-white line-clamp-2 text-ellipsis">
             {cell.getValue<Token["key"]>()}
           </div>
         </TipsCopyableCell>
@@ -191,9 +191,7 @@ export function TokenTable({
       ),
       cell: ({ cell }) => (
         <TipsCopyableCell value={cell.getValue<string>()}>
-          <div className="bg-white line-clamp-2 w-fit">
-            {cell.getValue<string>()}
-          </div>
+          <div className="bg-white line-clamp-2">{cell.getValue<string>()}</div>
         </TipsCopyableCell>
       ),
       meta: {
