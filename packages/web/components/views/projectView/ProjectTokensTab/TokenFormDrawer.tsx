@@ -107,9 +107,10 @@ export function TokenFormDrawer({
       return;
     }
     setIsGeneratingKey(true);
-    const result = await generateTokenKeyWithAi(formData.comment).catch(
-      () => null
-    );
+    const result = await generateTokenKeyWithAi(
+      formData.comment,
+      formData.tags
+    ).catch(() => null);
     setIsGeneratingKey(false);
     if (result) {
       onInputChange({
@@ -147,49 +148,47 @@ export function TokenFormDrawer({
                         <CircleHelp className="w-4 h-4 cursor-pointer" />
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <div className="text-sm text-gray-700 space-y-2">
+                        <div className="text-sm text-gray-100 space-y-2">
                           <p>
-                            <span className="font-medium text-gray-800">
-                              Key
-                            </span>{" "}
+                            <span className="font-medium text-white">Key</span>{" "}
                             是 token 的唯一标识，不能重复。
                           </p>
 
-                          <p className="font-medium">规则：</p>
+                          <p className="font-medium text-white">规则：</p>
                           <ul className="list-disc list-inside pl-4 space-y-1">
                             <li>
                               只能包含字母、
-                              <code className="bg-gray-100 text-gray-800 px-1 rounded text-xs">
+                              <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
                                 .
                               </code>
-                              、数字和下划线
+                              、数字
                             </li>
                             <li>必须以小写字母开头</li>
                             <li>
                               使用{" "}
-                              <code className="bg-gray-100 text-gray-800 px-1 rounded text-xs">
+                              <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
                                 .
                               </code>{" "}
                               分隔多级（子级）命名
                             </li>
                           </ul>
 
-                          <p className="font-medium">例如：</p>
+                          <p className="font-medium text-white">例如：</p>
                           <ul className="list-decimal list-inside pl-4 space-y-1">
                             <li>
-                              <code className="bg-gray-50 px-1 rounded text-sm text-gray-900">
+                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 login
                               </code>
                               （用途）
                             </li>
                             <li>
-                              <code className="bg-gray-50 px-1 rounded text-sm text-gray-900">
+                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 userCenter.loginSuccess
                               </code>
                               （模块.用途）
                             </li>
                             <li>
-                              <code className="bg-gray-50 px-1 rounded text-sm text-gray-900">
+                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 userCenter.login.success
                               </code>
                               （模块.用途.状态）

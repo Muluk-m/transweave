@@ -34,7 +34,9 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   const [sorting] = useQueryState(
     "sort",
-    getSortingStateParser<Token>().withDefault([{ id: "key", desc: true }])
+    getSortingStateParser<Token>().withDefault([
+      { id: "createdAt", desc: true },
+    ])
   );
 
   const [formData, setFormData] = useState<{
@@ -106,6 +108,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     // Sort
     if (sorting.length > 0) {
       const sort = sorting[0];
+      console.log(sort);
       if (sort) {
         result.sort((a, b) => {
           let aValue: any;
