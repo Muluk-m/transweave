@@ -34,7 +34,9 @@ export class ProjectController {
   ) {}
 
   @Post('create')
+  @UseGuards(AuthGuard)
   async createProject(
+    @CurrentUser() user: UserPayload,
     @Body()
     data: {
       name: string;
@@ -44,7 +46,12 @@ export class ProjectController {
       languages?: string[];
     },
   ) {
-    return this.projectService.createProject(data);
+    console.log({ user });
+    
+    return this.projectService.createProject({
+      ...data,
+      userId: user.userId,
+    });
   }
 
   @Get('all')
@@ -66,7 +73,9 @@ export class ProjectController {
   }
 
   @Put('update/:id')
+  @UseGuards(AuthGuard)
   async updateProject(
+    @CurrentUser() user: UserPayload,
     @Param('id') id: string,
     @Body()
     data: {
@@ -76,27 +85,34 @@ export class ProjectController {
       url?: string;
     },
   ) {
-    return this.projectService.updateProject(id, data);
+    return this.projectService.updateProject(id, {
+      ...data,
+      userId: user.userId,
+    });
   }
 
   @Delete('delete/:id')
-  async deleteProject(@Param('id') id: string) {
-    return this.projectService.deleteProject(id);
+  @UseGuards(AuthGuard)
+  async deleteProject(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.projectService.deleteProject(id, user.userId);
   }
 
   @Get('team/:teamId')
+  @UseGuards(AuthGuard)
   async findProjectsByTeamId(@Param('teamId') teamId: string) {
     return this.projectService.findProjectsByTeamId(teamId);
   }
 
   @Post('language/:id')
-  async addLanguage(@Param('id') id: string, @Body() data: { language: string }) {
-    return this.projectService.addLanguage(id, data.language);
+  @UseGuards(AuthGuard)
+  async addLanguage(@Param('id') id: string, @Body() data: { language: string }, @CurrentUser() user: UserPayload) {
+    return this.projectService.addLanguage(id, data.language, user.userId);
   }
 
   @Delete('language/:id/:language')
-  async removeLanguage(@Param('id') id: string, @Param('language') language: string) {
-    return this.projectService.removeLanguage(id, language);
+  @UseGuards(AuthGuard)
+  async removeLanguage(@Param('id') id: string, @Param('language') language: string, @CurrentUser() user: UserPayload) {
+    return this.projectService.removeLanguage(id, language, user.userId);
   }
 
   // Check if user has permission to read/write project
@@ -210,7 +226,7 @@ export class ProjectController {
       throw new ForbiddenException('You do not have permission to delete this content');
     }
 
-    return this.projectService.deleteToken(tokenId);
+    return this.projectService.deleteToken(tokenId, user.userId);
   }
 
   // Export project content
@@ -348,7 +364,10 @@ export class ProjectController {
     }
 
     try {
-      const result = await this.projectService.importProjectTokens(projectId, data);
+      const result = await this.projectService.importProjectTokens(projectId, {
+        ...data,
+        userId: user.userId,
+      });
       return {
         success: true,
         ...result,

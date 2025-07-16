@@ -13,6 +13,8 @@ import {
   TokenSchema,
   TokenHistory,
   TokenHistorySchema,
+  ActivityLog,
+  ActivityLogSchema,
 } from '../models';
 
 @Module({
@@ -34,6 +36,7 @@ import {
       { name: Project.name, schema: ProjectSchema },
       { name: Token.name, schema: TokenSchema },
       { name: TokenHistory.name, schema: TokenHistorySchema },
+      { name: ActivityLog.name, schema: ActivityLogSchema },
     ]),
   ],
   exports: [
@@ -44,6 +47,7 @@ import {
       { name: Project.name, schema: ProjectSchema },
       { name: Token.name, schema: TokenSchema },
       { name: TokenHistory.name, schema: TokenHistorySchema },
+      { name: ActivityLog.name, schema: ActivityLogSchema },
     ]),
   ],
 })

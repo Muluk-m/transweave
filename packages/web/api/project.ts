@@ -1,4 +1,4 @@
-import { Team, Project, Token } from "@/jotai/types";
+import { Team, Project, Token, ActivityLog } from "@/jotai/types";
 import { apiClient } from "../lib/api";
 
 // API Base Path
@@ -134,4 +134,40 @@ export async function importProjectTokens(projectId: string, data: {
   }
 }> {
   return apiClient.post(`${API_BASE}/import/${projectId}`, data);
+}
+
+// Get project recent activities
+export async function getProjectRecentActivities(projectId: string, limit?: number): Promise<ActivityLog[]> {
+  const params = new URLSearchParams();
+  if (limit) {
+    params.append('limit', limit.toString());
+  }
+  return apiClient.get(`/api/activity-logs/project/${projectId}/recent?${params.toString()}`);
+}
+
+// Query project activities with filters
+export async function queryProjectActivities(params: {
+  projectId: string;
+  userId?: string;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  data: ActivityLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      queryParams.append(key, value.toString());
+    }
+  });
+  return apiClient.get(`/api/activity-logs?${queryParams.toString()}`);
 }

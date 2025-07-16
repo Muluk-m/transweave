@@ -11,12 +11,14 @@ import {
   Token,
   TokenDocument,
   TokenHistory,
+  ActivityType,
 } from '../models';
 import { MembershipService } from './membership.service';
 import { createZipWithLanguageFiles } from 'src/utils/exportTo';
 import { parseImportData } from 'src/utils/importFrom';
 import { MongooseService } from './mongoose.service';
 import { diffObject } from 'src/utils/object';
+import { ActivityLogService } from './activity-log.service';
 
 @Injectable()
 export class ProjectService {
@@ -25,6 +27,7 @@ export class ProjectService {
     @InjectModel(Token.name) private tokenModel: Model<TokenDocument>,
     private membershipService: MembershipService,
     private mongooseService: MongooseService,
+    private activityLogService: ActivityLogService,
   ) {}
 
   async createProject(data: {
@@ -33,17 +36,42 @@ export class ProjectService {
     url: string;
     description?: string;
     languages?: string[];
+    userId: string; // 添加userId用于记录操作者
+    ipAddress?: string; // 可选的IP地址
+    userAgent?: string; // 可选的User Agent
   }) {
     const session = await this.mongooseService.getConnection().startSession();
     try {
       let result: ProjectDocument | null = null;
       await session.withTransaction(async () => {
+
+        console.log(data);
+        
         const project = new this.projectModel({
           ...data,
           languages: data.languages || [],
         });
         await project.save({ session });
         result = project;
+
+        // 记录操作日志
+        await this.activityLogService.create({
+          type: ActivityType.PROJECT_CREATE,
+          projectId: String(project._id),
+          userId: data.userId,
+          details: {
+            entityId: String(project._id),
+            entityType: 'project',
+            entityName: project.name,
+            metadata: {
+              languages: project.languages,
+              description: project.description,
+              url: project.url,
+            },
+          },
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        });
       });
       return result;
     } finally {
@@ -79,26 +107,112 @@ export class ProjectService {
       description?: string;
       languages?: string[];
       url?: string;
+      userId: string; // 添加userId用于记录操作者
+      ipAddress?: string; // 可选的IP地址
+      userAgent?: string; // 可选的User Agent
     },
   ) {
-    return this.projectModel
-      .findByIdAndUpdate(id, data, { new: true })
+    // 先获取原始数据用于比较变更
+    const oldProject = await this.projectModel.findById(id).exec();
+    if (!oldProject) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    // 准备更新数据，排除操作记录相关字段
+    const { userId, ipAddress, userAgent, ...updateData } = data;
+
+    const updatedProject = await this.projectModel
+      .findByIdAndUpdate(id, updateData, { new: true })
       .populate('tokens')
       .exec();
+
+    // 记录变更
+    const changes: Array<{field: string; oldValue: any; newValue: any}> = [];
+    for (const field of ['name', 'description', 'url']) {
+      if (updateData[field] !== undefined && oldProject[field] !== updateData[field]) {
+        changes.push({
+          field,
+          oldValue: oldProject[field],
+          newValue: updateData[field],
+        });
+      }
+    }
+
+    // 特殊处理languages数组
+    if (updateData.languages !== undefined) {
+      const oldLangs = JSON.stringify(oldProject.languages || []);
+      const newLangs = JSON.stringify(updateData.languages);
+      if (oldLangs !== newLangs) {
+        changes.push({
+          field: 'languages',
+          oldValue: oldProject.languages,
+          newValue: updateData.languages,
+        });
+      }
+    }
+
+    // 如果有变更，记录操作日志
+    if (changes.length > 0 && updatedProject) {
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_UPDATE,
+        projectId: id,
+        userId,
+        details: {
+          entityId: id,
+          entityType: 'project',
+          entityName: updatedProject.name,
+          changes,
+        },
+        ipAddress,
+        userAgent,
+      });
+    }
+
+    return updatedProject;
   }
 
-  async deleteProject(id: string) {
+  async deleteProject(
+    id: string,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     const session = await this.mongooseService.getConnection().startSession();
     try {
+      // 先获取项目信息用于日志记录
+      const project = await this.projectModel.findById(id).exec();
+      if (!project) {
+        throw new NotFoundException('项目不存在');
+      }
+
       await session.withTransaction(async () => {
         // 先删除关联的所有tokens
-        await this.tokenModel
+        const deletedTokens = await this.tokenModel
           .deleteMany({ projectId: id })
           .session(session)
           .exec();
 
         // 再删除项目
         await this.projectModel.findByIdAndDelete(id).session(session).exec();
+
+        // 记录操作日志
+        await this.activityLogService.create({
+          type: ActivityType.PROJECT_DELETE,
+          projectId: id,
+          userId,
+          details: {
+            entityId: id,
+            entityType: 'project',
+            entityName: project.name,
+            metadata: {
+              deletedTokensCount: deletedTokens.deletedCount,
+              languages: project.languages,
+              description: project.description,
+            },
+          },
+          ipAddress,
+          userAgent,
+        });
       });
       return { success: true };
     } finally {
@@ -106,7 +220,13 @@ export class ProjectService {
     }
   }
 
-  async addLanguage(id: string, language: string) {
+  async addLanguage(
+    id: string,
+    language: string,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     const project = await this.projectModel.findById(id).exec();
 
     if (!project) {
@@ -117,22 +237,79 @@ export class ProjectService {
     const languages = project.languages || [];
     if (!languages.includes(language)) {
       project.languages = [...languages, language];
-      return project.save();
+      const updatedProject = await project.save();
+
+      // 记录操作日志
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_LANGUAGE_ADD,
+        projectId: id,
+        userId,
+        details: {
+          entityId: id,
+          entityType: 'project',
+          entityName: project.name,
+          language,
+          changes: [{
+            field: 'languages',
+            oldValue: languages,
+            newValue: project.languages,
+          }],
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return updatedProject;
     }
 
     return project;
   }
 
-  async removeLanguage(id: string, language: string) {
+  async removeLanguage(
+    id: string,
+    language: string,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     const project = await this.projectModel.findById(id).exec();
 
     if (!project) {
       throw new NotFoundException('项目不存在');
     }
 
-    const languages = project.languages || [];
-    project.languages = languages.filter((lang) => lang !== language);
-    return project.save();
+    const oldLanguages = project.languages || [];
+    const newLanguages = oldLanguages.filter((lang) => lang !== language);
+    
+    // 只有在实际删除了语言时才更新和记录日志
+    if (oldLanguages.length !== newLanguages.length) {
+      project.languages = newLanguages;
+      const updatedProject = await project.save();
+
+      // 记录操作日志
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_LANGUAGE_REMOVE,
+        projectId: id,
+        userId,
+        details: {
+          entityId: id,
+          entityType: 'project',
+          entityName: project.name,
+          language,
+          changes: [{
+            field: 'languages',
+            oldValue: oldLanguages,
+            newValue: newLanguages,
+          }],
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return updatedProject;
+    }
+
+    return project;
   }
 
   // Check if user has permission to access the project
@@ -175,6 +352,8 @@ export class ProjectService {
     comment?: string;
     translations?: Record<string, string>;
     userId: string;
+    ipAddress?: string;
+    userAgent?: string;
   }) {
     const session = await this.mongooseService.getConnection().startSession();
     try {
@@ -228,6 +407,26 @@ export class ProjectService {
           })
           .session(session)
           .exec();
+
+        // 记录操作日志
+        await this.activityLogService.create({
+          type: ActivityType.TOKEN_CREATE,
+          projectId: data.projectId,
+          userId: data.userId,
+          details: {
+            entityId: String(token._id),
+            entityType: 'token',
+            entityName: token.key,
+            metadata: {
+              tags: token.tags,
+              comment: token.comment,
+              translationsCount: Object.keys(data.translations || {}).length,
+              languages: Object.keys(data.translations || {}),
+            },
+          },
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        });
       });
       return result;
     } finally {
@@ -258,6 +457,8 @@ export class ProjectService {
       comment?: string;
       translations?: Record<string, string>;
       userId: string;
+      ipAddress?: string;
+      userAgent?: string;
     },
   ): Promise<TokenDocument | null> {
     // 获取令牌以确认它存在
@@ -308,23 +509,96 @@ export class ProjectService {
       }
     }
 
+    // 记录变更
+    const changes: Array<{field: string; oldValue: any; newValue: any}> = [];
+    
+    // 检查各字段变更
+    if (data.key !== undefined && data.key !== token.key) {
+      changes.push({ field: 'key', oldValue: token.key, newValue: data.key });
+    }
+    if (data.tags !== undefined) {
+      const oldTags = JSON.stringify(token.tags || []);
+      const newTags = JSON.stringify(data.tags);
+      if (oldTags !== newTags) {
+        changes.push({ field: 'tags', oldValue: token.tags, newValue: data.tags });
+      }
+    }
+    if (data.comment !== undefined && data.comment !== token.comment) {
+      changes.push({ field: 'comment', oldValue: token.comment, newValue: data.comment });
+    }
+    if (data.translations !== undefined) {
+      changes.push({ 
+        field: 'translations', 
+        oldValue: token.translations,
+        newValue: updateData.translations
+      });
+    }
+
     // 执行更新
-    return this.tokenModel
+    const updatedToken = await this.tokenModel
       .findByIdAndUpdate(tokenId, updateData, { new: true })
       .populate({
         path: 'history.user',
         select: 'name email id avatar',
       })
       .exec();
+
+    // 如果有变更，记录操作日志
+    if (changes.length > 0 && updatedToken) {
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_UPDATE,
+        projectId: String(token.projectId),
+        userId: data.userId,
+        details: {
+          entityId: tokenId,
+          entityType: 'token',
+          entityName: updatedToken.key,
+          changes,
+          metadata: {
+            translationsUpdated: data.translations ? Object.keys(data.translations) : undefined,
+          },
+        },
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+      });
+    }
+
+    return updatedToken;
   }
 
   // 删除令牌
-  async deleteToken(tokenId: string) {
+  async deleteToken(
+    tokenId: string,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     // 获取令牌以确认它存在
-    await this.getTokenById(tokenId);
+    const token = await this.getTokenById(tokenId);
 
     // 删除令牌
-    return this.tokenModel.findByIdAndDelete(tokenId).exec();
+    const deletedToken = await this.tokenModel.findByIdAndDelete(tokenId).exec();
+
+    // 记录操作日志
+    await this.activityLogService.create({
+      type: ActivityType.TOKEN_DELETE,
+      projectId: String(token.projectId),
+      userId,
+      details: {
+        entityId: tokenId,
+        entityType: 'token',
+        entityName: token.key,
+        metadata: {
+          tags: token.tags,
+          comment: token.comment,
+          translationsCount: Object.keys(token.translations || {}).length,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return deletedToken;
   }
 
   // Export project content
@@ -338,6 +612,9 @@ export class ProjectService {
       prettify?: boolean;
       includeMetadata?: boolean;
       asZip?: boolean; // 添加选项：是否作为ZIP包导出
+      userId?: string; // 用于记录操作日志
+      ipAddress?: string;
+      userAgent?: string;
     },
   ) {
     // 获取项目信息，主要是支持的语言列表
@@ -413,7 +690,7 @@ export class ProjectService {
     }
 
     // 默认导出为ZIP（每种语言一个文件）
-    return await createZipWithLanguageFiles(
+    const result = await createZipWithLanguageFiles(
       tokens,
       {
         ...project.toObject(),
@@ -425,6 +702,32 @@ export class ProjectService {
         prettify: options.prettify,
       },
     );
+
+    // 记录操作日志
+    if (options.userId) {
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_EXPORT,
+        projectId,
+        userId: options.userId,
+        details: {
+          entityId: projectId,
+          entityType: 'project',
+          entityName: project.name,
+          format: options.format,
+          metadata: {
+            scope: options.scope || 'all',
+            languages: targetLanguages,
+            tokensCount: tokens.length,
+            showEmptyTranslations: options.showEmptyTranslations,
+            includeMetadata: options.includeMetadata,
+          },
+        },
+        ipAddress: options.ipAddress,
+        userAgent: options.userAgent,
+      });
+    }
+
+    return result;
   }
 
   // Import project content
@@ -435,6 +738,9 @@ export class ProjectService {
       content: string; // 文件内容
       format: 'json' | 'csv' | 'xml' | 'yaml'; // 导入格式
       mode: 'append' | 'replace'; // 导入模式
+      userId?: string; // 用于记录操作日志
+      ipAddress?: string;
+      userAgent?: string;
     },
   ) {
     const stats = {
@@ -583,6 +889,26 @@ export class ProjectService {
       } finally {
         session.endSession();
       }
+    }
+
+    // 记录操作日志
+    if (data.userId) {
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_IMPORT,
+        projectId,
+        userId: data.userId,
+        details: {
+          entityId: projectId,
+          entityType: 'project',
+          entityName: project.name,
+          language: data.language,
+          format: data.format,
+          mode: data.mode,
+          stats,
+        },
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+      });
     }
 
     return {

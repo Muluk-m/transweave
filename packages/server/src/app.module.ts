@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AppController } from './controller/index.controller';
 import { AppService } from './service/index.service';
@@ -18,6 +18,9 @@ import { HttpModule } from '@nestjs/axios';
 import { AiService } from './service/ai.service';
 import { AiController } from './controller/ai.controller';
 import { AuthService } from './service/auth.service';
+import { RequestIdMiddleware } from './middleware/request-id.middleware';
+import { ActivityLogService } from './service/activity-log.service';
+import { ActivityLogController } from './controller/activity-log.controller';
 
 @Module({
   imports: [
@@ -38,6 +41,7 @@ import { AuthService } from './service/auth.service';
     TeamController,
     ProjectController,
     UserController,
+    ActivityLogController,
   ],
   providers: [
     AppService,
@@ -49,6 +53,11 @@ import { AuthService } from './service/auth.service';
     JwtStrategy,
     MembershipService,
     AiService,
+    ActivityLogService,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

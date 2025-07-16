@@ -67,3 +67,51 @@ export interface Token {
 export interface Translation {
   [key: string]: string;
 }
+
+// Activity Log types
+export enum ActivityType {
+  PROJECT_CREATE = 'PROJECT_CREATE',
+  PROJECT_UPDATE = 'PROJECT_UPDATE',
+  PROJECT_DELETE = 'PROJECT_DELETE',
+  PROJECT_LANGUAGE_ADD = 'PROJECT_LANGUAGE_ADD',
+  PROJECT_LANGUAGE_REMOVE = 'PROJECT_LANGUAGE_REMOVE',
+  TOKEN_CREATE = 'TOKEN_CREATE',
+  TOKEN_UPDATE = 'TOKEN_UPDATE',
+  TOKEN_DELETE = 'TOKEN_DELETE',
+  TOKEN_BATCH_UPDATE = 'TOKEN_BATCH_UPDATE',
+  PROJECT_EXPORT = 'PROJECT_EXPORT',
+  PROJECT_IMPORT = 'PROJECT_IMPORT',
+}
+
+export interface ActivityDetails {
+  entityId?: string;
+  entityType?: 'project' | 'token';
+  entityName?: string;
+  changes?: {
+    field: string;
+    oldValue?: any;
+    newValue?: any;
+  }[];
+  language?: string;
+  format?: string;
+  mode?: string;
+  stats?: {
+    added?: number;
+    updated?: number;
+    unchanged?: number;
+    total?: number;
+  };
+  metadata?: Record<string, any>;
+}
+
+export interface ActivityLog {
+  id: string;
+  type: ActivityType;
+  projectId: string;
+  userId: string | User;  // Can be string or populated User object
+  details: ActivityDetails;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

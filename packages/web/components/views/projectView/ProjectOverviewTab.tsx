@@ -1,6 +1,6 @@
 "use client";
-import { useMemo } from "react";
-import { Project } from "@/jotai/types";
+import { useMemo, useEffect, useState } from "react";
+import { Project, ActivityLog, ActivityType } from "@/jotai/types";
 import {
   Card,
   CardContent,
@@ -15,10 +15,18 @@ import {
   Globe,
   Percent,
   TagIcon,
-  User,
   Users,
+  Plus,
+  Edit,
+  Trash,
+  Languages,
+  Download,
+  Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { getProjectRecentActivities } from "@/api/project";
+import { formatDistanceToNow } from "date-fns";
+import { zhCN } from "date-fns/locale";
 
 interface ProjectOverviewTabProps {
   project: Project | null;
@@ -26,6 +34,138 @@ interface ProjectOverviewTabProps {
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const t = useTranslations("project.overview");
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch recent activities
+  useEffect(() => {
+    if (project?.id) {
+      setLoading(true);
+      getProjectRecentActivities(project.id, 5)
+        .then((data) => {
+          setActivities(data);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch activities:", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [project?.id]);
+
+  // Get activity icon and color based on type
+  const getActivityIcon = (type: ActivityType) => {
+    const iconClass = "h-5 w-5";
+    switch (type) {
+      case ActivityType.PROJECT_CREATE:
+      case ActivityType.TOKEN_CREATE:
+        return {
+          icon: <Plus className={iconClass} />,
+          colorClass: "bg-green-100 text-green-600",
+        };
+      case ActivityType.PROJECT_UPDATE:
+      case ActivityType.TOKEN_UPDATE:
+        return {
+          icon: <Edit className={iconClass} />,
+          colorClass: "bg-blue-100 text-blue-600",
+        };
+      case ActivityType.PROJECT_DELETE:
+      case ActivityType.TOKEN_DELETE:
+        return {
+          icon: <Trash className={iconClass} />,
+          colorClass: "bg-red-100 text-red-600",
+        };
+      case ActivityType.PROJECT_LANGUAGE_ADD:
+      case ActivityType.PROJECT_LANGUAGE_REMOVE:
+        return {
+          icon: <Languages className={iconClass} />,
+          colorClass: "bg-purple-100 text-purple-600",
+        };
+      case ActivityType.PROJECT_EXPORT:
+        return {
+          icon: <Download className={iconClass} />,
+          colorClass: "bg-indigo-100 text-indigo-600",
+        };
+      case ActivityType.PROJECT_IMPORT:
+        return {
+          icon: <Upload className={iconClass} />,
+          colorClass: "bg-yellow-100 text-yellow-600",
+        };
+      default:
+        return {
+          icon: <FileText className={iconClass} />,
+          colorClass: "bg-gray-100 text-gray-600",
+        };
+    }
+  };
+
+  // Get activity description
+  const getActivityDescription = (activity: ActivityLog) => {
+    const user = typeof activity.userId === "object" ? activity.userId : null;
+    const userName = user?.name || t("unknownUser");
+    const entityName = activity.details.entityName || "";
+
+    switch (activity.type) {
+      case ActivityType.PROJECT_CREATE:
+        return t("activityProjectCreated", { user: userName });
+      case ActivityType.PROJECT_UPDATE:
+        return t("activityProjectUpdated", { user: userName });
+      case ActivityType.PROJECT_DELETE:
+        return t("activityProjectDeleted", { user: userName });
+      case ActivityType.PROJECT_LANGUAGE_ADD:
+        return t("activityLanguageAdded", {
+          user: userName,
+          language: activity.details.language,
+        });
+      case ActivityType.PROJECT_LANGUAGE_REMOVE:
+        return t("activityLanguageRemoved", {
+          user: userName,
+          language: activity.details.language,
+        });
+      case ActivityType.TOKEN_CREATE:
+        return t("activityTokenCreated", {
+          user: userName,
+          token: entityName,
+        });
+      case ActivityType.TOKEN_UPDATE:
+        return t("activityTokenUpdated", {
+          user: userName,
+          token: entityName,
+        });
+      case ActivityType.TOKEN_DELETE:
+        return t("activityTokenDeleted", {
+          user: userName,
+          token: entityName,
+        });
+      case ActivityType.PROJECT_EXPORT:
+        return t("activityProjectExported", {
+          user: userName,
+          format: activity.details.format,
+        });
+      case ActivityType.PROJECT_IMPORT:
+        return t("activityProjectImported", {
+          user: userName,
+          language: activity.details.language,
+          count: activity.details.stats?.added || 0,
+        });
+      default:
+        return t("activityUnknown", { user: userName });
+    }
+  };
+
+  // Format time
+  const formatTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: zhCN,
+      });
+    } catch (error) {
+      return "";
+    }
+  };
 
   // Calculate project statistics
   const projectStats = useMemo(() => {
@@ -161,41 +301,35 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <CardDescription>{t("recentActivityDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center">
-              <div className="mr-4 rounded-full h-10 w-10 bg-blue-100 flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600" />
+            {loading ? (
+              <div className="text-sm text-muted-foreground">
+                {t("loadingActivities")}
               </div>
-              <div>
-                <p className="text-sm font-medium">{t("userAddedNewToken")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("hourAgo", { count: 1 })}
-                </p>
+            ) : activities.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                {t("noRecentActivities")}
               </div>
-            </div>
-            <div className="flex items-center">
-              <div className="mr-4 rounded-full h-10 w-10 bg-green-100 flex items-center justify-center">
-                <User className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">
-                  {t("userCompletedTranslations", { count: 3 })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("hourAgo", { count: 3 })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="mr-4 rounded-full h-10 w-10 bg-purple-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{t("newMemberJoined")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("dayAgo", { count: 1 })}
-                </p>
-              </div>
-            </div>
+            ) : (
+              activities.map((activity, index) => (
+                <div key={index} className="flex items-center">
+                  <div
+                    className={`mr-4 rounded-full h-10 w-10 ${
+                      getActivityIcon(activity.type).colorClass
+                    } flex items-center justify-center`}
+                  >
+                    {getActivityIcon(activity.type).icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {getActivityDescription(activity)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTime(activity.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
