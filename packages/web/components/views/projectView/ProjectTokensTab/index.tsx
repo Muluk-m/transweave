@@ -172,14 +172,14 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   // Submit form
   const handleSubmit = async () => {
-    if (!isValidKey(formData.key)) {
-      toast({
-        title: t("errors.invalidKey"),
-        variant: "destructive",
-        duration: 2000,
-      });
-      return;
-    }
+    // if (!isValidKey(formData.key)) {
+    //   toast({
+    //     title: t("errors.invalidKey"),
+    //     variant: "destructive",
+    //     duration: 2000,
+    //   });
+    //   return;
+    // }
     try {
       setIsLoading(true);
 
