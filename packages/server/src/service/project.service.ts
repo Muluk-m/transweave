@@ -917,6 +917,147 @@ export class ProjectService {
     };
   }
 
+  // Migrate language codes in project and all tokens
+  async migrateLanguageCodes(
+    projectId: string,
+    data: {
+      languageMapping: Record<string, string>; // e.g., {"阿尔巴尼亚语": "sq", "阿塞拜疆语": "az"}
+      userId: string;
+      ipAddress?: string;
+      userAgent?: string;
+    },
+  ) {
+    const stats = {
+      projectLanguagesUpdated: 0,
+      tokensUpdated: 0,
+      translationsUpdated: 0,
+      historyRecordsUpdated: 0,
+    };
+
+    // Get project
+    const project = await this.projectModel.findById(projectId).exec();
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    const session = await this.mongooseService.getConnection().startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Step 1: Update project languages array
+        const oldLanguages = project.languages || [];
+        const newLanguages = oldLanguages.map(
+          (lang) => data.languageMapping[lang] || lang,
+        );
+
+        // Remove duplicates
+        const uniqueNewLanguages = [...new Set(newLanguages)];
+
+        if (JSON.stringify(oldLanguages) !== JSON.stringify(uniqueNewLanguages)) {
+          project.languages = uniqueNewLanguages;
+          await project.save({ session });
+          stats.projectLanguagesUpdated = oldLanguages.length;
+        }
+
+        // Step 2: Update all tokens' translations
+        const tokens = await this.tokenModel
+          .find({ projectId })
+          .session(session)
+          .exec();
+
+        for (const token of tokens) {
+          let tokenUpdated = false;
+          const oldTranslations = token.translations || {};
+          const newTranslations: Record<string, string> = {};
+
+          // Migrate translation keys
+          for (const [oldLang, value] of Object.entries(oldTranslations)) {
+            const newLang = data.languageMapping[oldLang] || oldLang;
+
+            // If the new language code already exists and is different from current key
+            if (newLang !== oldLang && newTranslations[newLang]) {
+              // Keep the existing translation, don't overwrite
+              continue;
+            }
+
+            newTranslations[newLang] = value;
+
+            if (newLang !== oldLang) {
+              stats.translationsUpdated++;
+            }
+          }
+
+          // Update token translations if changed
+          if (JSON.stringify(oldTranslations) !== JSON.stringify(newTranslations)) {
+            token.translations = newTranslations;
+            tokenUpdated = true;
+          }
+
+          // Step 3: Update history records
+          if (token.history && token.history.length > 0) {
+            const updatedHistory = token.history.map((historyItem) => {
+              const oldHistoryTranslations = historyItem.translations || {};
+              const newHistoryTranslations: Record<string, any> = {};
+
+              for (const [oldLang, value] of Object.entries(oldHistoryTranslations)) {
+                const newLang = data.languageMapping[oldLang] || oldLang;
+
+                if (newLang !== oldLang && newHistoryTranslations[newLang]) {
+                  continue;
+                }
+
+                newHistoryTranslations[newLang] = value;
+
+                if (newLang !== oldLang) {
+                  stats.historyRecordsUpdated++;
+                  tokenUpdated = true;
+                }
+              }
+
+              return {
+                ...historyItem,
+                translations: newHistoryTranslations,
+              };
+            });
+
+            token.history = updatedHistory as any;
+          }
+
+          if (tokenUpdated) {
+            await token.save({ session });
+            stats.tokensUpdated++;
+          }
+        }
+
+        // Record activity log
+        await this.activityLogService.create({
+          type: ActivityType.PROJECT_UPDATE,
+          projectId,
+          userId: data.userId,
+          details: {
+            entityId: projectId,
+            entityType: 'project',
+            entityName: project.name,
+            metadata: {
+              languageMapping: data.languageMapping,
+              oldLanguages,
+              newLanguages: uniqueNewLanguages,
+              stats,
+            },
+          },
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        });
+      });
+    } finally {
+      session.endSession();
+    }
+
+    return {
+      stats,
+      message: `迁移完成：项目语言已更新 ${stats.projectLanguagesUpdated} 个，${stats.tokensUpdated} 个令牌已更新，${stats.translationsUpdated} 个翻译键已更新，${stats.historyRecordsUpdated} 个历史记录已更新`,
+    };
+  }
+
   // Filter tokens by scope
   private filterTokensByScope(
     tokens: any[],

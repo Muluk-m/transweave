@@ -377,4 +377,36 @@ export class ProjectController {
       throw new BadRequestException(`Import failed: ${error.message}`);
     }
   }
+
+  // Migrate language codes in project
+  @Post('migrate-languages/:projectId')
+  @UseGuards(AuthGuard)
+  async migrateLanguages(
+    @Param('projectId') projectId: string,
+    @Body()
+    data: {
+      languageMapping: Record<string, string>; // Map from old language code/name to new code
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    // Verify permission
+    const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    if (!hasPermission) {
+      throw new ForbiddenException('You do not have permission to migrate languages in this project');
+    }
+
+    try {
+      const result = await this.projectService.migrateLanguageCodes(projectId, {
+        ...data,
+        userId: user.userId,
+      });
+      return {
+        success: true,
+        ...result,
+      };
+    } catch (error) {
+      Logger.error(`Language migration failed: ${error.message}`, error.stack);
+      throw new BadRequestException(`Language migration failed: ${error.message}`);
+    }
+  }
 }
