@@ -940,113 +940,133 @@ export class ProjectService {
       throw new NotFoundException('项目不存在');
     }
 
+    // Step 1: Update project languages array (before transaction)
+    const oldLanguages = project.languages || [];
+    const newLanguages = oldLanguages.map(
+      (lang) => data.languageMapping[lang] || lang,
+    );
+
+    // Remove duplicates
+    const uniqueNewLanguages = [...new Set(newLanguages)];
+
+    // Step 2: Get all tokens before transaction to avoid cursor issues
+    const tokens = await this.tokenModel
+      .find({ projectId })
+      .exec();
+
+    // Step 3: Process updates in transaction
     const session = await this.mongooseService.getConnection().startSession();
     try {
       await session.withTransaction(async () => {
-        // Step 1: Update project languages array
-        const oldLanguages = project.languages || [];
-        const newLanguages = oldLanguages.map(
-          (lang) => data.languageMapping[lang] || lang,
-        );
-
-        // Remove duplicates
-        const uniqueNewLanguages = [...new Set(newLanguages)];
-
+        // Update project languages
         if (JSON.stringify(oldLanguages) !== JSON.stringify(uniqueNewLanguages)) {
-          project.languages = uniqueNewLanguages;
-          await project.save({ session });
+          await this.projectModel
+            .findByIdAndUpdate(
+              projectId,
+              { languages: uniqueNewLanguages },
+              { session }
+            )
+            .exec();
           stats.projectLanguagesUpdated = oldLanguages.length;
         }
 
-        // Step 2: Update all tokens' translations
-        const tokens = await this.tokenModel
-          .find({ projectId })
-          .session(session)
-          .exec();
+        // Process tokens in batches to avoid transaction timeout
+        const BATCH_SIZE = 50;
+        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+          const batch = tokens.slice(i, i + BATCH_SIZE);
 
-        for (const token of tokens) {
-          let tokenUpdated = false;
-          const oldTranslations = token.translations || {};
-          const newTranslations: Record<string, string> = {};
+          for (const token of batch) {
+            let tokenUpdated = false;
+            const oldTranslations = token.translations || {};
+            const newTranslations: Record<string, string> = {};
 
-          // Migrate translation keys
-          for (const [oldLang, value] of Object.entries(oldTranslations)) {
-            const newLang = data.languageMapping[oldLang] || oldLang;
+            // Migrate translation keys
+            for (const [oldLang, value] of Object.entries(oldTranslations)) {
+              const newLang = data.languageMapping[oldLang] || oldLang;
 
-            // If the new language code already exists and is different from current key
-            if (newLang !== oldLang && newTranslations[newLang]) {
-              // Keep the existing translation, don't overwrite
-              continue;
-            }
-
-            newTranslations[newLang] = value;
-
-            if (newLang !== oldLang) {
-              stats.translationsUpdated++;
-            }
-          }
-
-          // Update token translations if changed
-          if (JSON.stringify(oldTranslations) !== JSON.stringify(newTranslations)) {
-            token.translations = newTranslations;
-            tokenUpdated = true;
-          }
-
-          // Step 3: Update history records
-          if (token.history && token.history.length > 0) {
-            const updatedHistory = token.history.map((historyItem) => {
-              const oldHistoryTranslations = historyItem.translations || {};
-              const newHistoryTranslations: Record<string, any> = {};
-
-              for (const [oldLang, value] of Object.entries(oldHistoryTranslations)) {
-                const newLang = data.languageMapping[oldLang] || oldLang;
-
-                if (newLang !== oldLang && newHistoryTranslations[newLang]) {
-                  continue;
-                }
-
-                newHistoryTranslations[newLang] = value;
-
-                if (newLang !== oldLang) {
-                  stats.historyRecordsUpdated++;
-                  tokenUpdated = true;
-                }
+              // If the new language code already exists and is different from current key
+              if (newLang !== oldLang && newTranslations[newLang]) {
+                // Keep the existing translation, don't overwrite
+                continue;
               }
 
-              return {
-                ...historyItem,
-                translations: newHistoryTranslations,
-              };
-            });
+              newTranslations[newLang] = value;
 
-            token.history = updatedHistory as any;
-          }
+              if (newLang !== oldLang) {
+                stats.translationsUpdated++;
+              }
+            }
 
-          if (tokenUpdated) {
-            await token.save({ session });
-            stats.tokensUpdated++;
+            // Update token translations if changed
+            if (JSON.stringify(oldTranslations) !== JSON.stringify(newTranslations)) {
+              tokenUpdated = true;
+            }
+
+            // Update history records
+            let updatedHistory = token.history;
+            if (token.history && token.history.length > 0) {
+              updatedHistory = token.history.map((historyItem) => {
+                const oldHistoryTranslations = historyItem.translations || {};
+                const newHistoryTranslations: Record<string, any> = {};
+
+                for (const [oldLang, value] of Object.entries(oldHistoryTranslations)) {
+                  const newLang = data.languageMapping[oldLang] || oldLang;
+
+                  if (newLang !== oldLang && newHistoryTranslations[newLang]) {
+                    continue;
+                  }
+
+                  newHistoryTranslations[newLang] = value;
+
+                  if (newLang !== oldLang) {
+                    stats.historyRecordsUpdated++;
+                    tokenUpdated = true;
+                  }
+                }
+
+                return {
+                  ...historyItem,
+                  translations: newHistoryTranslations,
+                };
+              });
+            }
+
+            // Bulk update token if any changes
+            if (tokenUpdated) {
+              await this.tokenModel
+                .findByIdAndUpdate(
+                  token._id,
+                  {
+                    translations: newTranslations,
+                    history: updatedHistory,
+                  },
+                  { session }
+                )
+                .exec();
+              stats.tokensUpdated++;
+            }
           }
         }
+      });
 
-        // Record activity log
-        await this.activityLogService.create({
-          type: ActivityType.PROJECT_UPDATE,
-          projectId,
-          userId: data.userId,
-          details: {
-            entityId: projectId,
-            entityType: 'project',
-            entityName: project.name,
-            metadata: {
-              languageMapping: data.languageMapping,
-              oldLanguages,
-              newLanguages: uniqueNewLanguages,
-              stats,
-            },
+      // Record activity log (after transaction completes)
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_UPDATE,
+        projectId,
+        userId: data.userId,
+        details: {
+          entityId: projectId,
+          entityType: 'project',
+          entityName: project.name,
+          metadata: {
+            languageMapping: data.languageMapping,
+            oldLanguages,
+            newLanguages: uniqueNewLanguages,
+            stats,
           },
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
-        });
+        },
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
       });
     } finally {
       session.endSession();
