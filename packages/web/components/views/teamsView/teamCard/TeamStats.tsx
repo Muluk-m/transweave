@@ -1,4 +1,3 @@
-import { CardContent } from "@/components/ui/card";
 import { Folder, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -9,20 +8,20 @@ interface TeamStatsProps {
 
 export function TeamStats({ memberCount, projectCount }: TeamStatsProps) {
     const t = useTranslations();
-    
+
     return (
-        <CardContent>
-            <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <Users className="h-3 w-3 inline mr-1" />
-                    {t('teams.card.membersCount', { count: memberCount })}
+        <div className="px-6 pb-3">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4" />
+                    <span>{t('teams.card.membersCount', { count: memberCount })}</span>
                 </div>
 
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <Folder className="h-3 w-3 inline mr-1" />
-                    {t('teams.card.projectsCount', { count: projectCount })}
+                <div className="flex items-center gap-1.5">
+                    <Folder className="h-4 w-4" />
+                    <span>{t('teams.card.projectsCount', { count: projectCount })}</span>
                 </div>
             </div>
-        </CardContent>
+        </div>
     );
 }

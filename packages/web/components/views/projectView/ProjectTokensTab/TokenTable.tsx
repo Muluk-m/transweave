@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useTranslations } from "next-intl";
+import { Languages as LanguagesIcon } from "lucide-react";
 import { Languages } from "@/constants";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -45,6 +46,8 @@ interface TokenTableProps {
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
   onDeleteSelected: (selected: string[]) => void;
+  onBatchTranslate?: (tokens: Token[]) => Promise<void>;
+  isBatchTranslating?: boolean;
   toolBar: React.ReactNode;
 }
 
@@ -97,6 +100,8 @@ export function TokenTable({
   onEdit,
   onDelete,
   onDeleteSelected,
+  onBatchTranslate,
+  isBatchTranslating = false,
 }: TokenTableProps) {
   const t = useTranslations("tokenTable");
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
@@ -191,8 +196,8 @@ export function TokenTable({
       ),
       cell: ({ row }) => (
         <div className="bg-white line-clamp-2">
-          <TipsCopyableCell value={row.original.translations[lang]}>
-            <span>{row.original.translations[lang]}</span>
+          <TipsCopyableCell value={row.original.translations?.[lang]}>
+            <span>{row.original.translations?.[lang]  }</span>
           </TipsCopyableCell>
         </div>
       ),
@@ -317,6 +322,21 @@ export function TokenTable({
               className="hidden data-[orientation=vertical]:h-5 sm:block"
             />
             <div className="flex items-center gap-1.5">
+              {onBatchTranslate && (
+                <DataTableActionBarAction
+                  size="icon"
+                  tooltip={isBatchTranslating ? "翻译中..." : "批量翻译"}
+                  onClick={() => {
+                    const selectedTokens = table
+                      .getFilteredSelectedRowModel()
+                      .rows.map((row) => getToken(row.id)!);
+                    onBatchTranslate(selectedTokens);
+                  }}
+                  disabled={isBatchTranslating}
+                >
+                  <LanguagesIcon className={isBatchTranslating ? "animate-pulse" : ""} />
+                </DataTableActionBarAction>
+              )}
               <DataTableActionBarAction
                 size="icon"
                 tooltip="删除选中"
@@ -327,6 +347,7 @@ export function TokenTable({
                       .rows.map((row) => row.id)
                   );
                 }}
+                disabled={isBatchTranslating}
               >
                 <Trash2 />
               </DataTableActionBarAction>

@@ -14,11 +14,13 @@ import { createToken, updateToken, deleteToken } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
 import { TokenTable } from "./TokenTable";
-import { Plus } from "lucide-react";
+import { BatchAddDialog, BatchTokenInput } from "./BatchAddDialog";
+import { Plus, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { translateWithAi } from "@/api/ai";
 import { useQueryState } from "nuqs";
 import { getSortingStateParser } from "@/lib/parsers";
+import { Progress } from "@/components/ui/progress";
 
 interface ProjectTokensTabProps {
   project: Project | null;
@@ -55,6 +57,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [currentTokenId, setCurrentTokenId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState<boolean>(false);
+  const [isBatchLoading, setIsBatchLoading] = useState<boolean>(false);
+  const [isBatchTranslating, setIsBatchTranslating] = useState<boolean>(false);
+  const [translateProgress, setTranslateProgress] = useState<number>(0);
 
   // Initialize tokens data
   useEffect(() => {
@@ -389,6 +395,134 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     return filteredAndSortedTokens.find((token) => token.id === currentTokenId);
   }, [filteredAndSortedTokens, currentTokenId]);
 
+  // Handle batch create
+  const handleBatchSubmit = async (batchTokens: BatchTokenInput[]) => {
+    if (!project?.id) {
+      toast({
+        title: t("errors.projectIdMissing"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsBatchLoading(true);
+
+      // Create all tokens
+      const createdTokens = await Promise.all(
+        batchTokens.map((tokenInput) =>
+          createToken(project.id, {
+            key: tokenInput.key,
+            tags: tokenInput.tags,
+            comment: tokenInput.comment,
+            translations: tokenInput.translations || {},
+          })
+        )
+      );
+
+      // Update local state
+      setTokens((prev) => [...prev, ...createdTokens]);
+
+      toast({
+        title: t("success.batchTokensCreated", { count: createdTokens.length }),
+      });
+
+      setIsBatchDialogOpen(false);
+    } catch (error) {
+      console.error("Error batch creating tokens:", error);
+      toast({
+        title: t("errors.batchCreateFailed"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsBatchLoading(false);
+    }
+  };
+
+  // Handle batch translate for selected tokens
+  const handleBatchTranslateSelected = async (selectedTokens: Token[]) => {
+    if (!project?.languages || project.languages.length === 0) {
+      toast({
+        title: t("errors.noLanguageToTranslate"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedTokens.length === 0) return;
+
+    try {
+      setIsBatchTranslating(true);
+      setTranslateProgress(0);
+
+      const total = selectedTokens.length;
+      let completed = 0;
+
+      // For each token, translate its first non-empty language to all empty languages
+      for (const token of selectedTokens) {
+        // Find which languages already have content
+        const filledLangs = project.languages.filter(
+          (lang) => token.translations?.[lang]?.trim()
+        );
+
+        // Find which languages need translation
+        const emptyLangs = project.languages.filter(
+          (lang) => !token.translations?.[lang]?.trim()
+        );
+
+        // Skip if no source or no target
+        if (filledLangs.length === 0 || emptyLangs.length === 0) {
+          completed++;
+          setTranslateProgress(Math.round((completed / total) * 100));
+          continue;
+        }
+
+        // Use first filled language as source
+        const sourceLang = filledLangs[0];
+        const sourceText = token.translations![sourceLang];
+
+        // Translate to empty languages
+        const translationResult = await translateWithAi(
+          sourceText,
+          sourceLang,
+          emptyLangs
+        );
+
+        // Merge existing and new translations
+        const updatedTranslations: Record<string, string> = {
+          ...token.translations,
+          ...translationResult,
+        };
+
+        // Update token
+        const updatedToken = await updateToken(token.id, {
+          translations: updatedTranslations,
+        });
+
+        // Update local state
+        setTokens((prev) =>
+          prev.map((t) => (t.id === token.id ? { ...t, ...updatedToken } : t))
+        );
+
+        completed++;
+        setTranslateProgress(Math.round((completed / total) * 100));
+      }
+
+      toast({
+        title: t("success.batchTranslated"),
+      });
+    } catch (error) {
+      console.error("Batch translate error:", error);
+      toast({
+        title: t("errors.translateFailed"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsBatchTranslating(false);
+      setTimeout(() => setTranslateProgress(0), 1000);
+    }
+  };
+
   return (
     <div className="p-4 bg-white rounded-lg shadow">
       <TokenFormDrawer
@@ -409,11 +543,36 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">{t("title")}</h2>
-        <Button onClick={handleOpenAddDrawer}>
-          <Plus size={16} className="mr-2" />
-          {t("addToken")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
+            <FileText size={16} className="mr-2" />
+            {t("batchAdd")}
+          </Button>
+          <Button onClick={handleOpenAddDrawer}>
+            <Plus size={16} className="mr-2" />
+            {t("addToken")}
+          </Button>
+        </div>
       </div>
+
+      <BatchAddDialog
+        isOpen={isBatchDialogOpen}
+        onOpenChange={setIsBatchDialogOpen}
+        onSubmit={handleBatchSubmit}
+        isLoading={isBatchLoading}
+      />
+
+      {isBatchTranslating && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-900">
+              批量翻译进行中...
+            </span>
+            <span className="text-sm text-blue-700">{translateProgress}%</span>
+          </div>
+          <Progress value={translateProgress} className="h-2" />
+        </div>
+      )}
 
       <TokenTable
         tokens={filteredAndSortedTokens}
@@ -421,6 +580,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onEdit={handleEditToken}
         onDelete={handleDeleteToken}
         onDeleteSelected={handleDeleteSelected}
+        onBatchTranslate={handleBatchTranslateSelected}
+        isBatchTranslating={isBatchTranslating}
         toolBar={
           <div className="flex gap-2 items-center justify-between w-full">
             <div className="flex-1">

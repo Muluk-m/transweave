@@ -213,7 +213,11 @@
       "noMatchingProjects": "没有找到匹配的项目",
       "close": "关闭",
       "listTitle": "{teamName} 的项目列表",
-      "projectsTotal": "该团队共有 {count} 个项目，点击项目名称可直接进入项目"
+      "projectsTotal": "该团队共有 {count} 个项目，点击项目名称可直接进入项目",
+      "inviteMembers": "邀请成员",
+      "deleteTeam": "删除团队",
+      "viewMore": "查看更多 {count} 个",
+      "viewAllProjects": "查看所有项目"
     },
     "create": {
       "title": "创建新团队",
@@ -586,13 +590,17 @@
   "projectTokens": {
     "title": "文案",
     "addToken": "添加文案",
+    "batchAdd": "批量添加",
     "searchPlaceholder": "搜索翻译文案",
     "selectTag": "选择标签",
     "allTags": "全部标签",
     "success": {
       "tokenCreated": "文案创建成功",
       "tokenUpdated": "文案更新成功",
-      "tokenDeleted": "文案已删除"
+      "tokenDeleted": "文案已删除",
+      "tokensDeleted": "文案批量删除成功",
+      "batchTokensCreated": "成功创建 {count} 条文案",
+      "batchTranslated": "批量翻译完成"
     },
     "errors": {
       "projectIdMissing": "项目ID不存在",
@@ -601,7 +609,8 @@
       "deleteFailed": "删除文案失败",
       "invalidKey": "key 格式不正确，请输入有效的 key",
       "noLanguageToTranslate": "没有可翻译的语言",
-      "translateFailed": "翻译失败"
+      "translateFailed": "翻译失败",
+      "batchCreateFailed": "批量创建文案失败"
     }
   },
   "tokenForm": {
@@ -628,6 +637,45 @@
     "delete": "删除",
     "edit": "编辑",
     "noData": "暂无数据"
+  },
+  "batchAdd": {
+    "title": "批量添加文案",
+    "description": "每行输入一条文案",
+    "tableDescription": "在下方表格中填写，批量添加文案",
+    "inputLabel": "批量输入",
+    "inputPlaceholder": "login.title 登录页标题\nlogin.submit [auth,form] 提交按钮\nuser.welcome 欢迎信息",
+    "comment": "备注",
+    "commentPlaceholder": "请输入备注",
+    "actions": "操作",
+    "addRow": "添加行",
+    "batchTranslate": "批量 AI 翻译",
+    "translating": "翻译中...",
+    "translatingProgress": "翻译中... {progress}%",
+    "translated": "已翻译为 {count} 种语言",
+    "formatGuide": {
+      "title": "格式说明：",
+      "rule1": "每行一条文案",
+      "rule2": "格式：key [标签] 备注",
+      "rule3": "标签可选，多个标签用逗号分隔",
+      "examples": "示例："
+    },
+    "tips": {
+      "tableInput": "在表格中填写 Key、Tags 和 Comment,然后批量创建",
+      "keyFormat": "Key 格式：小写字母开头，可包含字母、数字、点号（如 login.title）"
+    },
+    "lineCount": "{count} 行",
+    "rowCount": "{count} 条有效数据",
+    "submit": "全部创建",
+    "submitting": "创建中...",
+    "cancel": "取消",
+    "validation": {
+      "keyRequired": "Key 不能为空",
+      "keyInvalid": "Key 格式不正确",
+      "commentRequired": "备注不能为空"
+    },
+    "errors": {
+      "noValidTokens": "没有有效的文案可创建"
+    }
   },
   "project": {
     "tabs": {

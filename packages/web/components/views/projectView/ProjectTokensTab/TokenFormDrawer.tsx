@@ -329,7 +329,7 @@ function TokenHistorySheet({
           <div className="grid gap-6 pb-4 m-2">
             {history
               .filter((item, index, array) => {
-                if (!item.translations[lang]) return false;
+                if (!item.translations?.[lang]) return false;
                 if (index === 0) return true;
                 const prevItem = array[index - 1];
                 return item.translations[lang] !== prevItem.translations[lang];

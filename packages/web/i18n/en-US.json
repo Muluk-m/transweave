@@ -212,7 +212,11 @@
       "noMatchingProjects": "No matching projects found",
       "close": "Close",
       "listTitle": "Projects in {teamName}",
-      "projectsTotal": "This team has {count} projects. Click on a project name to view details"
+      "projectsTotal": "This team has {count} projects. Click on a project name to view details",
+      "inviteMembers": "Invite Members",
+      "deleteTeam": "Delete Team",
+      "viewMore": "View {count} more",
+      "viewAllProjects": "View All Projects"
     },
     "create": {
       "title": "Create New Team",
@@ -584,20 +588,27 @@
   "projectTokens": {
     "title": "Translations",
     "addToken": "Add Translation",
+    "batchAdd": "Batch Add",
     "searchPlaceholder": "Search translations",
     "selectTag": "Select Tag",
     "allTags": "All Tags",
     "success": {
       "tokenCreated": "Translation created successfully",
       "tokenUpdated": "Translation updated successfully",
-      "tokenDeleted": "Translation deleted"
+      "tokenDeleted": "Translation deleted",
+      "tokensDeleted": "Translations deleted successfully",
+      "batchTokensCreated": "{count} translations created successfully",
+      "batchTranslated": "Batch translation completed"
     },
     "errors": {
       "projectIdMissing": "Project ID is missing",
       "createFailed": "Failed to add translation",
       "updateFailed": "Failed to update translation",
       "deleteFailed": "Failed to delete translation",
-      "invalidKey": "Invalid key format, please enter a valid key"
+      "invalidKey": "Invalid key format, please enter a valid key",
+      "batchCreateFailed": "Failed to batch create translations",
+      "noLanguageToTranslate": "Please fill in at least one language to translate",
+      "translateFailed": "Translation failed"
     }
   },
   "tokenForm": {
@@ -623,6 +634,45 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "noData": "No data available"
+  },
+  "batchAdd": {
+    "title": "Batch Add Translations",
+    "description": "Enter multiple translations, one per line",
+    "tableDescription": "Fill in the table below to add multiple translations",
+    "inputLabel": "Batch Input",
+    "inputPlaceholder": "login.title Login page title\nlogin.submit [auth,form] Submit button\nuser.welcome Welcome message",
+    "comment": "Comment",
+    "commentPlaceholder": "Enter comment",
+    "actions": "Actions",
+    "addRow": "Add Row",
+    "batchTranslate": "Batch AI Translate",
+    "translating": "Translating...",
+    "translatingProgress": "Translating... {progress}%",
+    "translated": "Translated to {count} languages",
+    "formatGuide": {
+      "title": "Format Guide:",
+      "rule1": "One translation per line",
+      "rule2": "Format: key [tags] comment",
+      "rule3": "Tags are optional, separate multiple tags with commas",
+      "examples": "Examples:"
+    },
+    "tips": {
+      "tableInput": "Fill in Key, Tags, and Comment in the table, then batch create",
+      "keyFormat": "Key format: lowercase letter start, can contain letters, numbers, and dots (e.g. login.title)"
+    },
+    "lineCount": "{count} lines",
+    "rowCount": "{count} valid rows",
+    "submit": "Create All",
+    "submitting": "Creating...",
+    "cancel": "Cancel",
+    "validation": {
+      "keyRequired": "Key is required",
+      "keyInvalid": "Invalid key format",
+      "commentRequired": "Comment is required"
+    },
+    "errors": {
+      "noValidTokens": "No valid translations to create"
+    }
   },
   "project": {
     "tabs": {
