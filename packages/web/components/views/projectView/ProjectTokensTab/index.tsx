@@ -149,6 +149,43 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
   };
 
+  // Check if a new key conflicts with existing keys
+  // Conflict occurs when:
+  // 1. New key is a prefix of an existing key (e.g., adding "alert" when "alert.message" exists)
+  // 2. An existing key is a prefix of the new key (e.g., adding "alert.message" when "alert" exists)
+  const checkKeyConflict = (
+    newKey: string,
+    currentTokenId?: string | null
+  ): { conflict: boolean; conflictKey?: string; type?: "prefix" | "parent" } => {
+    // Get all existing keys except the current token being edited
+    const keysToCheck = tokens
+      .filter((token) => token.id !== currentTokenId)
+      .map((token) => token.key);
+
+    // Check if any existing key is a prefix of the new key
+    // e.g., existing "alert" conflicts with new "alert.message"
+    for (const existingKey of keysToCheck) {
+      if (newKey.startsWith(existingKey + ".")) {
+        return { conflict: true, conflictKey: existingKey, type: "parent" };
+      }
+    }
+
+    // Check if the new key is a prefix of any existing key
+    // e.g., new "alert" conflicts with existing "alert.message"
+    for (const existingKey of keysToCheck) {
+      if (existingKey.startsWith(newKey + ".")) {
+        return { conflict: true, conflictKey: existingKey, type: "prefix" };
+      }
+    }
+
+    // Check for exact duplicate
+    if (keysToCheck.includes(newKey)) {
+      return { conflict: true, conflictKey: newKey, type: "prefix" };
+    }
+
+    return { conflict: false };
+  };
+
   // Form input handlers
   const handleInputChange = (
     e:
@@ -178,14 +215,31 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   // Submit form
   const handleSubmit = async () => {
-    // if (!isValidKey(formData.key)) {
-    //   toast({
-    //     title: t("errors.invalidKey"),
-    //     variant: "destructive",
-    //     duration: 2000,
-    //   });
-    //   return;
-    // }
+    // Validate key format
+    if (!isValidKey(formData.key)) {
+      toast({
+        title: t("errors.invalidKey"),
+        variant: "destructive",
+        duration: 2000,
+      });
+      return;
+    }
+
+    // Check for key conflicts
+    const conflictCheck = checkKeyConflict(formData.key, currentTokenId);
+    if (conflictCheck.conflict) {
+      const errorMsg =
+        conflictCheck.type === "parent"
+          ? `无法添加 key "${formData.key}"，因为已存在父级 key "${conflictCheck.conflictKey}"`
+          : `无法添加 key "${formData.key}"，因为已存在子级 key "${conflictCheck.conflictKey}"`;
+      toast({
+        title: errorMsg,
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -403,6 +457,69 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate all keys before creating
+    for (const tokenInput of batchTokens) {
+      // Check key format
+      if (!isValidKey(tokenInput.key)) {
+        toast({
+          title: `Key "${tokenInput.key}" 格式无效`,
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Check for conflicts with existing keys
+      const conflictCheck = checkKeyConflict(tokenInput.key, null);
+      if (conflictCheck.conflict) {
+        const errorMsg =
+          conflictCheck.type === "parent"
+            ? `无法添加 key "${tokenInput.key}"，因为已存在父级 key "${conflictCheck.conflictKey}"`
+            : `无法添加 key "${tokenInput.key}"，因为已存在子级 key "${conflictCheck.conflictKey}"`;
+        toast({
+          title: errorMsg,
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
+    // Check for conflicts within the batch itself
+    for (let i = 0; i < batchTokens.length; i++) {
+      for (let j = i + 1; j < batchTokens.length; j++) {
+        const key1 = batchTokens[i].key;
+        const key2 = batchTokens[j].key;
+
+        if (key1 === key2) {
+          toast({
+            title: `批量添加中存在重复的 key: "${key1}"`,
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
+        if (key2.startsWith(key1 + ".")) {
+          toast({
+            title: `批量添加中 key 冲突: "${key1}" 与 "${key2}"`,
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
+        if (key1.startsWith(key2 + ".")) {
+          toast({
+            title: `批量添加中 key 冲突: "${key2}" 与 "${key1}"`,
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+      }
     }
 
     try {
