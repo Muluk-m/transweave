@@ -1,7 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Languages } from "@/constants";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,7 @@ export function TokenFormDrawer({
   const t = useTranslations("tokenForm");
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const screenshotAreaRef = useRef<HTMLDivElement>(null);
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
@@ -125,10 +126,8 @@ export function TokenFormDrawer({
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  // 通用的文件上传函数
+  const uploadFile = async (file: File) => {
     // 检查文件类型
     if (!file.type.startsWith('image/')) {
       toast({
@@ -168,8 +167,38 @@ export function TokenFormDrawer({
       });
     } finally {
       setIsUploadingImage(false);
-      // 清空 input 的值，以便可以重复上传同一文件
-      event.target.value = '';
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await uploadFile(file);
+    
+    // 清空 input 的值，以便可以重复上传同一文件
+    event.target.value = '';
+  };
+
+  // 处理粘贴事件
+  const handlePaste = async (event: React.ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        event.preventDefault();
+        const blob = item.getAsFile();
+        if (blob) {
+          // 将 Blob 转换为 File 对象
+          const file = new File([blob], `screenshot-${Date.now()}.png`, {
+            type: blob.type,
+          });
+          await uploadFile(file);
+        }
+        break;
+      }
     }
   };
 
@@ -304,7 +333,12 @@ export function TokenFormDrawer({
 
             <div className="grid gap-2">
               <Label htmlFor="screenshots">上下文截图</Label>
-              <div className="space-y-2">
+              <div 
+                className="space-y-2" 
+                ref={screenshotAreaRef}
+                onPaste={handlePaste}
+                tabIndex={0}
+              >
                 <div className="flex flex-wrap gap-2">
                   {(formData.screenshots || []).map((screenshot, index) => (
                     <div
@@ -348,7 +382,10 @@ export function TokenFormDrawer({
                   />
                 </div>
                 <p className="text-xs text-gray-500">
-                  支持 JPG、PNG、GIF、WebP 格式，单个文件不超过 5MB
+                  💡 支持 JPG、PNG、GIF、WebP 格式，单个文件不超过 5MB
+                </p>
+                <p className="text-xs text-blue-600 font-medium">
+                  ⌨️ 提示：可以直接使用 Ctrl/Cmd + V 粘贴截图
                 </p>
               </div>
             </div>
