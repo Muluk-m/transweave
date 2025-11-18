@@ -73,6 +73,7 @@ export async function createToken(projectId: string, data: {
   tags?: string[];
   comment?: string;
   translations?: Record<string, string>; // Changed to directly use translation object
+  screenshots?: string[];
 }): Promise<Token> {
   return apiClient.post(`${API_BASE}/token`, {
     projectId,
@@ -90,6 +91,7 @@ export async function updateToken(tokenId: string, data: {
   key?: string;
   tags?: string[];
   comment?: string;
+  screenshots?: string[];
   translations?: Record<string, string>; // Added translation object parameter
 }): Promise<Token> {
   return apiClient.put(`${API_BASE}/token/${tokenId}`, data);
