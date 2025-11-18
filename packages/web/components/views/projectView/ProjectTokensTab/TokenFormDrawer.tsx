@@ -38,7 +38,13 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { generateTokenKeyWithAi } from "@/api/ai";
 import { toast } from "@/hooks/use-toast";
 import { uploadImage, getImageUrl } from "@/api/upload";
-import { Image as ImageIcon, X, Upload } from "lucide-react";
+import { Image as ImageIcon, X, Upload, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TokenFormDrawerProps {
   isOpen: boolean;
@@ -99,6 +105,10 @@ export function TokenFormDrawer({
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const screenshotAreaRef = useRef<HTMLDivElement>(null);
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    index: number;
+  } | null>(null);
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
@@ -208,9 +218,78 @@ export function TokenFormDrawer({
     onScreenshotsChange(newScreenshots);
   };
 
+  const handlePreviewImage = (url: string, index: number) => {
+    setPreviewImage({ url, index });
+  };
+
+  const handlePrevImage = () => {
+    if (!previewImage || !formData.screenshots) return;
+    const newIndex = previewImage.index - 1;
+    if (newIndex >= 0) {
+      setPreviewImage({
+        url: formData.screenshots[newIndex],
+        index: newIndex,
+      });
+    }
+  };
+
+  const handleNextImage = () => {
+    if (!previewImage || !formData.screenshots) return;
+    const newIndex = previewImage.index + 1;
+    if (newIndex < formData.screenshots.length) {
+      setPreviewImage({
+        url: formData.screenshots[newIndex],
+        index: newIndex,
+      });
+    }
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[700px]">
+    <>
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl w-full">
+          <DialogHeader>
+            <DialogTitle>
+              截图预览 {previewImage && `(${previewImage.index + 1} / ${formData.screenshots?.length || 0})`}
+            </DialogTitle>
+          </DialogHeader>
+          {previewImage && (
+            <div className="relative">
+              <img
+                src={getImageUrl(previewImage.url)}
+                alt="Preview"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+              />
+              {formData.screenshots && formData.screenshots.length > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePrevImage}
+                    disabled={previewImage.index === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {previewImage.index + 1} / {formData.screenshots.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNextImage}
+                    disabled={previewImage.index === formData.screenshots.length - 1}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-[700px]">
         <SheetHeader>
           <SheetTitle>{isEditing ? t("editTitle") : t("addTitle")}</SheetTitle>
           <SheetDescription>{t("description")}</SheetDescription>
@@ -343,20 +422,27 @@ export function TokenFormDrawer({
                   {(formData.screenshots || []).map((screenshot, index) => (
                     <div
                       key={index}
-                      className="relative group w-24 h-24 border rounded-md overflow-hidden"
+                      className="relative group w-24 h-24 border rounded-md overflow-hidden cursor-pointer"
                     >
                       <img
                         src={getImageUrl(screenshot)}
                         alt={`Screenshot ${index + 1}`}
                         className="w-full h-full object-cover"
+                        onClick={() => handlePreviewImage(screenshot, index)}
                       />
                       <button
                         type="button"
-                        onClick={() => handleRemoveScreenshot(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveScreenshot(index);
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                       >
                         <X className="w-3 h-3" />
                       </button>
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
+                      </div>
                     </div>
                   ))}
                   <label
@@ -450,6 +536,7 @@ export function TokenFormDrawer({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+    </>
   );
 }
 

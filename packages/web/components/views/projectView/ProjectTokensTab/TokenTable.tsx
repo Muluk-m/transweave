@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +35,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DataTableActionBar,
   DataTableActionBarAction,
@@ -108,6 +114,10 @@ export function TokenTable({
   const t = useTranslations("tokenTable");
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
   const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
+  const [previewImages, setPreviewImages] = useState<{
+    urls: string[];
+    currentIndex: number;
+  } | null>(null);
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
@@ -130,6 +140,28 @@ export function TokenTable({
 
   const getToken = (id: string) => {
     return tokens.find((token) => token.id === id);
+  };
+
+  const handlePreviewImages = (screenshots: string[]) => {
+    if (screenshots.length > 0) {
+      setPreviewImages({ urls: screenshots, currentIndex: 0 });
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (!previewImages) return;
+    const newIndex = previewImages.currentIndex - 1;
+    if (newIndex >= 0) {
+      setPreviewImages({ ...previewImages, currentIndex: newIndex });
+    }
+  };
+
+  const handleNextImage = () => {
+    if (!previewImages) return;
+    const newIndex = previewImages.currentIndex + 1;
+    if (newIndex < previewImages.urls.length) {
+      setPreviewImages({ ...previewImages, currentIndex: newIndex });
+    }
   };
 
   const paginatedData = useMemo(() => {
@@ -205,26 +237,32 @@ export function TokenTable({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 cursor-pointer">
+                    <div 
+                      className="flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-2 py-1 transition-colors"
+                      onClick={() => handlePreviewImages(screenshots)}
+                    >
                       <ImageIconLucide className="w-4 h-4 text-blue-500" />
                       <span className="text-sm text-gray-600">{screenshots.length}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="p-2">
-                    <div className="flex flex-wrap gap-2 max-w-[400px]">
-                      {screenshots.slice(0, 3).map((screenshot: string, index: number) => (
-                        <img
-                          key={index}
-                          src={getImageUrl(screenshot)}
-                          alt={`Screenshot ${index + 1}`}
-                          className="w-20 h-20 object-cover rounded border"
-                        />
-                      ))}
-                      {screenshots.length > 3 && (
-                        <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
-                          +{screenshots.length - 3}
-                        </div>
-                      )}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap gap-2 max-w-[400px]">
+                        {screenshots.slice(0, 3).map((screenshot: string, index: number) => (
+                          <img
+                            key={index}
+                            src={getImageUrl(screenshot)}
+                            alt={`Screenshot ${index + 1}`}
+                            className="w-20 h-20 object-cover rounded border"
+                          />
+                        ))}
+                        {screenshots.length > 3 && (
+                          <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
+                            +{screenshots.length - 3}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 text-center">点击查看大图</p>
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -368,8 +406,51 @@ export function TokenTable({
   });
 
   return (
-    <div className="overflow-x-auto w-full">
-      <DataTable
+    <>
+      <Dialog open={!!previewImages} onOpenChange={(open) => !open && setPreviewImages(null)}>
+        <DialogContent className="max-w-4xl w-full">
+          <DialogHeader>
+            <DialogTitle>
+              截图预览 {previewImages && `(${previewImages.currentIndex + 1} / ${previewImages.urls.length})`}
+            </DialogTitle>
+          </DialogHeader>
+          {previewImages && (
+            <div className="relative">
+              <img
+                src={getImageUrl(previewImages.urls[previewImages.currentIndex])}
+                alt="Preview"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+              />
+              {previewImages.urls.length > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePrevImage}
+                    disabled={previewImages.currentIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {previewImages.currentIndex + 1} / {previewImages.urls.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNextImage}
+                    disabled={previewImages.currentIndex === previewImages.urls.length - 1}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <div className="overflow-x-auto w-full">
+        <DataTable
         table={table}
         actionBar={
           <DataTableActionBar table={table}>
@@ -414,6 +495,7 @@ export function TokenTable({
       >
         <DataTableToolbar table={table}>{toolBar}</DataTableToolbar>
       </DataTable>
-    </div>
+      </div>
+    </>
   );
 }
