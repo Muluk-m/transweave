@@ -27,6 +27,8 @@ import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { formatDate } from "@/lib/format";
 import { useQueryState } from "nuqs";
 import { parseAsInteger } from "nuqs";
+import { getImageUrl } from "@/api/upload";
+import { ImageIcon as ImageIconLucide } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -121,6 +123,7 @@ export function TokenTable({
         tags: token.tags || [],
         createdAt: token.createdAt,
         translations: token.translations,
+        screenshots: token.screenshots || [],
       })),
     [tokens]
   );
@@ -183,6 +186,60 @@ export function TokenTable({
         label: "Key",
       },
       size: 250,
+    },
+    {
+      id: "screenshots",
+      accessorKey: "screenshots",
+      header: ({ column }: { column: Column<any, unknown> }) => (
+        <DataTableColumnHeader
+          className="whitespace-nowrap"
+          column={column}
+          title="截图"
+        />
+      ),
+      cell: ({ row }) => {
+        const screenshots = row.original.screenshots || [];
+        return (
+          <div className="flex items-center gap-1">
+            {screenshots.length > 0 ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      <ImageIconLucide className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm text-gray-600">{screenshots.length}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="p-2">
+                    <div className="flex flex-wrap gap-2 max-w-[400px]">
+                      {screenshots.slice(0, 3).map((screenshot: string, index: number) => (
+                        <img
+                          key={index}
+                          src={getImageUrl(screenshot)}
+                          alt={`Screenshot ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                      ))}
+                      {screenshots.length > 3 && (
+                        <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
+                          +{screenshots.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <span className="text-gray-400 text-sm">-</span>
+            )}
+          </div>
+        );
+      },
+      meta: {
+        label: "截图",
+      },
+      size: 80,
+      enableSorting: false,
     },
     ...(languages.map((lang) => ({
       id: lang,

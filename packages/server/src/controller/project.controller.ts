@@ -148,6 +148,7 @@ export class ProjectController {
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Using translation object directly instead of array
+      screenshots?: string[]; // Add screenshots field
     },
     @CurrentUser() user: UserPayload,
   ) {
@@ -191,6 +192,7 @@ export class ProjectController {
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Add direct translation object
+      screenshots?: string[]; // Add screenshots field
     },
     @CurrentUser() user: UserPayload,
   ) {

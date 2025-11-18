@@ -46,11 +46,13 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     tags: string;
     comment: string;
     translations: Record<string, string>;
+    screenshots?: string[];
   }>({
     key: "",
     tags: "",
     comment: "",
     translations: {},
+    screenshots: [],
   });
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -207,6 +209,14 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     }));
   };
 
+  // Screenshots field handler
+  const handleScreenshotsChange = (screenshots: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      screenshots,
+    }));
+  };
+
   // Get translation text for a specific language
   const getTranslationText = (token: Token, lang: string): string => {
     if (!token.translations) return "";
@@ -263,6 +273,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
           tags: tagArray,
           comment: formData.comment,
           translations: formData.translations, // Pass translations object directly
+          screenshots: formData.screenshots, // Include screenshots
         });
 
         // Update local state
@@ -282,6 +293,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
           tags: tagArray,
           comment: formData.comment,
           translations: formData.translations, // Pass translations object directly
+          screenshots: formData.screenshots, // Include screenshots
         });
 
         setTokens((prev) => [...prev, newToken]);
@@ -375,6 +387,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       tags: token.tags.join(", "),
       comment: token.comment || "",
       translations,
+      screenshots: token.screenshots || [],
     });
 
     setIsDrawerOpen(true);
@@ -653,6 +666,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         currentToken={currentToken}
         onInputChange={handleInputChange}
         onTranslationChange={handleTranslationChange}
+        onScreenshotsChange={handleScreenshotsChange}
         onSubmit={handleSubmit}
         onAddNew={handleOpenAddDrawer}
         onTranslate={handleTranslate}

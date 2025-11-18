@@ -37,6 +37,8 @@ import {
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { generateTokenKeyWithAi } from "@/api/ai";
 import { toast } from "@/hooks/use-toast";
+import { uploadImage, getImageUrl } from "@/api/upload";
+import { Image as ImageIcon, X, Upload } from "lucide-react";
 
 interface TokenFormDrawerProps {
   isOpen: boolean;
@@ -49,6 +51,7 @@ interface TokenFormDrawerProps {
     tags: string;
     comment: string;
     translations: Record<string, string>;
+    screenshots?: string[];
   };
   languages?: string[];
   currentToken?: Token;
@@ -58,6 +61,7 @@ interface TokenFormDrawerProps {
       | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
   onTranslationChange: (lang: string, value: string) => void;
+  onScreenshotsChange: (screenshots: string[]) => void;
   onSubmit: () => void;
   onAddNew: () => void;
   onTranslate: () => void;
@@ -86,12 +90,14 @@ export function TokenFormDrawer({
   currentToken,
   onInputChange,
   onTranslationChange,
+  onScreenshotsChange,
   onSubmit,
   onAddNew,
   onTranslate,
 }: TokenFormDrawerProps) {
   const t = useTranslations("tokenForm");
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
@@ -117,6 +123,60 @@ export function TokenFormDrawer({
         target: { value: result.data, name: "key" },
       } as React.ChangeEvent<HTMLInputElement>);
     }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "错误",
+        description: "请上传图片文件",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 检查文件大小（限制 5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "错误",
+        description: "图片大小不能超过 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const result = await uploadImage(file);
+      const currentScreenshots = formData.screenshots || [];
+      // 使用 CDN 返回的 URL
+      onScreenshotsChange([...currentScreenshots, result.url]);
+      toast({
+        title: "上传成功",
+        description: `图片已成功上传到 CDN`,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "上传失败",
+        description: error instanceof Error ? error.message : "图片上传失败，请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+      // 清空 input 的值，以便可以重复上传同一文件
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveScreenshot = (index: number) => {
+    const currentScreenshots = formData.screenshots || [];
+    const newScreenshots = currentScreenshots.filter((_, i) => i !== index);
+    onScreenshotsChange(newScreenshots);
   };
 
   return (
@@ -240,6 +300,57 @@ export function TokenFormDrawer({
                 onChange={onInputChange}
                 placeholder={t("commentPlaceholder")}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="screenshots">上下文截图</Label>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {(formData.screenshots || []).map((screenshot, index) => (
+                    <div
+                      key={index}
+                      className="relative group w-24 h-24 border rounded-md overflow-hidden"
+                    >
+                      <img
+                        src={getImageUrl(screenshot)}
+                        alt={`Screenshot ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveScreenshot(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label
+                    htmlFor="screenshot-upload"
+                    className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    {isUploadingImage ? (
+                      <div className="text-xs text-gray-500">上传中...</div>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-gray-400 mb-1" />
+                        <span className="text-xs text-gray-500">上传图片</span>
+                      </>
+                    )}
+                  </label>
+                  <input
+                    id="screenshot-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={isUploadingImage}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  支持 JPG、PNG、GIF、WebP 格式，单个文件不超过 5MB
+                </p>
+              </div>
             </div>
 
             {languages.length > 0 && <Separator className="my-2" />}
