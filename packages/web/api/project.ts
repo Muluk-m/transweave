@@ -35,6 +35,7 @@ export async function updateProject(id: string, data: {
   name?: string;
   description?: string;
   languages?: string[];
+  modules?: Array<{ name: string; code: string }>;
   url?: string;
 }): Promise<Project> {
   return apiClient.put(`${API_BASE}/update/${id}`, data);
@@ -70,6 +71,7 @@ export async function getProjectTokens(projectId: string): Promise<Token[]> {
 // Create new token
 export async function createToken(projectId: string, data: {
   key: string;
+  module?: string;
   tags?: string[];
   comment?: string;
   translations?: Record<string, string>; // Changed to directly use translation object
@@ -89,6 +91,7 @@ export async function getToken(tokenId: string): Promise<Token> {
 // Update token
 export async function updateToken(tokenId: string, data: {
   key?: string;
+  module?: string;
   tags?: string[];
   comment?: string;
   screenshots?: string[];
@@ -100,6 +103,15 @@ export async function updateToken(tokenId: string, data: {
 // Delete token
 export async function deleteToken(tokenId: string): Promise<void> {
   return apiClient.delete(`${API_BASE}/token/${tokenId}`);
+}
+
+// Module management
+export async function addModule(projectId: string, module: string): Promise<Project> {
+  return apiClient.post(`${API_BASE}/module/${projectId}`, { module });
+}
+
+export async function removeModule(projectId: string, module: string): Promise<Project> {
+  return apiClient.delete(`${API_BASE}/module/${projectId}/${module}`);
 }
 
 // Export project copy

@@ -4,6 +4,7 @@ import { useAtom } from "jotai";
 import { nowProjectAtom } from "@/jotai";
 import { ProjectOverviewTab } from "@/components/views/projectView/ProjectOverviewTab";
 import { ProjectTokensTab } from "@/components/views/projectView/ProjectTokensTab";
+import { ProjectModulesTab } from "@/components/views/projectView/ProjectModulesTab";
 import { ProjectImportTab } from "@/components/views/projectView/ProjectImportTab";
 import { ProjectExportTab } from "@/components/views/projectView/ProjectExportTab";
 import { ProjectSettingTab } from "@/components/views/projectView/ProjectSettingTab";
@@ -19,7 +20,7 @@ export function ProjectView() {
       defaultValue="overview"
       className="w-full max-w-6xl mx-auto p-4 bg-white rounded-lg mt-6"
     >
-      <TabsList className="mb-4 grid grid-cols-6 gap-2">
+      <TabsList className="mb-4 grid grid-cols-7 gap-2">
         <TabsTrigger
           value="overview"
           className="px-2 py-1 text-gray-700 hover:text-blue-500 text-sm"
@@ -31,6 +32,12 @@ export function ProjectView() {
           className="px-2 py-1 text-gray-700 hover:text-blue-500 text-sm"
         >
           {t("project.tabs.tokens")}
+        </TabsTrigger>
+        <TabsTrigger
+          value="modules"
+          className="px-2 py-1 text-gray-700 hover:text-blue-500 text-sm"
+        >
+          模块管理
         </TabsTrigger>
         <TabsTrigger
           value="import"
@@ -64,6 +71,10 @@ export function ProjectView() {
 
       <TabsContent value="tokens">
         <ProjectTokensTab project={nowProject} />
+      </TabsContent>
+
+      <TabsContent value="modules">
+        <ProjectModulesTab />
       </TabsContent>
 
       <TabsContent value="import">

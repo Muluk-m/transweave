@@ -6,6 +6,18 @@ import { Team } from './team.schema';
 
 export type ProjectDocument = Project & Document;
 
+// Module Schema for nested module objects
+@Schema({ _id: false, timestamps: false })
+export class ProjectModule {
+  @Prop({ required: true })
+  name: string; // 模块名称（中文）
+
+  @Prop({ required: true })
+  code: string; // 模块代码（英文，用作 key 前缀）
+}
+
+export const ProjectModuleSchema = SchemaFactory.createForClass(ProjectModule);
+
 @Schema(baseSchemaOptions)
 export class Project {
   @Prop({ type: MongooseSchema.Types.ObjectId, auto: true })
@@ -34,6 +46,9 @@ export class Project {
 
   @Prop([String])
   languages: string[];
+
+  @Prop({ type: [ProjectModuleSchema], default: [] })
+  modules: ProjectModule[]; // Module/namespace prefixes for organizing translation keys
 
   @Prop()
   createdAt: Date;

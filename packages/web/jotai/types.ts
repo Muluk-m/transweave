@@ -32,6 +32,11 @@ export interface Membership {
   };
 }
 
+export interface ProjectModule {
+  name: string;  // 模块名称（中文）
+  code: string;  // 模块代码（英文，用作 key 前缀）
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -43,6 +48,7 @@ export interface Project {
   memberships: Membership[];
   description?: string;
   languages: string[];
+  modules?: ProjectModule[];
   createdAt?: number;
   updatedAt?: number;
 }
@@ -56,6 +62,7 @@ export interface TokenHistory {
 export interface Token {
   id: string;
   key: string;
+  module?: string;
   translations: Translation;
   tags: string[];
   comment?: string;

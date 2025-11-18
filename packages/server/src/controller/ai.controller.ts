@@ -20,8 +20,8 @@ export class AiController {
   }
 
   @Post('generate/key')
-  async generateKey(@Body() data: { remark: string; tag?: string }) {
-    const result = await this.aiService.generateTokenKey(data.remark, data.tag);
+  async generateKey(@Body() data: { remark: string; tag?: string; module?: string }) {
+    const result = await this.aiService.generateTokenKey(data.remark, data.tag, data.module);
     
     if (!result) { 
       throw new HttpException(

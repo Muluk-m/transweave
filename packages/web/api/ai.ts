@@ -23,6 +23,6 @@ export async function translateWithAi(text: string, from: string, to: string[]):
 /**
  * 生成多语言 key
  */
-export async function generateTokenKeyWithAi(remark: string, tag?: string) { 
-  return apiClient.post<{data: string}>(`${API_BASE}/generate/key`, { remark, tag })
+export async function generateTokenKeyWithAi(remark: string, tag?: string, module?: string) { 
+  return apiClient.post<{data: string}>(`${API_BASE}/generate/key`, { remark, tag, module })
 }
