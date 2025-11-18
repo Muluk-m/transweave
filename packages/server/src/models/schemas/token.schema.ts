@@ -37,6 +37,9 @@ export class Token {
   @Prop()
   comment: string;
 
+  @Prop([String])
+  screenshots: string[]; // CDN URLs of context screenshots
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Project', required: true })
   projectId: MongooseSchema.Types.ObjectId;
 

@@ -59,6 +59,7 @@ export interface Token {
   translations: Translation;
   tags: string[];
   comment?: string;
+  screenshots?: string[];
   history?: TokenHistory[];
   createdAt?: string;
   updatedAt?: string;

@@ -351,6 +351,7 @@ export class ProjectService {
     tags?: string[];
     comment?: string;
     translations?: Record<string, string>;
+    screenshots?: string[];
     userId: string;
     ipAddress?: string;
     userAgent?: string;
@@ -379,6 +380,7 @@ export class ProjectService {
           tags: data.tags || [],
           comment: data.comment || '',
           translations: data.translations || {},
+          screenshots: data.screenshots || [],
           history: [
             {
               user: new Types.ObjectId(data.userId),
@@ -456,6 +458,7 @@ export class ProjectService {
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>;
+      screenshots?: string[];
       userId: string;
       ipAddress?: string;
       userAgent?: string;
@@ -484,6 +487,7 @@ export class ProjectService {
     if (data.key !== undefined) updateData.key = data.key;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.comment !== undefined) updateData.comment = data.comment;
+    if (data.screenshots !== undefined) updateData.screenshots = data.screenshots;
 
     // 如果提供了翻译，合并而不是完全替换
     if (data.translations) {
