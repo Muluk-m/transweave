@@ -253,11 +253,11 @@ export function TokenTable({
                             key={index}
                             src={getImageUrl(screenshot)}
                             alt={`Screenshot ${index + 1}`}
-                            className="w-20 h-20 object-cover rounded border"
+                            className="w-50 h-50 object-cover rounded border"
                           />
                         ))}
                         {screenshots.length > 3 && (
-                          <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
+                          <div className="w-50 h-50 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
                             +{screenshots.length - 3}
                           </div>
                         )}
