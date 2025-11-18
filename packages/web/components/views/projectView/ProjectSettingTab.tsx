@@ -37,7 +37,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
     const { toast } = useToast();
 
     // Project language management
-    const availableLanguages = Languages.keys
+    const availableLanguages = Languages.keys;
     const [projectLanguages, setProjectLanguages] = useState<string[]>(
         project?.languages || ["en"]
     );

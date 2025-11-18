@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Copy, Pencil, Trash2, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,19 +42,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DataTableActionBar,
   DataTableActionBarAction,
   DataTableActionBarSelection,
 } from "@/components/data-table/data-table-action-bar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 interface TokenTableProps {
   tokens: Token[];
   languages: string[];
+  modules?: Array<{ name: string; code: string }>;
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
   onDeleteSelected: (selected: string[]) => void;
   onBatchTranslate?: (tokens: Token[]) => Promise<void>;
+  onBatchSetModule?: (tokens: Token[], moduleCode: string | null) => Promise<void>;
   isBatchTranslating?: boolean;
   toolBar: React.ReactNode;
 }
@@ -104,11 +114,13 @@ function TipsCopyableCell({
 export function TokenTable({
   tokens,
   languages,
+  modules = [],
   toolBar,
   onEdit,
   onDelete,
   onDeleteSelected,
   onBatchTranslate,
+  onBatchSetModule,
   isBatchTranslating = false,
 }: TokenTableProps) {
   const t = useTranslations("tokenTable");
@@ -118,6 +130,10 @@ export function TokenTable({
     urls: string[];
     currentIndex: number;
   } | null>(null);
+
+  const [isBatchModuleDialogOpen, setIsBatchModuleDialogOpen] = useState(false);
+  const [batchModuleTargetTokens, setBatchModuleTargetTokens] = useState<Token[]>([]);
+  const [batchSelectedModuleCode, setBatchSelectedModuleCode] = useState<string>("__no_module__");
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
@@ -218,6 +234,44 @@ export function TokenTable({
         label: "Key",
       },
       size: 250,
+    },
+    {
+      id: "module",
+      accessorKey: "module",
+      header: ({ column }: { column: Column<any, unknown> }) => (
+        <DataTableColumnHeader
+          className="whitespace-nowrap"
+          column={column}
+          title="模块"
+        />
+      ),
+      cell: ({ row }) => {
+        const moduleCode = row.original.module;
+        if (!moduleCode) {
+          return <span className="text-gray-400 text-sm">-</span>;
+        }
+        
+        // 从 modules 中找到对应的模块信息
+        const moduleInfo = modules.find(m => m.code === moduleCode);
+        
+        return (
+          <Badge variant="secondary" className="text-xs flex items-center gap-1 w-fit">
+            {moduleInfo ? (
+              <>
+                <span>{moduleInfo.name}</span>
+                <code className="text-[10px] opacity-70">({moduleCode})</code>
+              </>
+            ) : (
+              <code>{moduleCode}</code>
+            )}
+          </Badge>
+        );
+      },
+      meta: {
+        label: "模块",
+      },
+      size: 100,
+      enableSorting: true,
     },
     {
       id: "screenshots",
@@ -407,6 +461,74 @@ export function TokenTable({
 
   return (
     <>
+      {/* 批量设置模块对话框 */}
+      <Dialog
+        open={isBatchModuleDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsBatchModuleDialogOpen(false);
+            setBatchModuleTargetTokens([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量设置模块</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              已选择 {batchModuleTargetTokens.length} 个词条，设置它们的所属模块：
+            </p>
+            <Select
+              value={batchSelectedModuleCode}
+              onValueChange={setBatchSelectedModuleCode}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="选择模块" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__no_module__">无模块</SelectItem>
+                {modules.map((module) => (
+                  <SelectItem key={module.code} value={module.code}>
+                    <div className="flex items-center gap-2">
+                      <span>{module.name}</span>
+                      <code className="text-xs text-muted-foreground">
+                        ({module.code})
+                      </code>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsBatchModuleDialogOpen(false);
+                  setBatchModuleTargetTokens([]);
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!onBatchSetModule) return;
+                  const moduleCode =
+                    batchSelectedModuleCode === "__no_module__"
+                      ? null
+                      : batchSelectedModuleCode;
+                  await onBatchSetModule(batchModuleTargetTokens, moduleCode);
+                  setIsBatchModuleDialogOpen(false);
+                  setBatchModuleTargetTokens([]);
+                }}
+              >
+                确认应用
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!previewImages} onOpenChange={(open) => !open && setPreviewImages(null)}>
         <DialogContent className="max-w-4xl w-full">
           <DialogHeader>
@@ -473,6 +595,25 @@ export function TokenTable({
                   disabled={isBatchTranslating}
                 >
                   <LanguagesIcon className={isBatchTranslating ? "animate-pulse" : ""} />
+                </DataTableActionBarAction>
+              )}
+              {onBatchSetModule && (
+                <DataTableActionBarAction
+                  size="icon"
+                  tooltip="批量设置模块"
+                  onClick={() => {
+                    const selectedTokens = table
+                      .getFilteredSelectedRowModel()
+                      .rows.map((row) => getToken(row.id)!)
+                      .filter(Boolean);
+                    if (selectedTokens.length === 0) return;
+                    setBatchModuleTargetTokens(selectedTokens);
+                    setBatchSelectedModuleCode("__no_module__");
+                    setIsBatchModuleDialogOpen(true);
+                  }}
+                  disabled={isBatchTranslating}
+                >
+                  <Package />
                 </DataTableActionBarAction>
               )}
               <DataTableActionBarAction

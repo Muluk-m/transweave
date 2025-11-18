@@ -22,6 +22,7 @@ import {
   Languages,
   Download,
   Upload,
+  Package,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getProjectRecentActivities } from "@/api/project";
@@ -209,6 +210,25 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     // Mock last updated time
     const lastUpdated = t("today");
 
+    // Calculate module statistics
+    const modules = project.modules || [];
+    const moduleStats = new Map<string, { name: string; code: string; count: number }>();
+    let tokensWithoutModule = 0;
+    
+    tokens.forEach((token) => {
+      if (token.module) {
+        const moduleInfo = modules.find(m => m.code === token.module);
+        const current = moduleStats.get(token.module);
+        moduleStats.set(token.module, {
+          name: moduleInfo?.name || token.module,
+          code: token.module,
+          count: (current?.count || 0) + 1
+        });
+      } else {
+        tokensWithoutModule++;
+      }
+    });
+
     return {
       totalTokens: tokens.length,
       languages,
@@ -216,6 +236,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       tags: Array.from(allTags),
       lastUpdated,
       teamMembers,
+      modules,
+      moduleStats,
+      tokensWithoutModule,
     };
   }, [project, t]);
 
@@ -376,6 +399,75 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Module Statistics */}
+      {projectStats.modules.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              模块统计
+            </CardTitle>
+            <CardDescription>
+              按功能模块划分的词条分布情况
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Array.from(projectStats.moduleStats.values()).map((moduleData) => {
+                const percentage = projectStats.totalTokens > 0
+                  ? Math.round((moduleData.count / projectStats.totalTokens) * 100)
+                  : 0;
+
+                return (
+                  <div key={moduleData.code} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-blue-500" />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{moduleData.name}</span>
+                          <code className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">
+                            {moduleData.code}
+                          </code>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{moduleData.count} 个词条</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({percentage}%)
+                        </span>
+                      </div>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                );
+              })}
+              {projectStats.tokensWithoutModule > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-500">无模块</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {projectStats.tokensWithoutModule} 个词条
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({Math.round((projectStats.tokensWithoutModule / projectStats.totalTokens) * 100)}%)
+                      </span>
+                    </div>
+                  </div>
+                  <Progress 
+                    value={Math.round((projectStats.tokensWithoutModule / projectStats.totalTokens) * 100)} 
+                    className="h-2" 
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

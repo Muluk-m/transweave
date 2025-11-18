@@ -29,6 +29,7 @@ interface ProjectTokensTabProps {
 export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const t = useTranslations("projectTokens");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -43,12 +44,14 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   const [formData, setFormData] = useState<{
     key: string;
+    module?: string;
     tags: string;
     comment: string;
     translations: Record<string, string>;
     screenshots?: string[];
   }>({
     key: "",
+    module: "",
     tags: "",
     comment: "",
     translations: {},
@@ -97,6 +100,17 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const filteredAndSortedTokens = useMemo(() => {
     let result = [...tokens];
 
+    // Filter by module
+    if (selectedModule) {
+      if (selectedModule === "__no_module__") {
+        // 筛选无模块的词条
+        result = result.filter((token) => !token.module);
+      } else {
+        // 筛选指定模块的词条
+        result = result.filter((token) => token.module === selectedModule);
+      }
+    }
+
     // Filter by tag
     if (selectedTag) {
       result = result.filter((token) => token.tags.includes(selectedTag));
@@ -116,7 +130,6 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     // Sort
     if (sorting.length > 0) {
       const sort = sorting[0];
-      console.log(sort);
       if (sort) {
         result.sort((a, b) => {
           let aValue: any;
@@ -145,7 +158,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     }
 
     return result;
-  }, [tokens, selectedTag, searchTerm, sorting]);
+  }, [tokens, selectedModule, selectedTag, searchTerm, sorting]);
 
   const isValidKey = (key: string) => {
     return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
@@ -217,6 +230,45 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     }));
   };
 
+  // Module field handler
+  const handleModuleChange = (module: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      module,
+    }));
+  };
+
+  // 批量设置模块
+  const handleBatchSetModule = async (selectedTokens: Token[], moduleCode: string | null) => {
+    if (!project?.id) return;
+
+    try {
+      // 逐个更新，保证本地状态和服务端一致
+      const updatedTokenMap = new Map<string, Token>();
+      for (const token of selectedTokens) {
+        const updated = await updateToken(token.id, {
+          module: moduleCode || undefined,
+        });
+        updatedTokenMap.set(token.id, updated);
+      }
+
+      // 更新本地 tokens 列表
+      setTokens((prev) =>
+        prev.map((t) => updatedTokenMap.get(t.id) ?? t)
+      );
+
+      toast({
+        title: "批量更新模块成功",
+      });
+    } catch (error) {
+      console.error("Batch set module error:", error);
+      toast({
+        title: "批量更新模块失败",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Get translation text for a specific language
   const getTranslationText = (token: Token, lang: string): string => {
     if (!token.translations) return "";
@@ -270,6 +322,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         // Update token and its translations
         const updatedToken = await updateToken(currentTokenId, {
           key: formData.key,
+          module: formData.module,
           tags: tagArray,
           comment: formData.comment,
           translations: formData.translations, // Pass translations object directly
@@ -290,6 +343,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         // Create new token with translations
         const newToken = await createToken(project.id, {
           key: formData.key,
+          module: formData.module,
           tags: tagArray,
           comment: formData.comment,
           translations: formData.translations, // Pass translations object directly
@@ -384,6 +438,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
     setFormData({
       key: token.key,
+      module: token.module || "",
       tags: token.tags.join(", "),
       comment: token.comment || "",
       translations,
@@ -663,8 +718,10 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         isTranslating={isTranslating}
         formData={formData}
         languages={project?.languages}
+        modules={project?.modules}
         currentToken={currentToken}
         onInputChange={handleInputChange}
+        onModuleChange={handleModuleChange}
         onTranslationChange={handleTranslationChange}
         onScreenshotsChange={handleScreenshotsChange}
         onSubmit={handleSubmit}
@@ -708,9 +765,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       <TokenTable
         tokens={filteredAndSortedTokens}
         languages={project?.languages || []}
+        modules={project?.modules || []}
         onEdit={handleEditToken}
         onDelete={handleDeleteToken}
         onDeleteSelected={handleDeleteSelected}
+        onBatchSetModule={handleBatchSetModule}
         onBatchTranslate={handleBatchTranslateSelected}
         isBatchTranslating={isBatchTranslating}
         toolBar={
@@ -723,22 +782,41 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 onChange={handleSearchChange}
               />
             </div>
-            <Select
-              value={selectedTag || "all"}
-              onValueChange={handleTagChange}
-            >
-              <SelectTrigger className="h-[32px] w-fit">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allTags")}</SelectItem>
-                {allTags.map((tag, index) => (
-                  <SelectItem key={index} value={tag}>
-                    {tag}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select
+                value={selectedModule || "all"}
+                onValueChange={(value) => setSelectedModule(value === "all" ? null : value)}
+              >
+                <SelectTrigger className="h-[32px] w-[180px]">
+                  <SelectValue placeholder="所有模块" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有模块</SelectItem>
+                  <SelectItem value="__no_module__">无模块</SelectItem>
+                  {(project?.modules || []).map((module) => (
+                    <SelectItem key={module.code} value={module.code}>
+                      {module.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedTag || "all"}
+                onValueChange={handleTagChange}
+              >
+                <SelectTrigger className="h-[32px] w-fit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allTags")}</SelectItem>
+                  {allTags.map((tag, index) => (
+                    <SelectItem key={index} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         }
       />

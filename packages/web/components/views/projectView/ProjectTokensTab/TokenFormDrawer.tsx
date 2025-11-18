@@ -21,6 +21,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Bot,
   CircleHelp,
   History,
@@ -54,18 +61,21 @@ interface TokenFormDrawerProps {
   isTranslating: boolean;
   formData: {
     key: string;
+    module?: string;
     tags: string;
     comment: string;
     translations: Record<string, string>;
     screenshots?: string[];
   };
   languages?: string[];
+  modules?: Array<{ name: string; code: string }>;
   currentToken?: Token;
   onInputChange: (
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
+  onModuleChange: (module: string) => void;
   onTranslationChange: (lang: string, value: string) => void;
   onScreenshotsChange: (screenshots: string[]) => void;
   onSubmit: () => void;
@@ -93,8 +103,10 @@ export function TokenFormDrawer({
   isTranslating,
   formData,
   languages = [],
+  modules = [],
   currentToken,
   onInputChange,
+  onModuleChange,
   onTranslationChange,
   onScreenshotsChange,
   onSubmit,
@@ -126,7 +138,8 @@ export function TokenFormDrawer({
     setIsGeneratingKey(true);
     const result = await generateTokenKeyWithAi(
       formData.comment,
-      formData.tags
+      formData.tags,
+      formData.module
     ).catch(() => null);
     setIsGeneratingKey(false);
     if (result) {
@@ -386,6 +399,32 @@ export function TokenFormDrawer({
                 onChange={onInputChange}
                 placeholder={t("keyPlaceholder")}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="module">所属模块（可选）</Label>
+              <Select
+                value={formData.module || "__none__"}
+                onValueChange={(value) => onModuleChange(value === "__none__" ? "" : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择模块" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">无模块</SelectItem>
+                  {modules.map((module) => (
+                    <SelectItem key={module.code} value={module.code}>
+                      <div className="flex items-center gap-2">
+                        <span>{module.name}</span>
+                        <code className="text-xs text-gray-500">({module.code})</code>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                💡 选择模块后，AI 生成的 key 会自动带上模块代码前缀
+              </p>
             </div>
 
             <div className="grid gap-2">

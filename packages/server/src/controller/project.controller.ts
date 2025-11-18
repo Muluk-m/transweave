@@ -82,6 +82,7 @@ export class ProjectController {
       name?: string;
       description?: string;
       languages?: string[];
+      modules?: Array<{ name: string; code: string }>;
       url?: string;
     },
   ) {
@@ -115,6 +116,27 @@ export class ProjectController {
     return this.projectService.removeLanguage(id, language, user.userId);
   }
 
+  // Module management
+  @Post('module/:id')
+  @UseGuards(AuthGuard)
+  async addModule(
+    @Param('id') id: string,
+    @Body() data: { name: string; code: string },
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.projectService.addModule(
+      id,
+      { name: data.name, code: data.code },
+      user.userId,
+    );
+  }
+
+  @Delete('module/:id/:module')
+  @UseGuards(AuthGuard)
+  async removeModule(@Param('id') id: string, @Param('module') module: string, @CurrentUser() user: UserPayload) {
+    return this.projectService.removeModule(id, module, user.userId);
+  }
+
   // Check if user has permission to read/write project
   @Get('check/:id')
   @UseGuards(AuthGuard)
@@ -145,6 +167,7 @@ export class ProjectController {
     data: {
       projectId: string;
       key: string;
+      module?: string;
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Using translation object directly instead of array
@@ -189,6 +212,7 @@ export class ProjectController {
     @Body()
     data: {
       key?: string;
+      module?: string;
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>; // Add direct translation object

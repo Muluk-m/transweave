@@ -8,6 +8,7 @@ import { Model, Types } from 'mongoose';
 import {
   Project,
   ProjectDocument,
+  ProjectModule,
   Token,
   TokenDocument,
   TokenHistory,
@@ -84,7 +85,7 @@ export class ProjectService {
   }
 
   async findProjectById(id: string) {
-    return this.projectModel
+    const project = await this.projectModel
       .findById(id)
       .populate({
         path: 'tokens',
@@ -94,6 +95,28 @@ export class ProjectService {
         },
       })
       .exec();
+    
+    // 自动迁移：如果检测到旧格式模块数据，自动清空
+    if (project && project.modules && project.modules.length > 0) {
+      const hasOldFormat = (project.modules as any).some((m: any) => typeof m === 'string');
+      if (hasOldFormat) {
+        console.log(`项目 ${project.name} 检测到旧格式模块数据，自动清理...`);
+        await this.projectModel.findByIdAndUpdate(id, { $set: { modules: [] } }).exec();
+        // 重新获取更新后的数据
+        return this.projectModel
+          .findById(id)
+          .populate({
+            path: 'tokens',
+            populate: {
+              path: 'history.user',
+              select: 'name email id avatar',
+            },
+          })
+          .exec();
+      }
+    }
+    
+    return project;
   }
 
   async findProjectsByTeamId(teamId: string) {
@@ -106,6 +129,7 @@ export class ProjectService {
       name?: string;
       description?: string;
       languages?: string[];
+      modules?: ProjectModule[];
       url?: string;
       userId: string; // 添加userId用于记录操作者
       ipAddress?: string; // 可选的IP地址
@@ -120,6 +144,29 @@ export class ProjectService {
 
     // 准备更新数据，排除操作记录相关字段
     const { userId, ipAddress, userAgent, ...updateData } = data;
+
+    // 规范化 modules：兼容旧格式（string[]）和新格式（ProjectModule[]）
+    if (updateData.modules) {
+      // 把 string 转成 { name, code }，并根据 code 去重
+      const normalizedModulesMap = new Map<string, ProjectModule>();
+      (updateData.modules as any[]).forEach((m: any) => {
+        if (typeof m === 'string') {
+          const code = m;
+          if (!normalizedModulesMap.has(code)) {
+            normalizedModulesMap.set(code, { name: code, code });
+          }
+        } else if (m && typeof m.code === 'string') {
+          const code = m.code;
+          if (!normalizedModulesMap.has(code)) {
+            normalizedModulesMap.set(code, {
+              name: m.name || code,
+              code,
+            });
+          }
+        }
+      });
+      updateData.modules = Array.from(normalizedModulesMap.values());
+    }
 
     const updatedProject = await this.projectModel
       .findByIdAndUpdate(id, updateData, { new: true })
@@ -312,6 +359,116 @@ export class ProjectService {
     return project;
   }
 
+  // Module management
+  async addModule(
+    id: string,
+    module: ProjectModule,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const project = await this.projectModel.findById(id).exec();
+
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    if (!module.name || !module.code) {
+      throw new BadRequestException('模块名称和代码必须齐全');
+    }
+
+    // 验证模块代码格式
+    if (!/^[a-z][a-z0-9_]*$/i.test(module.code)) {
+      throw new BadRequestException('模块名只能包含字母、数字和下划线，且必须以字母开头');
+    }
+
+    // 确保modules数组存在且避免重复添加
+    const modules = project.modules || [];
+    if (modules.some((m) => m.code === module.code)) {
+      throw new BadRequestException('该模块代码已存在');
+    }
+
+    project.modules = [...modules, module];
+    const updatedProject = await project.save();
+
+    // 记录操作日志（可选）
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_UPDATE,
+      projectId: id,
+      userId,
+      details: {
+        entityId: id,
+        entityType: 'project',
+        entityName: project.name,
+        changes: [
+          {
+            field: 'modules',
+            oldValue: modules,
+            newValue: project.modules,
+          },
+        ],
+        metadata: {
+          action: 'add_module',
+          module,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return updatedProject;
+  }
+
+  async removeModule(
+    id: string,
+    moduleCode: string,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const project = await this.projectModel.findById(id).exec();
+
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    const oldModules = project.modules || [];
+    const newModules = oldModules.filter((m) => m.code !== moduleCode);
+
+    // 只有在实际删除了模块时才更新和记录日志
+    if (oldModules.length !== newModules.length) {
+      project.modules = newModules;
+      const updatedProject = await project.save();
+
+      // 记录操作日志（可选）
+      await this.activityLogService.create({
+        type: ActivityType.PROJECT_UPDATE,
+        projectId: id,
+        userId,
+        details: {
+          entityId: id,
+          entityType: 'project',
+          entityName: project.name,
+          changes: [{
+            field: 'modules',
+            oldValue: oldModules,
+            newValue: newModules,
+          }],
+          metadata: {
+            action: 'remove_module',
+            moduleCode,
+          },
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return updatedProject;
+    }
+
+    return project;
+  }
+
   // Check if user has permission to access the project
   async checkUserProjectPermission(
     projectId: string,
@@ -348,6 +505,7 @@ export class ProjectService {
   async createToken(data: {
     projectId: string;
     key: string;
+    module?: string;
     tags?: string[];
     comment?: string;
     translations?: Record<string, string>;
@@ -377,6 +535,7 @@ export class ProjectService {
         const token = new this.tokenModel({
           projectId: data.projectId,
           key: data.key,
+          module: data.module || '',
           tags: data.tags || [],
           comment: data.comment || '',
           translations: data.translations || {},
@@ -455,6 +614,7 @@ export class ProjectService {
     tokenId: string,
     data: {
       key?: string;
+      module?: string;
       tags?: string[];
       comment?: string;
       translations?: Record<string, string>;
@@ -485,6 +645,7 @@ export class ProjectService {
     // 准备更新数据
     const updateData = {} as TokenDocument;
     if (data.key !== undefined) updateData.key = data.key;
+    if (data.module !== undefined) updateData.module = data.module;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.comment !== undefined) updateData.comment = data.comment;
     if (data.screenshots !== undefined) updateData.screenshots = data.screenshots;

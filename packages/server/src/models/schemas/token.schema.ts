@@ -28,6 +28,9 @@ export class Token {
   @Prop({ required: true })
   key: string;
 
+  @Prop()
+  module: string; // Module code (e.g., 'smartShield', 'userCenter') - links to Project.modules[].code
+
   @Prop({ type: MongooseSchema.Types.Mixed, required: true })
   translations: Record<string, any>;
 
