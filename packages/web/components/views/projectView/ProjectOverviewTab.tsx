@@ -169,15 +169,28 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   };
 
   // Calculate project statistics
-  const projectStats = useMemo(() => {
+  const projectStats: {
+    totalTokens: number;
+    languages: string[];
+    completionRate: number;
+    tags: string[];
+    lastUpdated: string;
+    teamMembers: number;
+    modules: { name: string; code: string }[];
+    moduleStats: Map<string, { name: string; code: string; count: number }>;
+    tokensWithoutModule: number;
+  } = useMemo(() => {
     if (!project)
       return {
         totalTokens: 0,
-        languages: [],
+        languages: [] as string[],
         completionRate: 0,
-        tags: [],
+        tags: [] as string[],
         lastUpdated: t("today"),
         teamMembers: 0,
+        modules: [] as { name: string; code: string }[],
+        moduleStats: new Map<string, { name: string; code: string; count: number }>(),
+        tokensWithoutModule: 0,
       };
 
     const tokens = project.tokens || [];
@@ -401,7 +414,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       </div>
 
       {/* Module Statistics */}
-      {projectStats.modules.length > 0 && (
+      {Array.isArray(projectStats.modules) && projectStats.modules.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
