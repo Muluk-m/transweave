@@ -253,27 +253,37 @@ export function TokenTable({
         if (!moduleCode) {
           return <span className="text-gray-400 text-sm">-</span>;
         }
-        
-        // 从 modules 中找到对应的模块信息
-        const moduleInfo = modules.find(m => m.code === moduleCode);
-        
+
+        const moduleInfo = modules.find((m) => m.code === moduleCode);
+        const label = moduleInfo ? moduleInfo.name : moduleCode;
+
         return (
-          <Badge variant="secondary" className="text-xs flex items-center gap-1 w-fit">
-            {moduleInfo ? (
-              <>
-                <span>{moduleInfo.name}</span>
-                <code className="text-[10px] opacity-70">({moduleCode})</code>
-              </>
-            ) : (
-              <code>{moduleCode}</code>
-            )}
-          </Badge>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="secondary"
+                  className="text-xs flex items-center gap-1 w-fit cursor-default"
+                >
+                  {label}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <div className="font-medium mb-1">{label}</div>
+                  <div className="text-muted-foreground">
+                    模块代码：<code>{moduleCode}</code>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
       meta: {
         label: "模块",
       },
-      size: 100,
+      size: 140,
       enableSorting: true,
     },
     {
