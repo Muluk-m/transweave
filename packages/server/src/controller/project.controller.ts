@@ -255,6 +255,43 @@ export class ProjectController {
     return this.projectService.deleteToken(tokenId, user.userId);
   }
 
+  // Batch update token modules
+  @Post('tokens/batch/module')
+  @UseGuards(AuthGuard)
+  async batchUpdateTokenModule(
+    @Body()
+    data: {
+      tokenIds: string[];
+      moduleCode?: string | null;
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    const { tokenIds, moduleCode } = data;
+    if (!tokenIds || tokenIds.length === 0) {
+      throw new BadRequestException('No tokens provided');
+    }
+
+    // 权限校验：用第一个 token 的 projectId 做检查，其余在 Service 中保证同一项目
+    const firstToken = await this.projectService.getTokenById(tokenIds[0]);
+    if (!firstToken || !firstToken.projectId) {
+      throw new NotFoundException(`Project ${firstToken?.projectId} does not exist`);
+    }
+
+    const hasPermission = await this.projectService.checkUserProjectPermission(
+      firstToken.projectId.toString(),
+      user.userId,
+    );
+    if (!hasPermission) {
+      throw new ForbiddenException('You do not have permission to modify this content');
+    }
+
+    return this.projectService.batchUpdateTokenModule(
+      tokenIds,
+      moduleCode ?? null,
+      user.userId,
+    );
+  }
+
   // Export project content
   @Post('export/:projectId')
   @UseGuards(AuthGuard)

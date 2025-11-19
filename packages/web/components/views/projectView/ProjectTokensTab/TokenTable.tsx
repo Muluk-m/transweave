@@ -135,6 +135,8 @@ export function TokenTable({
   const [batchModuleTargetTokens, setBatchModuleTargetTokens] = useState<Token[]>([]);
   const [batchSelectedModuleCode, setBatchSelectedModuleCode] = useState<string>("__no_module__");
 
+  
+
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
     Languages.has(langCode)
@@ -146,6 +148,7 @@ export function TokenTable({
       tokens.map((token) => ({
         id: token.id,
         key: token.key,
+        module: token.module || "",
         tags: token.tags || [],
         createdAt: token.createdAt,
         translations: token.translations,
@@ -459,6 +462,9 @@ export function TokenTable({
     getRowId: (row) => row.id,
   });
 
+  const selectedRowModel = table.getFilteredSelectedRowModel();
+  const hasSelection = selectedRowModel.rows.length > 0;
+
   return (
     <>
       {/* 批量设置模块对话框 */}
@@ -611,25 +617,47 @@ export function TokenTable({
                     setBatchSelectedModuleCode("__no_module__");
                     setIsBatchModuleDialogOpen(true);
                   }}
-                  disabled={isBatchTranslating}
+                  disabled={isBatchTranslating || !hasSelection}
                 >
                   <Package />
                 </DataTableActionBarAction>
               )}
-              <DataTableActionBarAction
-                size="icon"
-                tooltip="删除选中"
-                onClick={() => {
-                  onDeleteSelected(
-                    table
-                      .getFilteredSelectedRowModel()
-                      .rows.map((row) => row.id)
-                  );
-                }}
-                disabled={isBatchTranslating}
-              >
-                <Trash2 />
-              </DataTableActionBarAction>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <span>
+                    <DataTableActionBarAction
+                      size="icon"
+                      tooltip="删除选中"
+                      disabled={isBatchTranslating || !hasSelection}
+                    >
+                      <Trash2 />
+                    </DataTableActionBarAction>
+                  </span>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认删除所选词条？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      将删除当前选中的 {selectedRowModel.rows.length} 个词条，此操作不可恢复。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onDeleteSelected(
+                          table
+                            .getFilteredSelectedRowModel()
+                            .rows.map((row) => row.id)
+                        );
+                      }}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      确认删除
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </DataTableActionBar>
         }

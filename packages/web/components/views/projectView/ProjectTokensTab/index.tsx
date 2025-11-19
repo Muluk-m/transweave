@@ -10,7 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createToken, updateToken, deleteToken } from "@/api/project";
+import {
+  createToken,
+  updateToken,
+  deleteToken,
+  batchUpdateTokenModule,
+} from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
 import { TokenTable } from "./TokenTable";
@@ -66,6 +71,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const [isBatchLoading, setIsBatchLoading] = useState<boolean>(false);
   const [isBatchTranslating, setIsBatchTranslating] = useState<boolean>(false);
   const [translateProgress, setTranslateProgress] = useState<number>(0);
+  const [isBatchSettingModule, setIsBatchSettingModule] = useState<boolean>(false);
+  const [batchModuleProgress, setBatchModuleProgress] = useState<number>(0);
 
   // Initialize tokens data
   useEffect(() => {
@@ -243,19 +250,18 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     if (!project?.id) return;
 
     try {
-      // 逐个更新，保证本地状态和服务端一致
-      const updatedTokenMap = new Map<string, Token>();
-      for (const token of selectedTokens) {
-        const updated = await updateToken(token.id, {
-          module: moduleCode || undefined,
-        });
-        updatedTokenMap.set(token.id, updated);
-      }
+      setIsBatchSettingModule(true);
+      setBatchModuleProgress(30);
+
+      const tokenIds = selectedTokens.map((t) => t.id);
+      const updatedTokens = await batchUpdateTokenModule(tokenIds, moduleCode);
 
       // 更新本地 tokens 列表
       setTokens((prev) =>
-        prev.map((t) => updatedTokenMap.get(t.id) ?? t)
+        prev.map((t) => updatedTokens.find((u) => u.id === t.id) ?? t),
       );
+
+      setBatchModuleProgress(100);
 
       toast({
         title: "批量更新模块成功",
@@ -266,6 +272,9 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         title: "批量更新模块失败",
         variant: "destructive",
       });
+    } finally {
+      setIsBatchSettingModule(false);
+      setBatchModuleProgress(0);
     }
   };
 
@@ -762,6 +771,18 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         </div>
       )}
 
+      {isBatchSettingModule && (
+        <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-purple-900">
+              批量更新模块进行中...
+            </span>
+            <span className="text-sm text-purple-700">{batchModuleProgress}%</span>
+          </div>
+          <Progress value={batchModuleProgress} className="h-2" />
+        </div>
+      )}
+
       <TokenTable
         tokens={filteredAndSortedTokens}
         languages={project?.languages || []}
@@ -771,7 +792,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onDeleteSelected={handleDeleteSelected}
         onBatchSetModule={handleBatchSetModule}
         onBatchTranslate={handleBatchTranslateSelected}
-        isBatchTranslating={isBatchTranslating}
+        isBatchTranslating={isBatchTranslating || isBatchSettingModule}
         toolBar={
           <div className="flex gap-2 items-center justify-between w-full">
             <div className="flex-1">

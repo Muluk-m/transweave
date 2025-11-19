@@ -105,6 +105,17 @@ export async function deleteToken(tokenId: string): Promise<void> {
   return apiClient.delete(`${API_BASE}/token/${tokenId}`);
 }
 
+// Batch update token module
+export async function batchUpdateTokenModule(
+  tokenIds: string[],
+  moduleCode: string | null,
+): Promise<Token[]> {
+  return apiClient.post(`${API_BASE}/tokens/batch/module`, {
+    tokenIds,
+    moduleCode,
+  });
+}
+
 // Module management
 export async function addModule(projectId: string, module: string): Promise<Project> {
   return apiClient.post(`${API_BASE}/module/${projectId}`, { module });

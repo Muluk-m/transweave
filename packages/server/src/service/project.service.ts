@@ -731,6 +731,76 @@ export class ProjectService {
     return updatedToken;
   }
 
+  // 批量更新令牌模块
+  async batchUpdateTokenModule(
+    tokenIds: string[],
+    moduleCode: string | null,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<TokenDocument[]> {
+    if (!tokenIds || tokenIds.length === 0) {
+      throw new BadRequestException('没有要更新的词条');
+    }
+
+    const tokens = await this.tokenModel
+      .find({ _id: { $in: tokenIds } })
+      .exec();
+
+    if (!tokens.length) {
+      throw new NotFoundException('要更新的词条不存在');
+    }
+
+    const projectIds = Array.from(
+      new Set(tokens.map((t) => String(t.projectId))),
+    );
+    if (projectIds.length > 1) {
+      throw new BadRequestException('一次只能更新同一项目下的词条模块');
+    }
+    const projectId = projectIds[0];
+
+    // 批量更新 module 字段
+    await this.tokenModel.updateMany(
+      { _id: { $in: tokenIds } },
+      { $set: { module: moduleCode ?? '' } },
+    );
+
+    const updatedTokens = await this.tokenModel
+      .find({ _id: { $in: tokenIds } })
+      .populate({
+        path: 'history.user',
+        select: 'name email id avatar',
+      })
+      .exec();
+
+    // 记录一条汇总操作日志
+    await this.activityLogService.create({
+      type: ActivityType.TOKEN_UPDATE,
+      projectId,
+      userId,
+      details: {
+        entityId: undefined,
+        entityType: 'token',
+        entityName: 'batch_update_module',
+        changes: [
+          {
+            field: 'module',
+            oldValue: undefined,
+            newValue: moduleCode ?? '',
+          },
+        ],
+        metadata: {
+          tokenIds,
+          moduleCode: moduleCode ?? '',
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return updatedTokens;
+  }
+
   // 删除令牌
   async deleteToken(
     tokenId: string,
