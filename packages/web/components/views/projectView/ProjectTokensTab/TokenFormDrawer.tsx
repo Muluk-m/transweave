@@ -606,7 +606,7 @@ function TokenHistorySheet({
                 if (!item.translations?.[lang]) return false;
                 if (index === 0) return true;
                 const prevItem = array[index - 1];
-                return item.translations[lang] !== prevItem.translations[lang];
+                return item.translations[lang] !== prevItem.translations?.[lang];
               })
               .sort(
                 (a, b) =>
