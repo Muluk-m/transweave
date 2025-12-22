@@ -21,7 +21,7 @@ import {
   imports: [
     (() => {
       const dbUrl =
-        process.env.DATABASE_URL || 'mongodb://localhost:27017/bondma';
+        process.env.DATABASE_URL || 'mongodb://admin:secret@localhost:27017/bondma?authSource=admin&replicaSet=rs0';
       return MongooseModule.forRoot(dbUrl, {
         authMechanism: 'SCRAM-SHA-1',
         bufferCommands: false,

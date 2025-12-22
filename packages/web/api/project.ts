@@ -142,6 +142,37 @@ export async function exportProjectTokens(projectId: string, options: {
   );
 }
 
+// Preview import before actually importing
+export async function previewImportTokens(projectId: string, data: {
+  language: string;
+  content: string;
+  format: 'json' | 'csv' | 'xml' | 'yaml';
+  mode: 'append' | 'replace';
+}): Promise<{
+  success: boolean;
+  changes: {
+    toAdd: Array<{ key: string; translation: string }>;
+    toUpdate: Array<{ 
+      key: string; 
+      oldTranslation: string; 
+      newTranslation: string;
+      tags?: string[];
+      comment?: string;
+    }>;
+    toDelete: Array<{ key: string; translation: string }>;
+    unchanged: Array<{ key: string; translation: string }>;
+    stats: {
+      added: number;
+      updated: number;
+      deleted: number;
+      unchanged: number;
+      total: number;
+    };
+  };
+}> {
+  return apiClient.post(`${API_BASE}/import/preview/${projectId}`, data);
+}
+
 // Import project copy
 export async function importProjectTokens(projectId: string, data: {
   language: string;

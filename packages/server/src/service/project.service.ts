@@ -45,8 +45,6 @@ export class ProjectService {
     try {
       let result: ProjectDocument | null = null;
       await session.withTransaction(async () => {
-
-        console.log(data);
         
         const project = new this.projectModel({
           ...data,
@@ -966,6 +964,112 @@ export class ProjectService {
   }
 
   // Import project content
+  /**
+   * Preview import tokens without actually importing
+   * Returns what will be added, updated, or deleted
+   */
+  async previewImportTokens(
+    projectId: string,
+    data: {
+      language: string; // 要导入的语言
+      content: string; // 文件内容
+      format: 'json' | 'csv' | 'xml' | 'yaml'; // 导入格式
+      mode: 'append' | 'replace'; // 导入模式
+    },
+  ) {
+    // 验证项目存在
+    const project = await this.projectModel.findById(projectId).exec();
+    if (!project) {
+      throw new NotFoundException('项目不存在');
+    }
+
+    // 验证语言是否在项目的支持语言列表中
+    if (!project.languages.includes(data.language)) {
+      throw new BadRequestException(`项目不支持"${data.language}"语言`);
+    }
+
+    // 解析导入的数据
+    const importData = parseImportData(
+      data.content,
+      data.format,
+      data.language,
+    );
+
+    if (!importData || Object.keys(importData).length === 0) {
+      throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
+    }
+
+    // 获取项目的所有当前令牌
+    const existingTokens = await this.tokenModel
+      .find({ projectId })
+      .lean()
+      .exec();
+
+    // 分类变更
+    const changes = {
+      toAdd: [] as Array<{ key: string; translation: string }>,
+      toUpdate: [] as Array<{ 
+        key: string; 
+        oldTranslation: string; 
+        newTranslation: string;
+        tags?: string[];
+        comment?: string;
+      }>,
+      toDelete: [] as Array<{ key: string; translation: string }>,
+      unchanged: [] as Array<{ key: string; translation: string }>,
+      stats: {
+        added: 0,
+        updated: 0,
+        deleted: 0,
+        unchanged: 0,
+        total: Object.keys(importData).length,
+      },
+    };
+
+    // 检查每个导入的键
+    for (const [key, value] of Object.entries(importData)) {
+      const existingToken = existingTokens.find((t) => t.key === key);
+
+      if (!existingToken) {
+        // 新增的 token
+        changes.toAdd.push({ key, translation: value });
+        changes.stats.added++;
+      } else {
+        // 检查是否需要更新
+        const currentValue = existingToken.translations?.[data.language] || '';
+        if (currentValue !== value) {
+          changes.toUpdate.push({
+            key,
+            oldTranslation: currentValue,
+            newTranslation: value,
+            tags: existingToken.tags,
+            comment: existingToken.comment,
+          });
+          changes.stats.updated++;
+        } else {
+          changes.unchanged.push({ key, translation: value });
+          changes.stats.unchanged++;
+        }
+      }
+    }
+
+    // 如果是替换模式，找出将被删除翻译的 tokens
+    if (data.mode === 'replace') {
+      const importKeySet = new Set(Object.keys(importData));
+      for (const token of existingTokens) {
+        if (!importKeySet.has(token.key) && token.translations?.[data.language]) {
+          changes.toDelete.push({
+            key: token.key,
+            translation: token.translations[data.language],
+          });
+          changes.stats.deleted++;
+        }
+      }
+    }
+
+    return changes;
+  }
+
   async importProjectTokens(
     projectId: string,
     data: {
