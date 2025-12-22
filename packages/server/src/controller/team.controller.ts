@@ -56,8 +56,6 @@ export class TeamController {
   async findAllEntireTeams(
     @CurrentUser() user: UserPayload,
   ) {
-    console.log('zws findAllEntireTeams', user);
-
     if (!isSuperAdmin(user.email)) {
       throw new UnauthorizedException()
     }

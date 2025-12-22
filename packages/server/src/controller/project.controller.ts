@@ -46,7 +46,6 @@ export class ProjectController {
       languages?: string[];
     },
   ) {
-    console.log({ user });
     
     return this.projectService.createProject({
       ...data,
@@ -403,6 +402,38 @@ export class ProjectController {
     } catch (error) {
       Logger.error(`Download failed: ${error.message}`, error.stack);
       throw error;
+    }
+  }
+
+  // Preview import before actually importing
+  @Post('import/preview/:projectId')
+  @UseGuards(AuthGuard)
+  async previewImport(
+    @Param('projectId') projectId: string,
+    @Body()
+    data: {
+      language: string; // Language to import
+      content: string; // File content
+      format: 'json' | 'csv' | 'xml' | 'yaml'; // Import format
+      mode: 'append' | 'replace'; // Import mode
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    // Verify permission
+    const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
+    if (!hasPermission) {
+      throw new ForbiddenException('You do not have permission to preview import for this project');
+    }
+
+    try {
+      const changes = await this.projectService.previewImportTokens(projectId, data);
+      return {
+        success: true,
+        changes,
+      };
+    } catch (error) {
+      Logger.error(`Import preview failed: ${error.message}`, error.stack);
+      throw new BadRequestException(`Import preview failed: ${error.message}`);
     }
   }
 

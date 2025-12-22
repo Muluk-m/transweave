@@ -1,6 +1,6 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException,  Injectable, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, catchError, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { UserService } from './user.service';
 import { hashPassword, verifyPassword } from 'src/utils/crypto';
 import { User } from '../models';

@@ -27,6 +27,32 @@ export function parseImportData(
 }
 
 /**
+ * Parse imported file content and return all languages
+ * Used for import preview and multi-language import
+ */
+export function parseImportDataMultiLanguage(
+  content: string,
+  format: 'json' | 'csv' | 'xml' | 'yaml',
+): Record<string, Record<string, string>> {
+  try {
+    switch (format) {
+      case 'json':
+        return parseJSONMultiLanguage(content);
+      case 'csv':
+        return parseCSVMultiLanguage(content);
+      case 'xml':
+        return parseXMLMultiLanguage(content);
+      case 'yaml':
+        return parseYAMLMultiLanguage(content);
+      default:
+        throw new Error(`Unsupported format: ${format}`);
+    }
+  } catch (error) {
+    throw new Error(`Failed to parse ${format} format file: ${error.message}`);
+  }
+}
+
+/**
  * Parse JSON format translation file
  */
 function parseJSON(content: string): Record<string, string> {
@@ -41,6 +67,46 @@ function parseJSON(content: string): Record<string, string> {
     // Convert to flat format key-value pairs
     const result: Record<string, string> = {};
     flattenObject(data, '', result);
+
+    return result;
+  } catch (error) {
+    throw new Error(`JSON parsing failed: ${error.message}`);
+  }
+}
+
+/**
+ * Parse JSON and return all languages
+ * Expects format: { translations: { key: { en: "...", "zh-CN": "..." } } }
+ * or flat format: { key: { en: "...", "zh-CN": "..." } }
+ */
+function parseJSONMultiLanguage(content: string): Record<string, Record<string, string>> {
+  try {
+    const data = JSON.parse(content);
+
+    if (typeof data !== 'object' || data === null) {
+      throw new Error('Incorrect JSON format');
+    }
+
+    // Check if it has a 'translations' wrapper
+    const translationsData = data.translations || data;
+
+    // Build language map: { lang: { key: value } }
+    const result: Record<string, Record<string, string>> = {};
+
+    // Flatten and organize by language
+    const flattened: Record<string, any> = {};
+    flattenObject(translationsData, '', flattened);
+
+    // Group by language
+    for (const [key, value] of Object.entries(flattened)) {
+      if (typeof value === 'object' && value !== null) {
+        // If value is an object, treat each key as a language
+        for (const [lang, translation] of Object.entries(value)) {
+          if (!result[lang]) result[lang] = {};
+          result[lang][key] = String(translation);
+        }
+      }
+    }
 
     return result;
   } catch (error) {
@@ -79,12 +145,33 @@ function convertToLanguageKeyMap(
 
 /**
  * Parse CSV format translation file
- * Assumes CSV format: first column is key, second column is value
+ * Assumes CSV format: first column is key, remaining columns are languages
  */
 function parseCSV(content: string, language: string): Record<string, string> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, ...lines] = content.split('\n').filter((line) => line.trim());
+    const languageKeyMap = parseCSVMultiLanguage(content);
+
+    if (languageKeyMap[language]) {
+      return languageKeyMap[language];
+    }
+
+    throw new Error(`Language "${language}" not found in CSV file`);
+  } catch (error) {
+    throw new Error(`CSV parsing failed: ${error.message}`);
+  }
+}
+
+/**
+ * Parse CSV and return all languages
+ * CSV format: key | en | zh-CN | ...
+ */
+function parseCSVMultiLanguage(content: string): Record<string, Record<string, string>> {
+  try {
+    const lines = content.split('\n').filter((line) => line.trim());
+    
+    if (lines.length === 0) {
+      throw new Error('CSV file is empty');
+    }
 
     const columnsList = lines.map((line) => {
       line = line.trim();
@@ -98,16 +185,10 @@ function parseCSV(content: string, language: string): Record<string, string> {
         columns = line.split(',');
       }
 
-      return columns.map((column) => column.trim()).filter((column) => column);
+      return columns.map((column) => column.trim());
     });
 
-    const languageKeyMap = convertToLanguageKeyMap(columnsList);
-
-    if (languageKeyMap[language]) {
-      return languageKeyMap[language];
-    }
-
-    throw new Error(`Language "${language}" not found in CSV file`);
+    return convertToLanguageKeyMap(columnsList);
   } catch (error) {
     throw new Error(`CSV parsing failed: ${error.message}`);
   }
@@ -171,6 +252,41 @@ function parseXML(content: string): Record<string, string> {
 }
 
 /**
+ * Parse XML and return all languages
+ * Expects format: <translations><string name="key"><en>...</en><zh-CN>...</zh-CN></string></translations>
+ */
+function parseXMLMultiLanguage(content: string): Record<string, Record<string, string>> {
+  try {
+    const result: Record<string, Record<string, string>> = {};
+
+    // Match string elements with name attribute
+    const stringRegex = /<string name="([^"]+)">([\s\S]*?)<\/string>/g;
+    let stringMatch;
+
+    while ((stringMatch = stringRegex.exec(content)) !== null) {
+      const key = stringMatch[1].trim();
+      const innerContent = stringMatch[2];
+
+      // Match language tags within the string element
+      const langRegex = /<([^>\/\s]+)>([^<]*)<\/\1>/g;
+      let langMatch;
+
+      while ((langMatch = langRegex.exec(innerContent)) !== null) {
+        const lang = langMatch[1].trim();
+        const value = langMatch[2].trim();
+
+        if (!result[lang]) result[lang] = {};
+        result[lang][key] = value;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error(`XML parsing failed: ${error.message}`);
+  }
+}
+
+/**
  * Parse YAML format translation file
  * Simple implementation, doesn't handle complex YAML
  */
@@ -186,6 +302,50 @@ function parseYAML(content: string): Record<string, string> {
       if (key && valueParts.length > 0) {
         const value = valueParts.join(':').trim();
         result[key.trim()] = value;
+      }
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error(`YAML parsing failed: ${error.message}`);
+  }
+}
+
+/**
+ * Parse YAML and return all languages
+ * Expects format:
+ * key:
+ *   en: "..."
+ *   zh-CN: "..."
+ */
+function parseYAMLMultiLanguage(content: string): Record<string, Record<string, string>> {
+  try {
+    const result: Record<string, Record<string, string>> = {};
+    const lines = content
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('#') && !line.trim().startsWith('---'));
+
+    let currentKey: string | null = null;
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+
+      const indent = line.search(/\S/);
+
+      if (indent === 0 && line.includes(':')) {
+        // Top-level key
+        const [key] = line.split(':');
+        currentKey = key.trim();
+      } else if (indent > 0 && line.includes(':') && currentKey) {
+        // Language line
+        const [lang, ...valueParts] = line.trim().split(':');
+        if (lang && valueParts.length > 0) {
+          const value = valueParts.join(':').trim().replace(/^["']|["']$/g, '');
+          const langKey = lang.trim();
+
+          if (!result[langKey]) result[langKey] = {};
+          result[langKey][currentKey] = value;
+        }
       }
     }
 

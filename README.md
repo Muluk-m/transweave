@@ -22,6 +22,14 @@ QLJ I18N Manager 是一个用于管理多语言资源的平台，帮助开发团
 pnpm install
 ```
 
+## 初始化数据库
+
+```bash
+chmod 600 conf/mongo-keyfile
+docker compose up -d
+docker exec -it mongodb mongosh -u admin -p secret --authenticationDatabase admin --eval "$(cat init/init-replica.js)"
+```
+
 ## 运行项目
 
 ```bash
