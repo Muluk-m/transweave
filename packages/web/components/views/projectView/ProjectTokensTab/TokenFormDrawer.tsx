@@ -3,7 +3,7 @@
 import type * as React from "react";
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Languages } from "@/constants";
+import { formatLanguageDisplay } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,7 @@ interface TokenFormDrawerProps {
     screenshots?: string[];
   };
   languages?: string[];
+  languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: Array<{ name: string; code: string }>;
   currentToken?: Token;
   onInputChange: (
@@ -103,6 +104,7 @@ export function TokenFormDrawer({
   isTranslating,
   formData,
   languages = [],
+  languageLabels = {},
   modules = [],
   currentToken,
   onInputChange,
@@ -124,9 +126,7 @@ export function TokenFormDrawer({
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
-    Languages.has(langCode)
-      ? `${Languages.raw(langCode)?.label} (${langCode})`
-      : langCode;
+    formatLanguageDisplay(langCode, languageLabels);
 
   const handleGenerateKey = async () => {
     if (!formData.comment) {

@@ -870,9 +870,20 @@
         "noLanguages": "未添加任何语种，请至少添加一种语言",
         "add": "添加语种",
         "addPlaceholder": "输入语言代码，如 zh-CN",
+        "codePlaceholder": "语言代码（如 th-TH）",
+        "labelPlaceholder": "中文备注（如 泰语）",
+        "addHelpText": "内置语言只需填写代码，自定义语言需同时填写代码和中文备注",
         "common": "常用语种",
         "saveSuccess": "语种设置已保存",
-        "saveButton": "保存语种设置"
+        "saveButton": "保存语种设置",
+        "customLanguageAdded": "自定义语言已添加",
+        "customLanguageAddedDescription": "已添加自定义语言 {label} ({code})",
+        "error": {
+          "codeRequired": "请输入语言代码",
+          "languageExists": "该语言已存在",
+          "labelRequired": "自定义语言需要填写中文备注",
+          "labelRequiredDescription": "非内置语言必须同时填写中文备注"
+        }
       },
       "advanced": {
         "title": "高级设置",

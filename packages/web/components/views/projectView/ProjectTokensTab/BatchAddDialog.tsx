@@ -62,7 +62,7 @@ export function BatchAddDialog({
     if (!key.trim()) {
       return t("validation.keyRequired");
     }
-    if (!/^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key)) {
+    if (!/^[a-z][a-zA-Z0-9_]*(\.[a-z][a-zA-Z0-9_]*)*$/.test(key)) {
       return t("validation.keyInvalid");
     }
     return undefined;

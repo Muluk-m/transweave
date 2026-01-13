@@ -48,6 +48,7 @@ export interface Project {
   memberships: Membership[];
   description?: string;
   languages: string[];
+  languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: ProjectModule[];
   createdAt?: number;
   updatedAt?: number;

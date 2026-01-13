@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Languages } from "@/constants";
+import { Languages, formatLanguageDisplay, isBuiltInLanguage } from "@/constants";
 import { deleteProject, updateProject } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
@@ -41,7 +41,11 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
     const [projectLanguages, setProjectLanguages] = useState<string[]>(
         project?.languages || ["en"]
     );
-    const [newLanguage, setNewLanguage] = useState<string>("");
+    const [projectLanguageLabels, setProjectLanguageLabels] = useState<Record<string, string>>(
+        project?.languageLabels || {}
+    );
+    const [newLanguageCode, setNewLanguageCode] = useState<string>("");
+    const [newLanguageLabel, setNewLanguageLabel] = useState<string>("");
 
     // Project advanced settings
     const [autoTranslate, setAutoTranslate] = useState<boolean>(false);
@@ -51,10 +55,51 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
 
     // Add language
     const handleAddLanguage = () => {
-        if (newLanguage && !projectLanguages.includes(newLanguage)) {
-            setProjectLanguages([...projectLanguages, newLanguage]);
-            setNewLanguage("");
+        if (!newLanguageCode) {
+            toast({
+                title: t('project.settings.languages.error.codeRequired'),
+                variant: 'destructive'
+            });
+            return;
         }
+
+        if (projectLanguages.includes(newLanguageCode)) {
+            toast({
+                title: t('project.settings.languages.error.languageExists'),
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // 如果不是内置语言且没有填写中文备注，提示用户
+        if (!isBuiltInLanguage(newLanguageCode) && !newLanguageLabel) {
+            toast({
+                title: t('project.settings.languages.error.labelRequired'),
+                description: t('project.settings.languages.error.labelRequiredDescription'),
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // 如果是自定义语言，更新 languageLabels
+        if (!isBuiltInLanguage(newLanguageCode) && newLanguageLabel) {
+            setProjectLanguageLabels({
+                ...projectLanguageLabels,
+                [newLanguageCode]: newLanguageLabel
+            });
+            
+            toast({
+                title: t('project.settings.languages.customLanguageAdded'),
+                description: t('project.settings.languages.customLanguageAddedDescription', {
+                    code: newLanguageCode,
+                    label: newLanguageLabel
+                }),
+            });
+        }
+
+        setProjectLanguages([...projectLanguages, newLanguageCode]);
+        setNewLanguageCode("");
+        setNewLanguageLabel("");
     };
 
     const router = useRouter()
@@ -94,6 +139,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                 url: projectUrl,
                 description: projectDescription,
                 languages: projectLanguages,
+                languageLabels: projectLanguageLabels,
             })
 
             setNowProject(projectInfo)
@@ -230,7 +276,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 <div className="flex flex-wrap gap-2">
                                     {sortedLanguages.map(lang => (
                                         <Badge key={lang} variant="outline" className="flex items-center gap-1 py-1.5">
-                                            {Languages.has(lang) ? `${Languages.raw(lang)?.label} (${lang})` : lang}
+                                            {formatLanguageDisplay(lang, projectLanguageLabels)}
                                             {
                                                 lang !== "en" && (
                                                     <button
@@ -251,15 +297,24 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             <div className="space-y-2">
                                 <Label>{t('project.settings.languages.add')}</Label>
                                 <div className="flex gap-2">
-                                    <Input
-                                        value={newLanguage}
-                                        onChange={(e) => setNewLanguage(e.target.value)}
-                                        placeholder={t('project.settings.languages.addPlaceholder')}
-                                        className="flex-1"
-                                    />
+                                    <div className="flex-1 space-y-2">
+                                        <Input
+                                            value={newLanguageCode}
+                                            onChange={(e) => setNewLanguageCode(e.target.value)}
+                                            placeholder={t('project.settings.languages.codePlaceholder')}
+                                        />
+                                        <Input
+                                            value={newLanguageLabel}
+                                            onChange={(e) => setNewLanguageLabel(e.target.value)}
+                                            placeholder={t('project.settings.languages.labelPlaceholder')}
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                            {t('project.settings.languages.addHelpText')}
+                                        </p>
+                                    </div>
                                     <Button
                                         onClick={handleAddLanguage}
-                                        className="flex items-center gap-1"
+                                        className="flex items-center gap-1 self-start"
                                     >
                                         <Plus className="h-4 w-4" />
                                         {t('common.add')}
@@ -283,7 +338,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                                 }
                                             }}
                                         >
-                                            {`${Languages.raw(lang)?.label} (${lang})`}
+                                            {formatLanguageDisplay(lang, projectLanguageLabels)}
                                         </Badge>
                                     ))}
                                 </div>

@@ -127,6 +127,7 @@ export class ProjectService {
       name?: string;
       description?: string;
       languages?: string[];
+      languageLabels?: Record<string, string>; // 自定义语言的中文备注
       modules?: ProjectModule[];
       url?: string;
       userId: string; // 添加userId用于记录操作者
@@ -179,6 +180,21 @@ export class ProjectService {
           field,
           oldValue: oldProject[field],
           newValue: updateData[field],
+        });
+      }
+    }
+
+    // 特殊处理 languageLabels（Map 类型）
+    if (updateData.languageLabels !== undefined) {
+      const oldLabels = oldProject.languageLabels 
+        ? Object.fromEntries(oldProject.languageLabels) 
+        : {};
+      const newLabels = updateData.languageLabels;
+      if (JSON.stringify(oldLabels) !== JSON.stringify(newLabels)) {
+        changes.push({
+          field: 'languageLabels',
+          oldValue: oldLabels,
+          newValue: newLabels,
         });
       }
     }

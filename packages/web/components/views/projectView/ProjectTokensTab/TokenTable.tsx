@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslations } from "next-intl";
 import { Languages as LanguagesIcon } from "lucide-react";
-import { Languages } from "@/constants";
+import { formatLanguageDisplay } from "@/constants";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +59,7 @@ import { Badge } from "@/components/ui/badge";
 interface TokenTableProps {
   tokens: Token[];
   languages: string[];
+  languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: Array<{ name: string; code: string }>;
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
@@ -114,6 +115,7 @@ function TipsCopyableCell({
 export function TokenTable({
   tokens,
   languages,
+  languageLabels = {},
   modules = [],
   toolBar,
   onEdit,
@@ -139,9 +141,7 @@ export function TokenTable({
 
   // Get localized language names
   const getLocalizedLanguageName = (langCode: string): string =>
-    Languages.has(langCode)
-      ? `${Languages.raw(langCode)?.label} (${langCode})`
-      : langCode;
+    formatLanguageDisplay(langCode, languageLabels);
 
   const data = useMemo(
     () =>

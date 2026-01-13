@@ -29,7 +29,7 @@ import {
   Download,
   Settings2,
 } from "lucide-react";
-import { Languages } from "@/constants";
+import { formatLanguageDisplay } from "@/constants";
 import { exportProjectTokens } from "@/api/project";
 import { useTranslations } from "next-intl";
 
@@ -253,9 +253,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                       size="sm"
                       onClick={() => toggleLanguage(lang)}
                     >
-                      {Languages.has(lang)
-                        ? `${Languages.raw(lang)?.label} (${lang})`
-                        : lang}
+                      {formatLanguageDisplay(lang, project?.languageLabels)}
                     </Button>
                   ))}
                 </div>

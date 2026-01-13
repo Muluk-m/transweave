@@ -47,6 +47,9 @@ export class Project {
   @Prop([String])
   languages: string[];
 
+  @Prop({ type: Map, of: String, default: {} })
+  languageLabels: Map<string, string>; // 自定义语言的中文备注，key 为语言代码，value 为中文名称
+
   @Prop({ type: [ProjectModuleSchema], default: [] })
   modules: ProjectModule[]; // Module/namespace prefixes for organizing translation keys
 
