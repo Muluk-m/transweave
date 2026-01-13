@@ -10,7 +10,7 @@ import { useDropzone } from "react-dropzone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProject, importProjectTokens, previewImportTokens } from "@/api/project";
 import { useTranslations } from "next-intl";
-import { Languages } from "@/constants";
+import { formatLanguageDisplay } from "@/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { nowProjectAtom } from "@/jotai";
 import { useSetAtom } from "jotai";
@@ -283,7 +283,7 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                 <SelectContent>
                                     {project?.languages?.map(lang => (
                                         <SelectItem key={lang} value={lang}>
-                                            {Languages.has(lang) ? `${Languages.raw(lang)?.label} (${lang})` : lang}
+                                            {formatLanguageDisplay(lang, project?.languageLabels)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

@@ -28,6 +28,7 @@ import { useTranslations } from "next-intl";
 import { getProjectRecentActivities } from "@/api/project";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { formatLanguageDisplay } from "@/constants";
 
 interface ProjectOverviewTabProps {
   project: Project | null;
@@ -294,7 +295,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               {projectStats.languages.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {projectStats.languages.join(", ")}
+              {projectStats.languages
+                .map((lang) => formatLanguageDisplay(lang, project?.languageLabels))
+                .join(", ")}
             </p>
           </CardContent>
         </Card>

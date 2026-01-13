@@ -8,6 +8,14 @@ export const baseSchemaOptions: SchemaOptions = {
     transform: (_doc, ret) => {
       delete ret._id;
       delete ret.__v;
+      
+      // 转换 Map 类型为普通对象
+      Object.keys(ret).forEach(key => {
+        if (ret[key] instanceof Map) {
+          ret[key] = Object.fromEntries(ret[key]);
+        }
+      });
+      
       return ret;
     },
   },
@@ -16,6 +24,14 @@ export const baseSchemaOptions: SchemaOptions = {
     transform: (_doc, ret) => {
       delete ret._id;
       delete ret.__v;
+      
+      // 转换 Map 类型为普通对象
+      Object.keys(ret).forEach(key => {
+        if (ret[key] instanceof Map) {
+          ret[key] = Object.fromEntries(ret[key]);
+        }
+      });
+      
       return ret;
     },
   },

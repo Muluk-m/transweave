@@ -81,6 +81,7 @@ export class ProjectController {
       name?: string;
       description?: string;
       languages?: string[];
+      languageLabels?: Record<string, string>; // 自定义语言的中文备注
       modules?: Array<{ name: string; code: string }>;
       url?: string;
     },

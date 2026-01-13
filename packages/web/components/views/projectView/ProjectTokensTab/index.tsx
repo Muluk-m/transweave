@@ -168,7 +168,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   }, [tokens, selectedModule, selectedTag, searchTerm, sorting]);
 
   const isValidKey = (key: string) => {
-    return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
+    return /^[a-z][a-zA-Z0-9_]*(\.[a-z][a-zA-Z0-9_]*)*$/.test(key);
   };
 
   // Check if a new key conflicts with existing keys
@@ -727,6 +727,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         isTranslating={isTranslating}
         formData={formData}
         languages={project?.languages}
+        languageLabels={project?.languageLabels}
         modules={project?.modules}
         currentToken={currentToken}
         onInputChange={handleInputChange}
@@ -786,6 +787,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       <TokenTable
         tokens={filteredAndSortedTokens}
         languages={project?.languages || []}
+        languageLabels={project?.languageLabels}
         modules={project?.modules || []}
         onEdit={handleEditToken}
         onDelete={handleDeleteToken}
