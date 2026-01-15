@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronRight,
   Globe,
-  Languages,
   LogOut,
   Moon,
   Sun,
@@ -27,6 +26,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getUserLanguage, setUserLanguage } from "@/lib/cookies";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
 
 export function HeaderView() {
   const [projects, setProjects] = useAtom(projectsAtom);
@@ -97,15 +97,13 @@ export function HeaderView() {
         {/* Left: Logo & Breadcrumb */}
         <div className="flex items-center gap-1">
           {/* Logo/Brand */}
+          <Logo className="h-6 w-6" />
           <Button
             onClick={onHomeBtnClick}
             variant="ghost"
-            className="flex items-center gap-2 px-3 hover:bg-primary/5 transition-colors"
+            className="flex items-center hover:bg-primary/5 transition-colors h-auto gap-2"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-sm">
-              <Languages className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-semibold text-foreground hidden sm:inline-block">
+            <span className="font-semibold text-xl text-foreground hidden sm:inline-block tracking-tight">
               {t("header.title")}
             </span>
           </Button>
