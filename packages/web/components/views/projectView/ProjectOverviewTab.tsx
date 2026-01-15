@@ -257,44 +257,40 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   }, [project, t]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
-          <p className="text-gray-600">
-            {project?.description || t("noDescription")}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+    <div className="space-y-6 animate-fade-in">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("documentCount")}
             </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectStats.totalTokens}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-foreground">{projectStats.totalTokens}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {t("documentCountDesc")}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("supportedLanguages")}
             </CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
+              <Globe className="h-4 w-4 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold text-foreground">
               {projectStats.languages.length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
               {projectStats.languages
                 .map((lang) => formatLanguageDisplay(lang, project?.languageLabels))
                 .join(", ")}
@@ -302,64 +298,85 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("translationProgress")}
             </CardTitle>
-            <Percent className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10">
+              <Percent className="h-4 w-4 text-success" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold text-foreground">
               {projectStats.completionRate}%
             </div>
-            <Progress className="mt-2" value={projectStats.completionRate} />
+            <Progress className="mt-2 h-2" value={projectStats.completionRate} />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("teamMembers")}
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning/10">
+              <Users className="h-4 w-4 text-warning" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projectStats.teamMembers}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-foreground">{projectStats.teamMembers}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {t("teamMembersDesc")}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        <Card>
+      {/* Activity and Info Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="border-border/50">
           <CardHeader>
-            <CardTitle>{t("recentActivity")}</CardTitle>
+            <CardTitle className="text-lg">{t("recentActivity")}</CardTitle>
             <CardDescription>{t("recentActivityDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {loading ? (
-              <div className="text-sm text-muted-foreground">
-                {t("loadingActivities")}
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-1/4 bg-muted animate-pulse rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : activities.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                {t("noRecentActivities")}
+              <div className="text-center py-8">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/50 mx-auto mb-3">
+                  <Clock className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("noRecentActivities")}
+                </p>
               </div>
             ) : (
               activities.map((activity, index) => (
-                <div key={index} className="flex items-center">
+                <div 
+                  key={index} 
+                  className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
                   <div
-                    className={`mr-4 rounded-full h-10 w-10 ${
+                    className={`rounded-xl h-10 w-10 ${
                       getActivityIcon(activity.type).colorClass
-                    } flex items-center justify-center`}
+                    } flex items-center justify-center flex-shrink-0`}
                   >
                     {getActivityIcon(activity.type).icon}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {getActivityDescription(activity)}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -372,44 +389,48 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
-            <CardTitle>{t("projectInfo")}</CardTitle>
+            <CardTitle className="text-lg">{t("projectInfo")}</CardTitle>
             <CardDescription>{t("projectInfoDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Clock className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{t("lastUpdated")}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{t("lastUpdated")}</span>
               </div>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-foreground">
                 {projectStats.lastUpdated}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <TagIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{t("tagCount")}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <TagIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{t("tagCount")}</span>
               </div>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-foreground">
                 {projectStats.tags.length}
               </span>
             </div>
-            <div>
-              <div className="flex items-center mb-2">
-                <TagIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{t("commonTags")}</span>
+            <div className="p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2 mb-3">
+                <TagIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{t("commonTags")}</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {projectStats.tags.slice(0, 5).map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-gray-200 text-gray-700 px-2 py-1 rounded-lg text-xs"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {projectStats.tags.length > 0 ? (
+                  projectStats.tags.slice(0, 5).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-primary/10 text-primary px-2.5 py-1 rounded-lg text-xs font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">暂无标签</span>
+                )}
               </div>
             </div>
           </CardContent>
@@ -418,56 +439,67 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
       {/* Module Statistics */}
       {Array.isArray(projectStats.modules) && projectStats.modules.length > 0 && (
-        <Card className="mt-6">
+        <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              模块统计
-            </CardTitle>
-            <CardDescription>
-              按功能模块划分的词条分布情况
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">模块统计</CardTitle>
+                <CardDescription>
+                  按功能模块划分的词条分布情况
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Array.from(projectStats.moduleStats.values()).map((moduleData) => {
+              {Array.from(projectStats.moduleStats.values()).map((moduleData, index) => {
                 const percentage = projectStats.totalTokens > 0
                   ? Math.round((moduleData.count / projectStats.totalTokens) * 100)
                   : 0;
 
                 return (
-                  <div key={moduleData.code} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-blue-500" />
+                  <div 
+                    key={moduleData.code} 
+                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                          <Package className="h-4 w-4 text-primary" />
+                        </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{moduleData.name}</span>
-                          <code className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">
+                          <span className="text-sm font-medium text-foreground">{moduleData.name}</span>
+                          <code className="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs font-mono">
                             {moduleData.code}
                           </code>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{moduleData.count} 个词条</span>
+                        <span className="text-sm font-semibold text-foreground">{moduleData.count}</span>
                         <span className="text-xs text-muted-foreground">
                           ({percentage}%)
                         </span>
                       </div>
                     </div>
-                    <Progress value={percentage} className="h-2" />
+                    <Progress value={percentage} className="h-1.5" />
                   </div>
                 );
               })}
               {projectStats.tokensWithoutModule > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-500">无模块</span>
+                <div className="p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">未分类</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        {projectStats.tokensWithoutModule} 个词条
+                      <span className="text-sm font-semibold text-foreground">
+                        {projectStats.tokensWithoutModule}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         ({Math.round((projectStats.tokensWithoutModule / projectStats.totalTokens) * 100)}%)
@@ -476,7 +508,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                   </div>
                   <Progress 
                     value={Math.round((projectStats.tokensWithoutModule / projectStats.totalTokens) * 100)} 
-                    className="h-2" 
+                    className="h-1.5" 
                   />
                 </div>
               )}

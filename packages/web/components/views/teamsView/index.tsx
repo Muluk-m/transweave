@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Users2 } from "lucide-react";
 import { useHooks } from "./useHooks";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { EmptyTeamsView } from "./EmptyTeamsView";
@@ -42,36 +42,60 @@ export default function TeamsView() {
     }, []);
     
     return (
-        <div className="container mx-auto py-10 mb-8">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">{t("teams.title")}</h2>
-                <Button onClick={() => setTeamDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+        <div className="page-container py-6">
+            {/* Header - 更紧凑的顶部栏 */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                        <Users2 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold text-foreground">
+                            {t("teams.title")}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {teams.length > 0 ? `${teams.length} 个团队` : '开始创建您的第一个团队'}
+                        </p>
+                    </div>
+                </div>
+                <Button 
+                    onClick={() => setTeamDialogOpen(true)}
+                    className="btn-gradient rounded-lg h-9 px-4"
+                >
+                    <Plus className="h-4 w-4 mr-1.5" />
                     {t("teams.createTeam")}
                 </Button>
             </div>
 
-            {loading && <LoadingTeamsView />}
+            {/* Content */}
+            <div className="animate-fade-in">
+                {loading && <LoadingTeamsView />}
 
-            {!loading && !teams.length && (
-                <EmptyTeamsView onCreateTeamClick={() => setTeamDialogOpen(true)} />
-            )}
+                {!loading && !teams.length && (
+                    <EmptyTeamsView onCreateTeamClick={() => setTeamDialogOpen(true)} />
+                )}
 
-            {!loading && !!teams.length && (
-                <div className="max-w-4xl mx-auto space-y-3">
-                    {teams.map((team) => (
-                        <TeamView
-                            key={team.id}
-                            team={team}
-                            handleSelectTeam={handleSelectTeam}
-                            handleDeleteTeam={handleDeleteTeam}
-                            handleViewTeamMembers={handleViewTeamMembers}
-                            loadingTeamId={loadingTeamId}
-                            router={router}
-                        />
-                    ))}
-                </div>
-            )}
+                {!loading && !!teams.length && (
+                    <div className="space-y-3">
+                        {teams.map((team, index) => (
+                            <div 
+                                key={team.id}
+                                className="animate-fade-in"
+                                style={{ animationDelay: `${index * 30}ms` }}
+                            >
+                                <TeamView
+                                    team={team}
+                                    handleSelectTeam={handleSelectTeam}
+                                    handleDeleteTeam={handleDeleteTeam}
+                                    handleViewTeamMembers={handleViewTeamMembers}
+                                    loadingTeamId={loadingTeamId}
+                                    router={router}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             <CreateTeamDialog
                 isOpen={teamDialogOpen}

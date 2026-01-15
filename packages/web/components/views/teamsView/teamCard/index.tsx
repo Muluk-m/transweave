@@ -15,7 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link, Settings, Pencil, Trash2, Users, Folder, Loader2, UserPlus, ExternalLink } from "lucide-react";
+import { Link, Settings, Pencil, Trash2, Users, Folder, Loader2, UserPlus, Plus } from "lucide-react";
 import { TeamProjectsDialog } from "./teamProjectsDialog";
 import { NewProjectDialog } from "../newProjectDialog";
 import { TeamMembersDialog } from "../teamMembersDialog";
@@ -80,49 +80,98 @@ export function TeamView(props: {
 
     return (
         <>
-            <div className={`border rounded-lg p-4 hover:border-primary/50 transition-colors ${nowTeam?.id === team.id ? 'border-primary bg-primary/5' : ''}`}>
-                {/* Header row */}
-                <div className="flex items-start justify-between gap-4 mb-3">
+            <div className={`
+                group relative
+                bg-card border rounded-lg
+                transition-all duration-200 
+                hover:border-primary/30
+                ${nowTeam?.id === team.id ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/50'}
+            `}>
+                {/* 单行布局 */}
+                <div className="flex items-center gap-4 p-4">
+                    {/* 团队图标 */}
+                    <div className={`
+                        flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0
+                        ${nowTeam?.id === team.id 
+                            ? 'bg-primary/10' 
+                            : 'bg-muted/50 group-hover:bg-primary/10'}
+                        transition-colors
+                    `}>
+                        <Users className={`h-5 w-5 ${nowTeam?.id === team.id ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'} transition-colors`} />
+                    </div>
+
+                    {/* 团队信息 */}
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold mb-1">{team.name}</h3>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                            <Link className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground truncate">
+                                {team.name}
+                            </h3>
+                            {nowTeam?.id === team.id && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0">
+                                    当前
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                            <Link className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">bondma.com/team/{team.url}</span>
                         </div>
                     </div>
 
-                    {/* Stats and settings */}
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                                <Users className="h-4 w-4" />
-                                <span>{team.memberships?.length || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <Folder className="h-4 w-4" />
-                                <span>{projects?.length || 0}</span>
-                            </div>
+                    {/* 统计信息 */}
+                    <div className="hidden sm:flex items-center gap-2 text-sm flex-shrink-0">
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/30 text-muted-foreground">
+                            <Users className="h-3.5 w-3.5" />
+                            <span>{team.memberships?.length || 0}</span>
                         </div>
+                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/30 text-muted-foreground">
+                            <Folder className="h-3.5 w-3.5" />
+                            <span>{projects?.length || 0}</span>
+                        </div>
+                    </div>
 
+                    {/* 操作按钮 */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                            variant={nowTeam?.id === team.id ? "secondary" : "default"}
+                            onClick={() => handleSelectTeam(team)}
+                            disabled={loadingTeamId === team.id}
+                            size="sm"
+                            className={`rounded-lg h-8 ${nowTeam?.id !== team.id ? 'btn-gradient' : ''}`}
+                        >
+                            {loadingTeamId === team.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                t('teams.card.enterTeam')
+                            )}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={handleViewMembers}
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-muted"
+                        >
+                            <UserPlus className="h-4 w-4" />
+                        </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 flex-shrink-0"
+                                    className="h-8 w-8 rounded-lg hover:bg-muted"
                                 >
                                     <Settings className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={openEditDialog}>
+                                <DropdownMenuItem onClick={openEditDialog} className="cursor-pointer">
                                     <Pencil className="h-4 w-4 mr-2" />
                                     {t('teams.card.editTeam')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     onClick={() => handleDeleteTeam(team.id)}
-                                    className="text-destructive focus:text-destructive"
+                                    className="text-destructive focus:text-destructive cursor-pointer"
                                 >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     {t('teams.card.deleteTeam')}
@@ -132,71 +181,69 @@ export function TeamView(props: {
                     </div>
                 </div>
 
-                {/* Projects section */}
-                <div className="mt-3 pt-3 border-t">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : projects && projects.length > 0 ? (
-                        <div className="max-h-48 overflow-y-auto space-y-1.5">
-                            {projects.map(project => (
+                {/* 项目列表 - 折叠在下方，仅在有项目时显示 */}
+                {!isLoading && projects && projects.length > 0 && (
+                    <div className="border-t border-border/30 px-4 py-2 bg-muted/20">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {projects.slice(0, 5).map(project => (
                                 <div
                                     key={project.id}
                                     onClick={() => handleNavigateToProject(project.id)}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer transition-colors"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md 
+                                        bg-card hover:bg-primary/5 border border-border/50 hover:border-primary/30
+                                        cursor-pointer transition-all text-sm group/item"
                                 >
-                                    <Folder className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                    <span className="text-sm truncate flex-1">{project.name}</span>
-                                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                                        {project.languages?.length || 0} langs
+                                    <Folder className="h-3.5 w-3.5 text-muted-foreground group-hover/item:text-primary" />
+                                    <span className="truncate max-w-[120px] group-hover/item:text-primary">
+                                        {project.name}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {project.languages?.length || 0}
                                     </span>
                                 </div>
                             ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-4">
-                            <p className="text-sm text-muted-foreground mb-2">
-                                {t('teams.card.noProjects')}
-                            </p>
+                            {projects.length > 5 && (
+                                <span className="text-xs text-muted-foreground px-2">
+                                    +{projects.length - 5} 更多
+                                </span>
+                            )}
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowNewProjectDialog(true)}
-                                className="text-xs"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
                             >
-                                {t('teams.card.createFirstProject')}
+                                <Plus className="h-3 w-3 mr-1" />
+                                新建
                             </Button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* Actions row */}
-                <div className="flex items-center gap-2 mt-4">
-                    <Button
-                        variant={nowTeam?.id === team.id ? "secondary" : "default"}
-                        onClick={() => handleSelectTeam(team)}
-                        disabled={loadingTeamId === team.id}
-                        size="sm"
-                    >
-                        {loadingTeamId === team.id ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                {t('teams.card.loading')}
-                            </>
-                        ) : (
-                            t('teams.card.enterTeam')
-                        )}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={handleViewMembers}
-                        size="sm"
-                    >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        {t('teams.card.inviteMembers')}
-                    </Button>
-                </div>
+                {/* 空项目提示 - 简洁版 */}
+                {!isLoading && (!projects || projects.length === 0) && (
+                    <div className="border-t border-border/30 px-4 py-2 bg-muted/20">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowNewProjectDialog(true)}
+                            className="h-7 text-xs text-muted-foreground hover:text-primary"
+                        >
+                            <Plus className="h-3 w-3 mr-1" />
+                            创建第一个项目
+                        </Button>
+                    </div>
+                )}
+
+                {/* 加载状态 */}
+                {isLoading && (
+                    <div className="border-t border-border/30 px-4 py-2 bg-muted/20">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            加载项目中...
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Dialog components */}

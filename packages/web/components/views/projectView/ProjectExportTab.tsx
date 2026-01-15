@@ -112,8 +112,8 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold mb-2 text-foreground">{t("title")}</h1>
+        <p className="text-muted-foreground">
           {t("description", { projectName: project?.name })}
         </p>
       </div>
@@ -150,64 +150,64 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                 >
                   <Label
                     htmlFor="json"
-                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 ${
-                      fileFormat === "json" ? "border-blue-500 bg-blue-50" : ""
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "json" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <FileJson className="h-8 w-8 text-blue-500" />
+                    <FileJson className="h-8 w-8 text-primary" />
                     <RadioGroupItem
                       value="json"
                       id="json"
                       className="sr-only"
                     />
-                    <div className="font-medium">{t("jsonFormat")}</div>
-                    <span className="text-xs text-gray-500">
+                    <div className="font-medium text-foreground">{t("jsonFormat")}</div>
+                    <span className="text-xs text-muted-foreground">
                       {t("jsonDesc")}
                     </span>
                   </Label>
 
                   <Label
                     htmlFor="csv"
-                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 ${
-                      fileFormat === "csv" ? "border-blue-500 bg-blue-50" : ""
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "csv" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <TableIcon className="h-8 w-8 text-green-500" />
+                    <TableIcon className="h-8 w-8 text-success" />
                     <RadioGroupItem value="csv" id="csv" className="sr-only" />
-                    <div className="font-medium">{t("csvFormat")}</div>
-                    <span className="text-xs text-gray-500">
+                    <div className="font-medium text-foreground">{t("csvFormat")}</div>
+                    <span className="text-xs text-muted-foreground">
                       {t("csvDesc")}
                     </span>
                   </Label>
 
                   <Label
                     htmlFor="xml"
-                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 ${
-                      fileFormat === "xml" ? "border-blue-500 bg-blue-50" : ""
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "xml" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <FileText className="h-8 w-8 text-orange-500" />
+                    <FileText className="h-8 w-8 text-warning" />
                     <RadioGroupItem value="xml" id="xml" className="sr-only" />
-                    <div className="font-medium">{t("xmlFormat")}</div>
-                    <span className="text-xs text-gray-500">
+                    <div className="font-medium text-foreground">{t("xmlFormat")}</div>
+                    <span className="text-xs text-muted-foreground">
                       {t("xmlDesc")}
                     </span>
                   </Label>
 
                   <Label
                     htmlFor="yaml"
-                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 ${
-                      fileFormat === "yaml" ? "border-blue-500 bg-blue-50" : ""
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "yaml" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <FileText className="h-8 w-8 text-purple-500" />
+                    <FileText className="h-8 w-8 text-accent" />
                     <RadioGroupItem
                       value="yaml"
                       id="yaml"
                       className="sr-only"
                     />
-                    <div className="font-medium">{t("yamlFormat")}</div>
-                    <span className="text-xs text-gray-500">
+                    <div className="font-medium text-foreground">{t("yamlFormat")}</div>
+                    <span className="text-xs text-muted-foreground">
                       {t("yamlDesc")}
                     </span>
                   </Label>
@@ -257,7 +257,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                     </Button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {selectedLanguages.length
                     ? t("languagesSelected", {
                         count: selectedLanguages.length,
@@ -272,15 +272,15 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                   {t("advancedOptions")}
                 </label>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                     <div>
                       <Label
                         htmlFor="empty-translations"
-                        className="font-medium"
+                        className="font-medium text-foreground"
                       >
                         {t("includeEmpty")}
                       </Label>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t("includeEmptyDesc")}
                       </p>
                     </div>
@@ -293,10 +293,10 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="prettify" className="font-medium">
+                      <Label htmlFor="prettify" className="font-medium text-foreground">
                         {t("prettify")}
                       </Label>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t("prettifyDesc")}
                       </p>
                     </div>
@@ -309,10 +309,10 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="metadata" className="font-medium">
+                      <Label htmlFor="metadata" className="font-medium text-foreground">
                         {t("metadata")}
                       </Label>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t("metadataDesc")}
                       </p>
                     </div>
@@ -335,7 +335,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center">
             {t("fileNote")}
           </p>
 
@@ -343,11 +343,11 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
           {exportStatus === "success" && (
             <Alert
               variant="default"
-              className="bg-green-50 border-green-200 mt-4"
+              className="bg-success/10 border-success/20 mt-4"
             >
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <AlertTitle>{t("exportSuccess")}</AlertTitle>
-              <AlertDescription>{t("exportSuccessDesc")}</AlertDescription>
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              <AlertTitle className="text-success">{t("exportSuccess")}</AlertTitle>
+              <AlertDescription className="text-success/80">{t("exportSuccessDesc")}</AlertDescription>
             </Alert>
           )}
         </CardContent>

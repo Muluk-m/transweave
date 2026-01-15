@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Book, Code, Github, Globe2, Layers, Lock, Users } from "lucide-react";
+import { ArrowRight, Book, Code, Github, Globe2, Layers, Lock, Users, Languages, Sparkles, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,34 +56,40 @@ export default function WelcomeView() {
     // 使用i18n获取功能列表
     const features = [
         {
-            icon: <Globe2 className="h-8 w-8 text-primary" />,
+            icon: <Globe2 className="h-6 w-6" />,
             title: t('features.items.0.title'),
-            description: t('features.items.0.description')
+            description: t('features.items.0.description'),
+            gradient: "from-blue-500 to-cyan-500"
         },
         {
-            icon: <Users className="h-8 w-8 text-primary" />,
+            icon: <Users className="h-6 w-6" />,
             title: t('features.items.1.title'),
-            description: t('features.items.1.description')
+            description: t('features.items.1.description'),
+            gradient: "from-violet-500 to-purple-500"
         },
         {
-            icon: <Layers className="h-8 w-8 text-primary" />,
+            icon: <Layers className="h-6 w-6" />,
             title: t('features.items.2.title'),
-            description: t('features.items.2.description')
+            description: t('features.items.2.description'),
+            gradient: "from-amber-500 to-orange-500"
         },
         {
-            icon: <Code className="h-8 w-8 text-primary" />,
+            icon: <Code className="h-6 w-6" />,
             title: t('features.items.3.title'),
-            description: t('features.items.3.description')
+            description: t('features.items.3.description'),
+            gradient: "from-emerald-500 to-teal-500"
         },
         {
-            icon: <Lock className="h-8 w-8 text-primary" />,
+            icon: <Lock className="h-6 w-6" />,
             title: t('features.items.4.title'),
-            description: t('features.items.4.description')
+            description: t('features.items.4.description'),
+            gradient: "from-rose-500 to-pink-500"
         },
         {
-            icon: <Github className="h-8 w-8 text-primary" />,
+            icon: <Github className="h-6 w-6" />,
             title: t('features.items.5.title'),
-            description: t('features.items.5.description')
+            description: t('features.items.5.description'),
+            gradient: "from-slate-600 to-slate-800"
         }
     ];
 
@@ -120,188 +126,321 @@ export default function WelcomeView() {
     ];
 
     return (
-        <div className="container mx-auto py-10 px-4 md:px-6">
+        <div className="relative overflow-hidden">
+            {/* Background decorations */}
+            <div className="absolute inset-0 -z-10 overflow-hidden">
+                <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+                <div className="absolute top-1/3 -left-32 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
+            </div>
 
-            {/* 英雄部分 */}
-            <section className="flex flex-col md:flex-row items-center justify-between gap-8 py-10 md:py-16">
-                <div className="flex-1 space-y-6">
-                    <div className="inline-block rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-                        {t('welcome.tagline')}
-                    </div>
-                    <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl" >
+            <div className="page-container">
+                {/* Hero Section */}
+                <section className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16 lg:py-24 animate-fade-in-up">
+                    <div className="flex-1 space-y-8 text-center lg:text-left">
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20">
+                            <Sparkles className="h-4 w-4" />
+                            {t('welcome.tagline')}
+                        </div>
+                        
+                        {/* Title */}
+                        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                             {t.rich('welcome.title', {
-                                span: (chunks) => <span>{chunks}</span>
+                                span: (chunks) => (
+                                    <span className="text-gradient bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer">
+                                        {chunks}
+                                    </span>
+                                )
                             })}
-                    </h1>
-                    <p className="text-xl text-muted-foreground">
-                        {t('welcome.description')}
-                    </p>
-                    <div className="flex flex-wrap gap-4">
-                        <Button size="lg" onClick={handleGetStarted}>
-                            {t('welcome.getStarted')}
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="lg" onClick={handleTutorial}>
-                            {t('welcome.learnMore')}
-                        </Button>
+                        </h1>
+                        
+                        {/* Description */}
+                        <p className="text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
+                            {t('welcome.description')}
+                        </p>
+                        
+                        {/* CTA Buttons */}
+                        <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+                            <Button 
+                                size="lg" 
+                                onClick={handleGetStarted}
+                                className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg"
+                            >
+                                {t('welcome.getStarted')}
+                                <ArrowRight className="ml-2 h-5 w-5" />
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="lg" 
+                                onClick={handleTutorial}
+                                className="rounded-xl px-8 h-12 text-base border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                            >
+                                {t('welcome.learnMore')}
+                            </Button>
+                        </div>
+                        
+                        {/* Stats */}
+                        <div className="flex gap-8 pt-4 justify-center lg:justify-start">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-foreground">10+</div>
+                                <div className="text-sm text-muted-foreground">支持语言</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-foreground">99.9%</div>
+                                <div className="text-sm text-muted-foreground">可用性</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-foreground">24/7</div>
+                                <div className="text-sm text-muted-foreground">技术支持</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="flex-1 relative">
-                    <div className="relative h-[350px] w-full overflow-hidden rounded-lg shadow-xl">
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background"></div>
-                        <Image 
-                            src="/fanyi.webp" 
-                            alt="Bondma 界面预览"
-                            sizes="(min-width: 768px) 50vw, 100vw"
-                            fill
-                            className="object-cover"
-                            priority
-                        />
+                    
+                    {/* Hero Image */}
+                    <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
+                        <div className="relative h-[400px] lg:h-[500px] w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 z-10"></div>
+                            <Image 
+                                src="/fanyi.webp" 
+                                alt="Bondma 界面预览"
+                                sizes="(min-width: 1024px) 50vw, 100vw"
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                        </div>
+                        {/* Floating elements */}
+                        <div className="absolute -top-4 -left-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                            <Languages className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="absolute -bottom-4 -right-4 flex h-14 w-14 items-center justify-center rounded-xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                            <Zap className="h-7 w-7 text-accent" />
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* 特点部分 */}
-            <section ref={featuresRef} className="py-16 bg-muted/30 rounded-2xl my-16 px-6" id="features">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold mb-4">{t('features.title')}</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        {t('features.description')}
-                    </p>
-                </div>
+                {/* Features Section */}
+                <section ref={featuresRef} className="py-20" id="features">
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-4">
+                            <Zap className="h-4 w-4" />
+                            功能特性
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('features.title')}</h2>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                            {t('features.description')}
+                        </p>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {features.map((feature, index) => (
-                        <Card key={index} className="border-none shadow-md hover:shadow-xl transition-all">
-                            <CardHeader>
-                                <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4">
-                                    {feature.icon}
-                                </div>
-                                <CardTitle>{feature.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">{feature.description}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </section>
-
-            {/* 工作流程部分 */}
-            <section className="py-16">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold mb-4">{t('workflow.title')}</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        {t('workflow.description')}
-                    </p>
-                </div>
-
-                <Tabs defaultValue="import" className="max-w-3xl mx-auto">
-                    <TabsList className="grid grid-cols-3 mb-8">
-                        <TabsTrigger value="import">{t('workflow.tabs.import')}</TabsTrigger>
-                        <TabsTrigger value="translate">{t('workflow.tabs.translate')}</TabsTrigger>
-                        <TabsTrigger value="export">{t('workflow.tabs.export')}</TabsTrigger>
-                    </TabsList>
-                    {workflows.map((workflow, i) => (
-                        <TabsContent key={i} value={["import", "translate", "export"][i]}>
-                            <Card>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {features.map((feature, index) => (
+                            <Card 
+                                key={index} 
+                                className="group border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                            >
                                 <CardHeader>
-                                    <CardTitle className="text-2xl">{workflow.title}</CardTitle>
-                                    <CardDescription>
-                                        {workflow.description}
-                                    </CardDescription>
+                                    <div className={`rounded-xl bg-gradient-to-br ${feature.gradient} w-12 h-12 flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        {feature.icon}
+                                    </div>
+                                    <CardTitle className="text-lg">{feature.title}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <ul className="space-y-4">
-                                        {workflow.steps.map((step, j) => (
-                                            <li key={j} className="flex items-start">
-                                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white text-xs mr-3">
-                                                    {j+1}
-                                                </span>
-                                                <span className="text-lg">{step}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Workflow Section */}
+                <section className="py-20">
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent border border-accent/20 mb-4">
+                            <Book className="h-4 w-4" />
+                            工作流程
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('workflow.title')}</h2>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                            {t('workflow.description')}
+                        </p>
+                    </div>
+
+                    <Tabs defaultValue="import" className="max-w-3xl mx-auto">
+                        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1 w-full mb-8">
+                            <TabsTrigger 
+                                value="import"
+                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
+                                    text-muted-foreground hover:text-foreground
+                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
+                                    data-[state=active]:shadow-sm transition-all duration-200"
+                            >
+                                {t('workflow.tabs.import')}
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="translate"
+                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
+                                    text-muted-foreground hover:text-foreground
+                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
+                                    data-[state=active]:shadow-sm transition-all duration-200"
+                            >
+                                {t('workflow.tabs.translate')}
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="export"
+                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
+                                    text-muted-foreground hover:text-foreground
+                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
+                                    data-[state=active]:shadow-sm transition-all duration-200"
+                            >
+                                {t('workflow.tabs.export')}
+                            </TabsTrigger>
+                        </TabsList>
+                        {workflows.map((workflow, i) => (
+                            <TabsContent key={i} value={["import", "translate", "export"][i]} className="animate-fade-in">
+                                <Card className="border-border/50 shadow-soft">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl">{workflow.title}</CardTitle>
+                                        <CardDescription className="text-base">
+                                            {workflow.description}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ul className="space-y-4">
+                                            {workflow.steps.map((step, j) => (
+                                                <li key={j} className="flex items-start gap-4">
+                                                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-white text-sm font-medium flex-shrink-0">
+                                                        {j+1}
+                                                    </span>
+                                                    <span className="text-foreground pt-1">{step}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button 
+                                            onClick={handleTutorial} 
+                                            variant="outline" 
+                                            className="w-full rounded-xl border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                                        >
+                                            {t('workflow.viewDocs')}
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            </TabsContent>
+                        ))}
+                    </Tabs>
+                </section>
+
+                {/* Case Studies Section */}
+                <section className="py-20 relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-muted/50 to-muted/30 rounded-3xl -z-10" />
+                    <div className="px-6 py-12">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('cases.title')}</h2>
+                            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                                {t('cases.description')}
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                            <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
+                                <div className="h-48 bg-gradient-to-br from-primary via-violet-500 to-accent relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
+                                    <div className="absolute bottom-4 left-4 right-4">
+                                        <div className="flex gap-2">
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">SaaS</span>
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">多语言</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <CardHeader>
+                                    <CardTitle className="group-hover:text-primary transition-colors">{t('cases.case1.title')}</CardTitle>
+                                    <CardDescription>{t('cases.case1.subtitle')}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        {t('cases.case1.quote')}
+                                    </p>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button onClick={handleTutorial} variant="outline" className="w-full">
-                                        {t('workflow.viewDocs')}
+                                    <Button variant="ghost" className="px-0 text-primary hover:text-primary/80">
+                                        {t('cases.case1.readMore')}
+                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </CardFooter>
                             </Card>
-                        </TabsContent>
-                    ))}
-                </Tabs>
-            </section>
 
-            {/* 案例研究部分 */}
-            <section className="py-16 bg-muted/30 rounded-2xl my-16 px-6">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold mb-4">{t('cases.title')}</h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        {t('cases.description')}
-                    </p>
-                </div>
+                            <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
+                                <div className="h-48 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
+                                    <div className="absolute bottom-4 left-4 right-4">
+                                        <div className="flex gap-2">
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">电商</span>
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">国际化</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <CardHeader>
+                                    <CardTitle className="group-hover:text-primary transition-colors">{t('cases.case2.title')}</CardTitle>
+                                    <CardDescription>{t('cases.case2.subtitle')}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        {t('cases.case2.quote')}
+                                    </p>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button variant="ghost" className="px-0 text-primary hover:text-primary/80">
+                                        {t('cases.case2.readMore')}
+                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </div>
+                    </div>
+                </section>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Card className="overflow-hidden">
-                        <div className="h-48 bg-gradient-to-r from-primary to-purple-600"></div>
-                        <CardHeader>
-                            <CardTitle>{t('cases.case1.title')}</CardTitle>
-                            <CardDescription>{t('cases.case1.subtitle')}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">
-                                {t('cases.case1.quote')}
-                            </p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="link" className="px-0">
-                                {t('cases.case1.readMore')}
-                                <ArrowRight className="ml-2 h-4 w-4" />
+                {/* CTA Section */}
+                <section className="py-24 text-center relative">
+                    <div className="absolute inset-0 -z-10">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-3xl" />
+                    </div>
+                    <div className="max-w-3xl mx-auto px-4">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-6">
+                            <Sparkles className="h-4 w-4" />
+                            立即开始
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-bold mb-6">{t('cta.title')}</h2>
+                        <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                            {t('cta.description')}
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <Button 
+                                size="lg" 
+                                className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg" 
+                                onClick={handleGetStarted}
+                            >
+                                {t('cta.register')}
+                                <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
-                        </CardFooter>
-                    </Card>
-
-                    <Card className="overflow-hidden">
-                        <div className="h-48 bg-gradient-to-r from-amber-500 to-red-500"></div>
-                        <CardHeader>
-                            <CardTitle>{t('cases.case2.title')}</CardTitle>
-                            <CardDescription>{t('cases.case2.subtitle')}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">
-                                {t('cases.case2.quote')}
-                            </p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="link" className="px-0">
-                                {t('cases.case2.readMore')}
-                                <ArrowRight className="ml-2 h-4 w-4" />
+                            <Button 
+                                onClick={handleTutorial} 
+                                variant="outline" 
+                                size="lg" 
+                                className="rounded-xl px-8 h-12 text-base border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                            >
+                                {t('cta.demo')}
                             </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            </section>
-
-            {/* 号召行动 */}
-            <section className="py-20 text-center">
-                <h2 className="text-3xl font-bold mb-6">{t('cta.title')}</h2>
-                <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                    {t('cta.description')}
-                </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                    <Button size="lg" className="px-8" onClick={handleGetStarted}>
-                        {t('cta.register')}
-                    </Button>
-                    <Button onClick={handleTutorial} variant="outline" size="lg" className="px-8">
-                        {t('cta.demo')}
-                    </Button>
-                </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                    {t('cta.note')}
-                </p>
-            </section>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-6">
+                            {t('cta.note')}
+                        </p>
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }

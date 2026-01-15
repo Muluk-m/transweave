@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { getTeamProjects } from "@/api/project";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { FolderOpen, Settings } from "lucide-react";
 
 export function ProjectsView() {
   const t = useTranslations("projects");
@@ -49,28 +50,65 @@ export function ProjectsView() {
     setProjects([...projects, project]);
   };
 
+  const tabs = [
+    { value: "projects", label: t("tabs.projects"), icon: FolderOpen },
+    { value: "setting", label: t("tabs.settings"), icon: Settings },
+  ];
+
   return (
-    <Tabs
-      defaultValue="projects"
-      className="w-full max-w-6xl mx-auto p-4 bg-white rounded-lg mt-6"
-    >
-      <TabsList className="mb-4 grid grid-cols-2 gap-2">
-        <TabsTrigger value="projects">{t("tabs.projects")}</TabsTrigger>
-        <TabsTrigger value="setting">{t("tabs.settings")}</TabsTrigger>
-      </TabsList>
+    <div className="page-container section-spacing animate-fade-in-up">
+      {/* Team Header */}
+      {nowTeam && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">
+            {nowTeam.name}
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            管理团队项目和设置
+          </p>
+        </div>
+      )}
 
-      <TabsContent value="projects">
-        <ProjectsList
-          projects={projects}
-          onProjectClick={handleProjectClick}
-          onCreateProject={handleCreateProject}
-          teamId={nowTeam?.id}
-        />
-      </TabsContent>
+      <Tabs defaultValue="projects" className="w-full">
+        {/* Modern Tab Navigation */}
+        <div className="relative mb-6">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg
+                    text-muted-foreground hover:text-foreground
+                    data-[state=active]:bg-background data-[state=active]:text-foreground 
+                    data-[state=active]:shadow-sm data-[state=active]:shadow-black/5
+                    transition-all duration-200"
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
 
-      <TabsContent value="setting">
-        <TeamSettingsView teamId={nowTeam?.id} />
-      </TabsContent>
-    </Tabs>
+        {/* Tab Contents */}
+        <div className="bg-card rounded-xl border border-border/50 shadow-soft overflow-hidden">
+          <TabsContent value="projects" className="m-0 p-6 animate-fade-in">
+            <ProjectsList
+              projects={projects}
+              onProjectClick={handleProjectClick}
+              onCreateProject={handleCreateProject}
+              teamId={nowTeam?.id}
+            />
+          </TabsContent>
+
+          <TabsContent value="setting" className="m-0 p-6 animate-fade-in">
+            <TeamSettingsView teamId={nowTeam?.id} />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
   );
 }
