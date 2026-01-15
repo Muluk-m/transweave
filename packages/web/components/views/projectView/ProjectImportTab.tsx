@@ -227,18 +227,18 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
     // Get file icon
     const getFileIcon = (filename: string) => {
         const ext = filename.split('.').pop()?.toLowerCase();
-        if (ext === 'json') return <FileJson className="h-12 w-12 text-blue-500" />;
-        if (ext === 'csv') return <TableIcon className="h-12 w-12 text-green-500" />;
-        if (ext === 'xml') return <FileText className="h-12 w-12 text-orange-500" />;
-        if (ext === 'yaml' || ext === 'yml') return <FileText className="h-12 w-12 text-purple-500" />;
-        return <FileText className="h-12 w-12 text-gray-500" />;
+        if (ext === 'json') return <FileJson className="h-12 w-12 text-primary" />;
+        if (ext === 'csv') return <TableIcon className="h-12 w-12 text-success" />;
+        if (ext === 'xml') return <FileText className="h-12 w-12 text-warning" />;
+        if (ext === 'yaml' || ext === 'yml') return <FileText className="h-12 w-12 text-accent" />;
+        return <FileText className="h-12 w-12 text-muted-foreground" />;
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold mb-2">{t('project.import.title')}</h1>
-                <p className="text-gray-600">
+                <h1 className="text-2xl font-bold mb-2 text-foreground">{t('project.import.title')}</h1>
+                <p className="text-muted-foreground">
                     {t('project.import.description', { projectName: project?.name })}
                 </p>
             </div>
@@ -294,7 +294,7 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                         <div
                             {...getRootProps()}
                             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                                ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}
+                                ${isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}
                                 ${importStatus === 'loading' ? 'opacity-50 pointer-events-none' : ''}
                             `}
                         >
@@ -304,8 +304,8 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                     <div className="flex justify-center">
                                         {getFileIcon(importedFiles[0].name)}
                                     </div>
-                                    <p className="font-medium">{importedFiles[0].name}</p>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="font-medium text-foreground">{importedFiles[0].name}</p>
+                                    <p className="text-sm text-muted-foreground">
                                         {(importedFiles[0].size / 1024).toFixed(2)} KB
                                     </p>
                                     <Button
@@ -322,15 +322,15 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                             ) : (
                                 <div className="space-y-4">
                                     <div className="flex justify-center">
-                                        <Upload className="h-12 w-12 text-gray-400" />
+                                        <Upload className="h-12 w-12 text-muted-foreground" />
                                     </div>
                                     <div>
-                                        <p className="font-medium">
+                                        <p className="font-medium text-foreground">
                                             {isDragActive
                                                 ? t('project.import.dragDropArea.dragActive')
                                                 : t('project.import.dragDropArea.instructions')}
                                         </p>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-muted-foreground">
                                             {t('project.import.dragDropArea.supportedFormats')}
                                         </p>
                                     </div>
@@ -339,9 +339,9 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                         </div>
 
                         {/* Import notes */}
-                        <div className="bg-gray-50 p-4 rounded-md text-sm">
-                            <p className="font-medium mb-2">{t('project.import.importNotes.title')}</p>
-                            <ul className="list-disc list-inside space-y-1 text-gray-600">
+                        <div className="bg-muted/50 p-4 rounded-md text-sm border border-border/50">
+                            <p className="font-medium mb-2 text-foreground">{t('project.import.importNotes.title')}</p>
+                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                                 <li>{t('project.import.importNotes.jsonNote')}</li>
                                 <li>{t('project.import.importNotes.csvNote')}</li>
                                 <li>{t('project.import.importNotes.formatNote')}</li>
@@ -365,10 +365,10 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
 
                         {/* Import status message */}
                         {importStatus === 'success' && (
-                            <Alert variant="default" className="bg-green-50 border-green-200">
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                <AlertTitle>{t('project.import.status.success')}</AlertTitle>
-                                <AlertDescription>
+                            <Alert variant="default" className="bg-success/10 border-success/20">
+                                <CheckCircle2 className="h-4 w-4 text-success" />
+                                <AlertTitle className="text-success">{t('project.import.status.success')}</AlertTitle>
+                                <AlertDescription className="text-success/80">
                                     {importMessage}
                                     {stats && (
                                         <div className="mt-2 text-sm">
@@ -407,29 +407,29 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                         <>
                             {/* Stats Overview */}
                             <div className="grid grid-cols-4 gap-3 py-4 flex-shrink-0">
-                                <div className="p-3 bg-green-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-green-600">
+                                <div className="p-3 bg-success/10 rounded-lg text-center border border-success/20">
+                                    <div className="text-2xl font-bold text-success">
                                         {previewChanges.stats.added}
                                     </div>
-                                    <div className="text-xs text-gray-600 mt-1">新增</div>
+                                    <div className="text-xs text-muted-foreground mt-1">新增</div>
                                 </div>
-                                <div className="p-3 bg-blue-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-blue-600">
+                                <div className="p-3 bg-primary/10 rounded-lg text-center border border-primary/20">
+                                    <div className="text-2xl font-bold text-primary">
                                         {previewChanges.stats.updated}
                                     </div>
-                                    <div className="text-xs text-gray-600 mt-1">更新</div>
+                                    <div className="text-xs text-muted-foreground mt-1">更新</div>
                                 </div>
-                                <div className="p-3 bg-red-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-red-600">
+                                <div className="p-3 bg-destructive/10 rounded-lg text-center border border-destructive/20">
+                                    <div className="text-2xl font-bold text-destructive">
                                         {previewChanges.stats.deleted}
                                     </div>
-                                    <div className="text-xs text-gray-600 mt-1">删除</div>
+                                    <div className="text-xs text-muted-foreground mt-1">删除</div>
                                 </div>
-                                <div className="p-3 bg-gray-50 rounded-lg text-center">
-                                    <div className="text-2xl font-bold text-gray-600">
+                                <div className="p-3 bg-muted/50 rounded-lg text-center border border-border/50">
+                                    <div className="text-2xl font-bold text-muted-foreground">
                                         {previewChanges.stats.unchanged}
                                     </div>
-                                    <div className="text-xs text-gray-600 mt-1">未变更</div>
+                                    <div className="text-xs text-muted-foreground mt-1">未变更</div>
                                 </div>
                             </div>
 
@@ -440,15 +440,15 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                         {previewChanges.toAdd.length > 0 && (
                                             <div>
                                                 <div className="mb-3">
-                                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                                                    <Badge className="bg-success/10 text-success hover:bg-success/10 border border-success/20">
                                                         新增 {previewChanges.toAdd.length} 项
                                                     </Badge>
                                                 </div>
                                                 <div className="space-y-2">
                                                     {previewChanges.toAdd.map((item, idx) => (
-                                                        <div key={idx} className="p-3 bg-green-50/50 rounded border border-green-200">
-                                                            <div className="text-xs text-gray-500 mb-1 font-mono">{item.key}</div>
-                                                            <div className="text-sm text-gray-800">{item.translation}</div>
+                                                        <div key={idx} className="p-3 bg-success/5 rounded border border-success/20">
+                                                            <div className="text-xs text-muted-foreground mb-1 font-mono">{item.key}</div>
+                                                            <div className="text-sm text-foreground">{item.translation}</div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -459,19 +459,19 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                         {previewChanges.toUpdate.length > 0 && (
                                             <div>
                                                 <div className="mb-3">
-                                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                                    <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border border-primary/20">
                                                         更新 {previewChanges.toUpdate.length} 项
                                                     </Badge>
                                                 </div>
                                                 <div className="space-y-2">
                                                     {previewChanges.toUpdate.map((item, idx) => (
-                                                        <div key={idx} className="p-3 bg-blue-50/50 rounded border border-blue-200">
-                                                            <div className="text-xs text-gray-500 mb-2 font-mono">{item.key}</div>
+                                                        <div key={idx} className="p-3 bg-primary/5 rounded border border-primary/20">
+                                                            <div className="text-xs text-muted-foreground mb-2 font-mono">{item.key}</div>
                                                             <div className="space-y-1 text-sm">
-                                                                <div className="text-red-600/70 line-through">
+                                                                <div className="text-destructive/70 line-through">
                                                                     <span className="font-semibold">- </span>{item.oldTranslation}
                                                                 </div>
-                                                                <div className="text-green-700">
+                                                                <div className="text-success">
                                                                     <span className="font-semibold">+ </span>{item.newTranslation}
                                                                 </div>
                                                             </div>
@@ -485,15 +485,15 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                         {previewChanges.toDelete.length > 0 && (
                                             <div>
                                                 <div className="mb-3">
-                                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                                    <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10 border border-destructive/20">
                                                         删除 {previewChanges.toDelete.length} 项
                                                     </Badge>
                                                 </div>
                                                 <div className="space-y-2">
                                                     {previewChanges.toDelete.map((item, idx) => (
-                                                        <div key={idx} className="p-3 bg-red-50/50 rounded border border-red-200">
-                                                            <div className="text-xs text-gray-500 mb-1 font-mono">{item.key}</div>
-                                                            <div className="text-sm text-gray-600 line-through">{item.translation}</div>
+                                                        <div key={idx} className="p-3 bg-destructive/5 rounded border border-destructive/20">
+                                                            <div className="text-xs text-muted-foreground mb-1 font-mono">{item.key}</div>
+                                                            <div className="text-sm text-muted-foreground line-through">{item.translation}</div>
                                                         </div>
                                                     ))}
                                                 </div>

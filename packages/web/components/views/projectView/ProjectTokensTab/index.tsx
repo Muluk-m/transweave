@@ -718,7 +718,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow">
+    <div className="p-4 bg-card rounded-lg">
       <TokenFormDrawer
         isOpen={isDrawerOpen}
         onOpenChange={(open) => setIsDrawerOpen(open)}
@@ -761,24 +761,24 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       />
 
       {isBatchTranslating && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-900">
+            <span className="text-sm font-medium text-foreground">
               批量翻译进行中...
             </span>
-            <span className="text-sm text-blue-700">{translateProgress}%</span>
+            <span className="text-sm text-primary">{translateProgress}%</span>
           </div>
           <Progress value={translateProgress} className="h-2" />
         </div>
       )}
 
       {isBatchSettingModule && (
-        <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+        <div className="mb-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-900">
+            <span className="text-sm font-medium text-foreground">
               批量更新模块进行中...
             </span>
-            <span className="text-sm text-purple-700">{batchModuleProgress}%</span>
+            <span className="text-sm text-accent">{batchModuleProgress}%</span>
           </div>
           <Progress value={batchModuleProgress} className="h-2" />
         </div>

@@ -227,7 +227,7 @@ export function TokenTable({
         />
       ),
       cell: ({ cell }) => (
-        <div className="bg-white line-clamp-2 text-ellipsis">
+        <div className="line-clamp-2 text-ellipsis text-foreground">
           <TipsCopyableCell value={cell.getValue<Token["key"]>()}>
             <span>{cell.getValue<Token["key"]>()}</span>
           </TipsCopyableCell>
@@ -251,7 +251,7 @@ export function TokenTable({
       cell: ({ row }) => {
         const moduleCode = row.original.module;
         if (!moduleCode) {
-          return <span className="text-gray-400 text-sm">-</span>;
+          return <span className="text-muted-foreground text-sm">-</span>;
         }
 
         const moduleInfo = modules.find((m) => m.code === moduleCode);
@@ -305,11 +305,11 @@ export function TokenTable({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div 
-                      className="flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-2 py-1 transition-colors"
+                      className="flex items-center gap-1 cursor-pointer hover:bg-muted rounded px-2 py-1 transition-colors"
                       onClick={() => handlePreviewImages(screenshots)}
                     >
-                      <ImageIconLucide className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm text-gray-600">{screenshots.length}</span>
+                      <ImageIconLucide className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-muted-foreground">{screenshots.length}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="p-2">
@@ -320,22 +320,22 @@ export function TokenTable({
                             key={index}
                             src={getImageUrl(screenshot)}
                             alt={`Screenshot ${index + 1}`}
-                            className="w-50 h-50 object-cover rounded border"
+                            className="w-50 h-50 object-cover rounded border border-border"
                           />
                         ))}
                         {screenshots.length > 3 && (
-                          <div className="w-50 h-50 flex items-center justify-center bg-gray-100 rounded border text-sm text-gray-500">
+                          <div className="w-50 h-50 flex items-center justify-center bg-muted rounded border border-border text-sm text-muted-foreground">
                             +{screenshots.length - 3}
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 text-center">点击查看大图</p>
+                      <p className="text-xs text-muted-foreground text-center">点击查看大图</p>
                     </div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <span className="text-gray-400 text-sm">-</span>
+              <span className="text-muted-foreground text-sm">-</span>
             )}
           </div>
         );
@@ -357,7 +357,7 @@ export function TokenTable({
         />
       ),
       cell: ({ row }) => (
-        <div className="bg-white line-clamp-2">
+        <div className="line-clamp-2 text-foreground">
           <TipsCopyableCell value={row.original.translations?.[lang]}>
             <span>{row.original.translations?.[lang]  }</span>
           </TipsCopyableCell>
@@ -569,7 +569,7 @@ export function TokenTable({
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     {previewImages.currentIndex + 1} / {previewImages.urls.length}
                   </span>
                   <Button
