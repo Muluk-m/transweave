@@ -26,6 +26,7 @@ import { translateWithAi } from "@/api/ai";
 import { useQueryState } from "nuqs";
 import { getSortingStateParser } from "@/lib/parsers";
 import { Progress } from "@/components/ui/progress";
+import { isValidTokenKey } from "@/lib/validation";
 
 interface ProjectTokensTabProps {
   project: Project | null;
@@ -167,10 +168,6 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     return result;
   }, [tokens, selectedModule, selectedTag, searchTerm, sorting]);
 
-  const isValidKey = (key: string) => {
-    return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
-  };
-
   // Check if a new key conflicts with existing keys
   // Conflict occurs when:
   // 1. New key is a prefix of an existing key (e.g., adding "alert" when "alert.message" exists)
@@ -290,7 +287,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       isEditing && currentToken && formData.key === currentToken.key;
 
     // Validate key format for new keys or when editing key value
-    if (!isEditingLegacyKey && !isValidKey(formData.key)) {
+    if (!isEditingLegacyKey && !isValidTokenKey(formData.key)) {
       toast({
         title: t("errors.invalidKey"),
         variant: "destructive",
@@ -542,7 +539,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     // Validate all keys before creating
     for (const tokenInput of batchTokens) {
       // Check key format
-      if (!isValidKey(tokenInput.key)) {
+      if (!isValidTokenKey(tokenInput.key)) {
         toast({
           title: `Key "${tokenInput.key}" 格式无效`,
           variant: "destructive",
