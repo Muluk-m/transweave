@@ -39,12 +39,14 @@ export function HeaderView() {
   const t = useTranslations();
   const [isDark, setIsDark] = useState(false);
 
-  // Initialize theme from localStorage
+  // Initialize theme from localStorage (default dark)
   useEffect(() => {
     const theme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldBeDark = theme === "dark" || (!theme && prefersDark);
+    const shouldBeDark = theme ? theme === "dark" : true;
     setIsDark(shouldBeDark);
+    if (!theme) {
+      localStorage.setItem("theme", "dark");
+    }
     document.documentElement.classList.toggle("dark", shouldBeDark);
   }, []);
 

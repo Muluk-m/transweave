@@ -34,6 +34,7 @@ export function TeamView(props: {
     const [nowTeam] = useAtom(nowTeamAtom);
     const [teams, setTeams] = useAtom(teamsAtom);
     const t = useTranslations();
+    const maxVisibleProjects = 6;
 
     // Use custom hook to get project data
     const { projects, setProjects, isLoading } = useTeamProjectsData(team.id);
@@ -49,6 +50,10 @@ export function TeamView(props: {
 
     const handleNavigateToProject = (projectId: string) => {
         router.push(`/project/${projectId}`);
+    };
+
+    const handleOpenProjectsDialog = () => {
+        setShowProjectsDialog(true);
     };
 
     const handleViewMembers = () => {
@@ -184,8 +189,21 @@ export function TeamView(props: {
                 {/* 项目列表 - 折叠在下方，仅在有项目时显示 */}
                 {!isLoading && projects && projects.length > 0 && (
                     <div className="border-t border-border/30 px-4 py-2 bg-muted/20">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="text-xs text-muted-foreground">
+                                {t('teams.card.projectList')} · {t('teams.card.projectsCount', { count: projects.length })}
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleOpenProjectsDialog}
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                            >
+                                {t('teams.card.viewAllProjects')}
+                            </Button>
+                        </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            {projects.slice(0, 5).map(project => (
+                            {projects.slice(0, maxVisibleProjects).map(project => (
                                 <div
                                     key={project.id}
                                     onClick={() => handleNavigateToProject(project.id)}
@@ -202,10 +220,15 @@ export function TeamView(props: {
                                     </span>
                                 </div>
                             ))}
-                            {projects.length > 5 && (
-                                <span className="text-xs text-muted-foreground px-2">
-                                    +{projects.length - 5} 更多
-                                </span>
+                            {projects.length > maxVisibleProjects && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleOpenProjectsDialog}
+                                    className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                                >
+                                    {t('teams.card.viewMore', { count: projects.length - maxVisibleProjects })}
+                                </Button>
                             )}
                             <Button
                                 variant="ghost"
@@ -214,7 +237,7 @@ export function TeamView(props: {
                                 className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
                             >
                                 <Plus className="h-3 w-3 mr-1" />
-                                新建
+                                {t('teams.card.newProject')}
                             </Button>
                         </div>
                     </div>

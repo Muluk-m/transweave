@@ -392,7 +392,7 @@ export class ProjectService {
     }
 
     // 验证模块代码格式
-    if (!/^[a-z][a-z0-9_]*$/i.test(module.code)) {
+    if (!/^[a-z][a-z0-9]*$/i.test(module.code)) {
       throw new BadRequestException('模块名只能包含字母、数字和下划线，且必须以字母开头');
     }
 

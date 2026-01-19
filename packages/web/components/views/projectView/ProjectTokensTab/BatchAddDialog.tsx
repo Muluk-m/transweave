@@ -23,6 +23,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { validateTokenKey } from "@/lib/validation";
 
 interface BatchAddDialogProps {
   isOpen: boolean;
@@ -58,22 +59,12 @@ export function BatchAddDialog({
     { id: "1", key: "", tags: "", comment: "" },
   ]);
 
-  const validateKey = (key: string): string | undefined => {
-    if (!key.trim()) {
-      return t("validation.keyRequired");
-    }
-    if (!/^[a-z][a-zA-Z0-9_]*(\.[a-z][a-zA-Z0-9_]*)*$/.test(key)) {
-      return t("validation.keyInvalid");
-    }
-    return undefined;
-  };
-
   const validateRow = (row: TableRow): string | undefined => {
     if (!row.key && !row.tags && !row.comment) {
       return undefined; // Empty row is ok, will be filtered out
     }
 
-    const keyError = validateKey(row.key);
+    const keyError = validateTokenKey(row.key, t);
     if (keyError) return keyError;
 
     if (!row.comment.trim()) {
