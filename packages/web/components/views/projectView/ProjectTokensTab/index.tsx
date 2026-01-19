@@ -168,7 +168,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   }, [tokens, selectedModule, selectedTag, searchTerm, sorting]);
 
   const isValidKey = (key: string) => {
-    return /^[a-z][a-zA-Z0-9_]*(\.[a-z][a-zA-Z0-9_]*)*$/.test(key);
+    return /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/.test(key);
   };
 
   // Check if a new key conflicts with existing keys
@@ -286,8 +286,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   // Submit form
   const handleSubmit = async () => {
-    // Validate key format
-    if (!isValidKey(formData.key)) {
+    const isEditingLegacyKey =
+      isEditing && currentToken && formData.key === currentToken.key;
+
+    // Validate key format for new keys or when editing key value
+    if (!isEditingLegacyKey && !isValidKey(formData.key)) {
       toast({
         title: t("errors.invalidKey"),
         variant: "destructive",
