@@ -15,7 +15,7 @@ RUN pnpm install --frozen-lockfil
 # 复制服务端源码
 COPY packages/server ./packages/server
 
-# 生成 Prisma 客户端并构建
+# 生成 数据库客户端并构建
 WORKDIR /app/packages/server
 
 # -------- 生产阶段 --------
@@ -35,7 +35,6 @@ RUN pnpm install --frozen-lockfile
 
 # 拷贝构建产物
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
-COPY --from=builder /app/packages/server/prisma ./packages/server/prisma
 COPY --from=builder /app/packages/server/node_modules ./packages/server/node_modules
 
 ENV NODE_ENV=production
