@@ -17,6 +17,7 @@ COPY packages/server ./packages/server
 
 # 生成 数据库客户端并构建
 WORKDIR /app/packages/server
+RUN pnpm build
 
 # -------- 生产阶段 --------
 FROM node:20-alpine AS runner
