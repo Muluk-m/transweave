@@ -13,7 +13,7 @@ import {
 import { Response, Request } from 'express';
 import { McpService } from '../service/mcp.service';
 
-@Controller('mcp')
+@Controller('api/mcp')
 export class McpController {
   private readonly logger = new Logger(McpController.name);
 
