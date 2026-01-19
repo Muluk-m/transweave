@@ -21,6 +21,8 @@ import { AuthService } from './service/auth.service';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
 import { ActivityLogService } from './service/activity-log.service';
 import { ActivityLogController } from './controller/activity-log.controller';
+import { McpService } from './service/mcp.service';
+import { McpController } from './controller/mcp.controller';
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { ActivityLogController } from './controller/activity-log.controller';
     ProjectController,
     UserController,
     ActivityLogController,
+    McpController,
   ],
   providers: [
     AppService,
@@ -54,6 +57,7 @@ import { ActivityLogController } from './controller/activity-log.controller';
     MembershipService,
     AiService,
     ActivityLogService,
+    McpService,
   ],
 })
 export class AppModule implements NestModule {
