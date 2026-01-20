@@ -1,117 +1,86 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Res,
-  Req,
-  HttpStatus,
-  Logger,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Res, Req, HttpStatus, Logger, All } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { McpService } from '../service/mcp.service';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
 
 @Controller('api/mcp')
 export class McpController {
   private readonly logger = new Logger(McpController.name);
+  private activeTransports = new Map<string, StreamableHTTPServerTransport>();
 
   constructor(private readonly mcpService: McpService) {}
 
-  // SSE 端点 - 建立 SSE 连接
-  @Get('sse')
-  async sse(@Res() res: Response) {
-    this.logger.log('SSE connection requested');
+  // Streamable HTTP 端点 - 统一处理所有 MCP 请求
+  @All()
+  async handleMcp(@Req() req: Request, @Res() res: Response) {
+    const sessionId = req.headers['mcp-session-id'] as string;
+    const method = req.method.toUpperCase();
 
-    const sessionId = this.mcpService.generateSessionId();
+    this.logger.log(`MCP ${method} request, session: ${sessionId || 'new'}`);
 
-    // 设置 SSE 响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('X-Session-Id', sessionId);
-
-    // 发送初始 endpoint 事件
-    res.write(`event: endpoint\ndata: /mcp/messages\n\n`);
-
-    // 创建一个简单的控制器来发送消息
-    const controller = {
-      enqueue: (data: string) => {
-        res.write(data);
-      },
-    };
-
-    // 注册会话
-    this.mcpService.registerSSESession(sessionId, controller);
-
-    // 定期发送心跳保持连接
-    const heartbeatInterval = setInterval(() => {
-      try {
-        res.write(': heartbeat\n\n');
-      } catch (error) {
-        clearInterval(heartbeatInterval);
-        this.mcpService.removeSSESession(sessionId);
+    try {
+      // DELETE: 终止会话
+      if (method === 'DELETE') {
+        if (sessionId) {
+          const transport = this.activeTransports.get(sessionId);
+          if (transport) {
+            transport.close();
+            this.activeTransports.delete(sessionId);
+            this.logger.log(`Session ${sessionId} terminated`);
+          }
+        }
+        return res.status(HttpStatus.NO_CONTENT).send();
       }
-    }, 15000); // 每 15 秒发送一次心跳
 
-    // 监听客户端断开连接
-    res.on('close', () => {
-      this.logger.log(`SSE connection closed for session ${sessionId}`);
-      clearInterval(heartbeatInterval);
-      this.mcpService.removeSSESession(sessionId);
-    });
-  }
+      // GET/POST: 处理 MCP 消息
+      let transport = sessionId ? this.activeTransports.get(sessionId) : undefined;
 
-  // SSE 消息端点 - 接收客户端请求并通过 SSE 返回响应
-  @Post('messages')
-  async messages(@Body() requestData: any, @Req() req: Request) {
-    const sessionId = req.headers['x-session-id'] as string;
+      // 如果没有 transport，创建新的
+      if (!transport) {
+        transport = new StreamableHTTPServerTransport();
+        const newSessionId = transport.sessionId;
+        
+        // 确保 sessionId 存在
+        if (!newSessionId) {
+          throw new Error('Failed to generate session ID');
+        }
 
-    if (!sessionId) {
-      throw new BadRequestException('缺少 X-Session-Id 头');
-    }
+        this.activeTransports.set(newSessionId, transport);
 
-    const session = this.mcpService.getSSESession(sessionId);
-    if (!session) {
-      throw new NotFoundException('会话不存在或已过期');
-    }
+        // 连接 MCP Server
+        const server = this.mcpService.getServer();
+        await server.connect(transport);
 
-    try {
-      const response = await this.mcpService.handleMCPRequest(requestData);
+        // 设置会话 ID 头
+        res.setHeader('mcp-session-id', newSessionId);
 
-      // 通过 SSE 发送响应
-      this.mcpService.sendSSEMessage(session, response);
+        this.logger.log(`New session created: ${newSessionId}`);
 
-      // 返回确认
-      return { status: 'sent' };
+        // 监听 transport 关闭事件
+        transport.onclose = () => {
+          this.logger.log(`Transport closed for session ${newSessionId}`);
+          this.activeTransports.delete(newSessionId);
+        };
+      }
+
+      // 处理请求 - POST 需要传入 body
+      if (method === 'POST') {
+        await transport.handleRequest(req, res, req.body);
+      } else {
+        await transport.handleRequest(req, res);
+      }
     } catch (error: any) {
-      this.logger.error('处理 SSE 消息错误:', error);
-      throw new BadRequestException(error.message || '未知错误');
+      this.logger.error('MCP request error:', error);
+      if (!res.headersSent) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          error: error.message || 'Internal server error',
+        });
+      }
     }
   }
 
-  // MCP 端点 - 处理 JSON-RPC 请求 (HTTP POST 模式)
-  @Post()
-  async mcp(@Body() requestData: any) {
-    try {
-      const response = await this.mcpService.handleMCPRequest(requestData);
-      return response;
-    } catch (error: any) {
-      this.logger.error('请求处理错误:', error);
-      return {
-        jsonrpc: '2.0',
-        error: {
-          code: -32700,
-          message: '解析错误',
-        },
-      };
-    }
-  }
-
-  // 首页 - 显示 MCP 服务信息
-  @Get()
+  // 服务信息页面
+  @Get('info')
   async info(@Res() res: Response) {
     const html = `
 <!DOCTYPE html>
@@ -303,7 +272,7 @@ export class McpController {
     .info-label {
       font-weight: 600;
       color: var(--text-primary);
-      min-width: 100px;
+      min-width: 120px;
       flex-shrink: 0;
     }
     
@@ -465,6 +434,11 @@ export class McpController {
       background: #d1fae5;
       color: #065f46;
     }
+
+    .method-delete {
+      background: #fee2e2;
+      color: #991b1b;
+    }
     
     @media (prefers-color-scheme: dark) {
       .method-get {
@@ -474,6 +448,10 @@ export class McpController {
       .method-post {
         background: #064e3b;
         color: #a7f3d0;
+      }
+      .method-delete {
+        background: #7f1d1d;
+        color: #fecaca;
       }
     }
     
@@ -496,6 +474,18 @@ export class McpController {
         align-items: flex-start;
       }
     }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.625rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #10b981;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -515,7 +505,7 @@ export class McpController {
           <span>运行中</span>
         </div>
       </div>
-      <p class="subtitle">基于 Model Context Protocol 的 i18n 词条管理服务</p>
+      <p class="subtitle">基于 Model Context Protocol 的 i18n 词条管理服务 <span class="badge">Streamable HTTP</span></p>
     </div>
 
     <div class="content">
@@ -538,12 +528,16 @@ export class McpController {
             <span class="info-value">1.0.0</span>
           </div>
           <div class="info-item">
+            <span class="info-label">SDK 版本</span>
+            <span class="info-value">@modelcontextprotocol/sdk v1.25.2</span>
+          </div>
+          <div class="info-item">
             <span class="info-label">协议版本</span>
             <span class="info-value">MCP 2024-11-05</span>
           </div>
           <div class="info-item">
             <span class="info-label">传输方式</span>
-            <span class="info-value">SSE / HTTP POST</span>
+            <span class="info-value">Streamable HTTP (推荐)</span>
           </div>
         </div>
       </div>
@@ -563,7 +557,7 @@ export class McpController {
           <h3>list_projects</h3>
           <p><strong>描述:</strong> 列出所有 i18n 项目</p>
           <p><strong>参数:</strong> 无</p>
-          <p><strong>返回:</strong> 项目列表，包含 id、name、description、languages</p>
+          <p><strong>返回:</strong> 项目列表,包含 id、name、description、languages</p>
         </div>
 
         <div class="tool-card">
@@ -573,7 +567,7 @@ export class McpController {
           <ul class="param-list">
             <li><code>projectId</code> - 项目 ID</li>
           </ul>
-          <p><strong>返回:</strong> 词条列表，包含 key、module、translations、tags、comment</p>
+          <p><strong>返回:</strong> 词条列表,包含 key、module、translations、tags、comment</p>
         </div>
 
         <div class="tool-card">
@@ -583,7 +577,7 @@ export class McpController {
           <ul class="param-list">
             <li><code>tokenId</code> - 词条 ID</li>
           </ul>
-          <p><strong>返回:</strong> 词条完整信息，包括历史记录</p>
+          <p><strong>返回:</strong> 词条完整信息,包括历史记录</p>
         </div>
 
         <div class="tool-card">
@@ -593,7 +587,7 @@ export class McpController {
           <ul class="param-list">
             <li><code>projectId</code> - 项目 ID</li>
             <li><code>key</code> - 词条 key</li>
-            <li><code>translations</code> - 翻译内容对象，如 {"zh-CN": "中文", "en": "English"}</li>
+            <li><code>translations</code> - 翻译内容对象,如 {"zh-CN": "中文", "en": "English"}</li>
           </ul>
           <p><strong>可选参数:</strong></p>
           <ul class="param-list">
@@ -615,9 +609,9 @@ export class McpController {
           连接方式
         </h2>
         
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">SSE 传输（推荐）</h3>
-          <p style="color: var(--text-secondary); margin-bottom: 1rem;">支持实时消息推送，适合生产环境</p>
+        <div>
+          <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">Streamable HTTP (推荐)</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">使用官方 SDK v1.25+,支持单端点、无状态、动态流式传输</p>
           <div class="code-block">
             <div class="code-header">
               <span class="code-lang">JSON</span>
@@ -626,30 +620,7 @@ export class McpController {
             <pre id="code1"><code>{
   "mcpServers": {
     "qlj-i18n": {
-      "url": "http://localhost:3000/mcp/sse"
-    }
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <div>
-          <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">HTTP POST 传输</h3>
-          <p style="color: var(--text-secondary); margin-bottom: 1rem;">传统请求-响应模式，易于调试</p>
-          <div class="code-block">
-            <div class="code-header">
-              <span class="code-lang">JSON</span>
-              <button class="copy-btn" onclick="copyCode(this, 'code2')">复制</button>
-            </div>
-            <pre id="code2"><code>{
-  "mcpServers": {
-    "qlj-i18n": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-http",
-        "http://localhost:3000/mcp"
-      ]
+      "url": "http://localhost:3000/api/mcp"
     }
   }
 }</code></pre>
@@ -670,24 +641,24 @@ export class McpController {
         </h2>
         <ul class="endpoint-list">
           <li class="endpoint-item">
-            <span class="method-badge method-get">GET</span>
-            <code class="endpoint-path">/mcp/sse</code>
-            <span class="endpoint-desc">建立 SSE 连接</span>
-          </li>
-          <li class="endpoint-item">
             <span class="method-badge method-post">POST</span>
-            <code class="endpoint-path">/mcp/messages</code>
-            <span class="endpoint-desc">SSE 消息处理</span>
-          </li>
-          <li class="endpoint-item">
-            <span class="method-badge method-post">POST</span>
-            <code class="endpoint-path">/mcp</code>
-            <span class="endpoint-desc">HTTP POST 模式</span>
+            <code class="endpoint-path">/api/mcp</code>
+            <span class="endpoint-desc">MCP 消息处理 (JSON-RPC 2.0)</span>
           </li>
           <li class="endpoint-item">
             <span class="method-badge method-get">GET</span>
-            <code class="endpoint-path">/mcp</code>
-            <span class="endpoint-desc">服务信息页面</span>
+            <code class="endpoint-path">/api/mcp</code>
+            <span class="endpoint-desc">建立 SSE 通知连接</span>
+          </li>
+          <li class="endpoint-item">
+            <span class="method-badge method-delete">DELETE</span>
+            <code class="endpoint-path">/api/mcp</code>
+            <span class="endpoint-desc">终止 MCP 会话</span>
+          </li>
+          <li class="endpoint-item">
+            <span class="method-badge method-get">GET</span>
+            <code class="endpoint-path">/api/mcp/info</code>
+            <span class="endpoint-desc">服务信息页面 (当前页面)</span>
           </li>
         </ul>
       </div>
@@ -699,7 +670,7 @@ export class McpController {
       const code = document.getElementById(codeId).textContent;
       navigator.clipboard.writeText(code).then(() => {
         const originalText = button.textContent;
-        button.textContent = '已复制！';
+        button.textContent = '已复制!';
         button.style.background = 'rgba(16, 185, 129, 0.2)';
         button.style.borderColor = 'rgba(16, 185, 129, 0.4)';
         button.style.color = '#10b981';
