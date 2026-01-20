@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: MCP 协议支持
-系统 SHALL 支持 Model Context Protocol (MCP) 2024-11-05 版本,通过 JSON-RPC 2.0 协议提供工具调用接口。
+系统 SHALL 使用官方 `@modelcontextprotocol/sdk` v1.x 实现 Model Context Protocol (MCP) 2024-11-05 版本,通过 JSON-RPC 2.0 协议提供工具调用接口。
 
 #### Scenario: 初始化连接
 - **WHEN** 客户端发送 `initialize` 方法请求
@@ -14,19 +14,19 @@
 - **THEN** 返回所有可用的 MCP 工具列表及其参数定义
 
 ### Requirement: SSE 传输支持
-系统 SHALL 支持通过 Server-Sent Events (SSE) 建立持久连接,用于实时消息推送。
+系统 SHALL 使用官方 SDK 的 `SSEServerTransport` 支持通过 Server-Sent Events (SSE) 建立持久连接,用于实时消息推送。
 
 #### Scenario: 建立 SSE 连接
-- **WHEN** 客户端请求 `GET /mcp/sse`
-- **THEN** 返回 SSE 流,并发送初始 endpoint 事件和唯一的 session ID
+- **WHEN** 客户端请求 `GET /api/mcp/sse`
+- **THEN** 使用 `SSEServerTransport` 建立 SSE 流,并返回唯一的 session ID
 
-#### Scenario: 会话心跳
-- **WHEN** SSE 连接建立后
-- **THEN** 每 15 秒发送心跳消息保持连接活跃
+#### Scenario: 消息处理
+- **WHEN** 客户端通过 `POST /api/mcp/messages` 发送消息
+- **THEN** 使用 `SSEServerTransport.handlePostMessage()` 处理请求并通过 SSE 返回响应
 
-#### Scenario: 会话过期清理
-- **WHEN** SSE 会话超过 5 分钟无活动
-- **THEN** 自动关闭连接并清理会话
+#### Scenario: 连接关闭
+- **WHEN** 客户端断开 SSE 连接
+- **THEN** 清理 transport 实例和会话资源
 
 ### Requirement: 项目列表查询
 系统 SHALL 提供查询所有 i18n 项目的功能。
@@ -72,32 +72,31 @@
 - **WHEN** 调用时缺少 projectId、key 或 translations
 - **THEN** 返回参数验证失败错误
 
+### Requirement: 参数验证
+系统 SHALL 使用 `zod` 进行工具参数验证。
+
+#### Scenario: 参数类型验证
+- **WHEN** 工具调用的参数类型不符合 schema 定义
+- **THEN** zod 抛出验证错误,SDK 自动返回标准 JSON-RPC 错误响应
+
+#### Scenario: 必需参数缺失
+- **WHEN** 调用时缺少必需参数
+- **THEN** zod 抛出验证错误,SDK 自动返回错误信息
+
 ### Requirement: 错误处理
-系统 SHALL 对所有 MCP 请求提供标准化的错误处理。
+系统 SHALL 依赖官方 SDK 提供的标准化错误处理,自动处理 JSON-RPC 协议层面的错误。
 
-#### Scenario: JSON-RPC 版本验证
-- **WHEN** 请求的 jsonrpc 版本不是 "2.0"
-- **THEN** 返回错误码 -32600 和相应错误信息
+#### Scenario: 协议错误
+- **WHEN** 请求不符合 JSON-RPC 2.0 规范
+- **THEN** SDK 自动返回相应的错误码和错误信息
 
-#### Scenario: 未知方法处理
-- **WHEN** 调用未知的 RPC 方法或工具
-- **THEN** 返回错误码 -32601 和相应错误信息
+#### Scenario: 工具执行错误
+- **WHEN** 工具执行过程中抛出异常
+- **THEN** SDK 捕获异常并返回标准错误响应
 
-#### Scenario: 参数验证失败
-- **WHEN** 工具调用的参数不符合 schema 定义
-- **THEN** 返回错误码 -32602 和详细的验证错误信息
+## MODIFIED Requirements
 
-#### Scenario: 内部错误
-- **WHEN** 处理请求时发生未预期的错误
-- **THEN** 返回错误码 -32603 和错误描述
-
-### Requirement: CORS 支持
-系统 SHALL 支持跨域请求,允许来自任何源的 MCP 客户端连接。
-
-#### Scenario: OPTIONS 预检请求
-- **WHEN** 收到 OPTIONS 预检请求
-- **THEN** 返回适当的 CORS 头,允许 GET、POST 方法和必要的请求头
-
-#### Scenario: 跨域响应头
-- **WHEN** 处理 MCP 请求
-- **THEN** 在响应中包含 `access-control-allow-origin: *`
+### Requirement: 依赖管理
+系统 SHALL 添加以下依赖:
+- `@modelcontextprotocol/sdk` ^1.25.2 - MCP 官方 TypeScript SDK
+- `zod` ^3.25 - 参数验证库 (SDK 必需的 peer dependency)
