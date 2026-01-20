@@ -17,6 +17,8 @@ COPY packages/server ./packages/server
 
 # 生成 数据库客户端并构建
 WORKDIR /app/packages/server
+# 增加 Node.js 内存限制以避免构建时内存溢出
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
 # -------- 生产阶段 --------
