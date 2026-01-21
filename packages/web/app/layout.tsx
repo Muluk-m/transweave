@@ -22,7 +22,7 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning>
+    <html suppressHydrationWarning className="dark">
       <body className={inter.className}>
         <NuqsAdapter>
           <AuthProvider>

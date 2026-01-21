@@ -138,6 +138,8 @@
   
   html {
     @apply scroll-smooth;
+    /* 防止刷新时白色背景闪烁 */
+    background-color: hsl(222 40% 13%);
   }
   
   body {
