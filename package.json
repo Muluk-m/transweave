@@ -7,7 +7,9 @@
   "license": "MIT",
   "scripts": {
     "dev:web": "pnpm --filter ./packages/web dev",
-    "build:web": "pnpm --filter ./packages/web build"
+    "dev:server": "pnpm --filter ./packages/server start:dev",
+    "build:web": "pnpm --filter ./packages/web build",
+    "build:server": "pnpm --filter ./packages/server build"
   },
   "keywords": [],
   "author": "",
