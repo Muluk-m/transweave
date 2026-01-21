@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ProjectService } from './project.service';
 import { z } from 'zod';
 
