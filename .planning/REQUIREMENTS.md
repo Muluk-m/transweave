@@ -20,12 +20,12 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can register with username and password
-- [ ] **AUTH-02**: User can log in with username and password and receive JWT token
-- [ ] **AUTH-03**: User session persists across browser refresh via stored JWT
-- [ ] **AUTH-04**: User can log out from any page
-- [ ] **AUTH-05**: First-run setup wizard creates initial admin user and team when database is empty
-- [ ] **AUTH-06**: Admin can reset any user's password
+- [x] **AUTH-01**: User can register with username and password
+- [x] **AUTH-02**: User can log in with username and password and receive JWT token
+- [x] **AUTH-03**: User session persists across browser refresh via stored JWT
+- [x] **AUTH-04**: User can log out from any page
+- [x] **AUTH-05**: First-run setup wizard creates initial admin user and team when database is empty
+- [x] **AUTH-06**: Admin can reset any user's password
 
 ### Users & Teams
 
@@ -164,12 +164,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLEAN-06 | Phase 1 | Complete |
 | CLEAN-07 | Phase 1 | Complete |
 | CLEAN-08 | Phase 1 | Complete |
-| AUTH-01 | Phase 3 | Pending |
-| AUTH-02 | Phase 3 | Pending |
-| AUTH-03 | Phase 3 | Pending |
-| AUTH-04 | Phase 3 | Pending |
-| AUTH-05 | Phase 3 | Pending |
-| AUTH-06 | Phase 3 | Pending |
+| AUTH-01 | Phase 3 | Complete |
+| AUTH-02 | Phase 3 | Complete |
+| AUTH-03 | Phase 3 | Complete |
+| AUTH-04 | Phase 3 | Complete |
+| AUTH-05 | Phase 3 | Complete |
+| AUTH-06 | Phase 3 | Complete |
 | TEAM-01 | Phase 3 | Complete |
 | TEAM-02 | Phase 3 | Complete |
 | TEAM-03 | Phase 3 | Complete |

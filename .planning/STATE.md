@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T12:47:59.398Z"
+last_updated: "2026-03-01T12:48:41.341Z"
 progress:
   total_phases: 9
   completed_phases: 3
@@ -51,6 +51,7 @@ Progress: [███░░░░░░░] 33%
 
 *Updated after each plan completion*
 | Phase 03 P02 | 4min | 2 tasks | 4 files |
+| Phase 03-authentication-teams P01 | 6min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,9 @@ Recent decisions affecting current work:
 - [04-01] Installed @types/multer as devDependency since types not available transitively via @nestjs/platform-express
 - [04-01] Used process.env.UPLOAD_DIR directly in Multer diskStorage decorator (resolved at module load time)
 - [04-01] Sequential file upload in uploadFiles() to keep implementation simple
+- [03-01] Used forwardRef(() => TeamService) in AuthService to handle circular DI for setup endpoint
+- [03-01] DB-backed isAdmin check replaces hardcoded SUPER_ADMINS email list across all controllers
+- [03-01] Register endpoint returns JWT token alongside user data for immediate auth after registration
 
 ### Pending Todos
 
@@ -98,5 +102,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 04-01-PLAN.md (Local file storage) -- Phase 4 complete
-Resume file: .planning/phases/04-local-file-storage/04-01-SUMMARY.md
+Stopped at: Completed 03-01-PLAN.md (Auth migration, Feishu removal, setup endpoint)
+Resume file: .planning/phases/03-authentication-teams/03-01-SUMMARY.md

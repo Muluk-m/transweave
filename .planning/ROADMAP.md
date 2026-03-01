@@ -85,7 +85,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 04-01-PLAN.md -- Server-side file storage (Multer + serve-static) and frontend upload integration
+- [x] 04-01-PLAN.md -- Server-side file storage (Multer + serve-static) and frontend upload integration
 
 ### Phase 5: Translation Core & Search
 **Goal**: Users can fully manage translation tokens with multi-language values, organize them, track history, and find what they need through search and filtering
