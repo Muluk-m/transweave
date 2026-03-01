@@ -54,20 +54,20 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### Translation Core
 
-- [ ] **TRANS-01**: User can create translation tokens with multi-language values
-- [ ] **TRANS-02**: User can edit translation token keys and values
-- [ ] **TRANS-03**: User can delete translation tokens
-- [ ] **TRANS-04**: User can organize tokens by modules/namespaces
-- [ ] **TRANS-05**: User can view token change history
-- [ ] **TRANS-06**: Translation progress shown as per-language completion percentage per project
-- [ ] **TRANS-07**: User can add comments/notes on individual translation tokens
-- [ ] **TRANS-08**: User can bulk delete, bulk status change, and bulk tag translations
+- [x] **TRANS-01**: User can create translation tokens with multi-language values
+- [x] **TRANS-02**: User can edit translation token keys and values
+- [x] **TRANS-03**: User can delete translation tokens
+- [x] **TRANS-04**: User can organize tokens by modules/namespaces
+- [x] **TRANS-05**: User can view token change history
+- [x] **TRANS-06**: Translation progress shown as per-language completion percentage per project
+- [x] **TRANS-07**: User can add comments/notes on individual translation tokens
+- [x] **TRANS-08**: User can bulk delete, bulk status change, and bulk tag translations
 
 ### Search & Filter
 
-- [ ] **SRCH-01**: User can full-text search across token keys and translation values
-- [ ] **SRCH-02**: User can filter translations by language completion status (translated/untranslated)
-- [ ] **SRCH-03**: User can filter translations by module/namespace
+- [x] **SRCH-01**: User can full-text search across token keys and translation values
+- [x] **SRCH-02**: User can filter translations by language completion status (translated/untranslated)
+- [x] **SRCH-03**: User can filter translations by module/namespace
 
 ### Import & Export
 
@@ -186,17 +186,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILE-02 | Phase 4 | Complete |
 | FILE-03 | Phase 4 | Complete |
 | FILE-04 | Phase 4 | Complete |
-| TRANS-01 | Phase 5 | Pending |
-| TRANS-02 | Phase 5 | Pending |
-| TRANS-03 | Phase 5 | Pending |
-| TRANS-04 | Phase 5 | Pending |
-| TRANS-05 | Phase 5 | Pending |
-| TRANS-06 | Phase 5 | Pending |
-| TRANS-07 | Phase 5 | Pending |
-| TRANS-08 | Phase 5 | Pending |
-| SRCH-01 | Phase 5 | Pending |
-| SRCH-02 | Phase 5 | Pending |
-| SRCH-03 | Phase 5 | Pending |
+| TRANS-01 | Phase 5 (05-01) | Complete |
+| TRANS-02 | Phase 5 (05-01) | Complete |
+| TRANS-03 | Phase 5 (05-01) | Complete |
+| TRANS-04 | Phase 5 (05-01) | Complete |
+| TRANS-05 | Phase 5 (05-01) | Complete |
+| TRANS-06 | Phase 5 | Complete |
+| TRANS-07 | Phase 5 (05-01) | Complete |
+| TRANS-08 | Phase 5 | Complete |
+| SRCH-01 | Phase 5 | Complete |
+| SRCH-02 | Phase 5 | Complete |
+| SRCH-03 | Phase 5 | Complete |
 | IMEX-01 | Phase 6 | Pending |
 | IMEX-02 | Phase 6 | Pending |
 | IMEX-03 | Phase 6 | Pending |

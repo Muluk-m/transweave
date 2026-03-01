@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Cleanup & Branch Setup** - Remove all proprietary code, secrets, and internal references; create clean orphan branch
 - [x] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
-- [ ] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
+- [x] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
 - [x] **Phase 4: Local File Storage** - Replace external CDN with local disk storage and static file serving
 - [ ] **Phase 5: Translation Core & Search** - Full translation token management with search, filtering, history, and bulk operations
 - [ ] **Phase 6: Import & Export** - Multi-format file import/export with preview and diff
@@ -70,9 +70,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md -- Backend auth & user services: remove Feishu, migrate to repositories, add setup + admin reset endpoints
-- [ ] 03-02-PLAN.md -- Backend team & membership services: migrate to repositories, replace Mongoose patterns with Drizzle
-- [ ] 03-03-PLAN.md -- Frontend auth: rewrite login page, add setup wizard, clean auth context
+- [x] 03-01-PLAN.md -- Backend auth & user services: remove Feishu, migrate to repositories, add setup + admin reset endpoints
+- [x] 03-02-PLAN.md -- Backend team & membership services: migrate to repositories, replace Mongoose patterns with Drizzle
+- [x] 03-03-PLAN.md -- Frontend auth: rewrite login page, add setup wizard, clean auth context
 
 ### Phase 4: Local File Storage
 **Goal**: File uploads and screenshots work using local disk storage with no external CDN dependency
@@ -100,8 +100,8 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 05-01-PLAN.md -- Token service & CRUD backend (extract from ProjectService to dedicated TokenService/TokenController)
-- [ ] 05-02-PLAN.md -- Search, filter & progress API (server-side search, module/completion filtering, per-language progress)
+- [x] 05-01-PLAN.md -- Token service & CRUD backend (extract from ProjectService to dedicated TokenService/TokenController)
+- [x] 05-02-PLAN.md -- Search, filter & progress API (server-side search, module/completion filtering, per-language progress)
 - [ ] 05-03-PLAN.md -- Bulk operations & frontend integration (bulk delete/tag/module endpoint, connect frontend to new APIs)
 
 ### Phase 6: Import & Export
@@ -174,9 +174,9 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Branch Setup | 2/2 | Complete | 2026-03-01 |
 | 2. Database Foundation | 3/3 | Complete | 2026-03-01 |
-| 3. Authentication & Teams | 0/3 | Planned | - |
+| 3. Authentication & Teams | 3/3 | Complete | 2026-03-01 |
 | 4. Local File Storage | 1/1 | Complete | 2026-03-01 |
-| 5. Translation Core & Search | 0/3 | Not started | - |
+| 5. Translation Core & Search | 2/3 | In progress | - |
 | 6. Import & Export | 0/2 | Not started | - |
 | 7. AI Translation | 0/2 | Not started | - |
 | 8. Developer Tools | 0/3 | Planned | - |

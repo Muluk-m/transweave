@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-01T12:48:41.341Z"
+status: executing
+last_updated: "2026-03-01T13:26:00Z"
 progress:
   total_phases: 9
-  completed_phases: 3
+  completed_phases: 5
   total_plans: 21
-  completed_plans: 8
+  completed_plans: 12
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Teams can self-host a complete i18n management platform with zero dependency on external proprietary services
-**Current focus:** Phase 4 - Local File Storage
+**Current focus:** Phase 5 complete, Phase 6 next
 
 ## Current Position
 
-Phase: 4 of 9 (Local File Storage)
-Plan: 1 of 1 in current phase (complete)
-Status: Phase 4 complete
-Last activity: 2026-03-01 -- Completed 04-01 Local file storage
+Phase: 5 of 9 (Translation Core & Search) -- COMPLETE
+Plan: 3 of 3 in current phase (05-03 complete)
+Status: Phase 5 Complete
+Last activity: 2026-03-01 -- Completed 05-03 Bulk Operations + Frontend Integration
 
-Progress: [███░░░░░░░] 33%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 12
 - Average duration: 6min
-- Total execution time: 0.76 hours
+- Total execution time: 1.18 hours
 
 **By Phase:**
 
@@ -42,16 +42,21 @@ Progress: [███░░░░░░░] 33%
 |-------|-------|-------|----------|
 | 01-cleanup | 2 | 13min | 6.5min |
 | 02-database | 3 | 24min | 8min |
-| 03-authentication-teams | 1 | 4min | 4min |
+| 03-authentication-teams | 3 | 13min | 4.3min |
 | 04-local-file-storage | 1 | 4min | 4min |
+| 05-translation-core-search | 3 | 22min | 7.3min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (5min), 02-02 (3min), 02-03 (16min), 03-02 (4min), 04-01 (4min)
-- Trend: Fast execution for service migration and infrastructure plans
+- Last 5 plans: 03-03 (3min), 04-01 (4min), 05-01 (7min), 05-02 (8min), 05-03 (7min)
+- Trend: Consistent 7-8min for feature integration plans
 
 *Updated after each plan completion*
 | Phase 03 P02 | 4min | 2 tasks | 4 files |
 | Phase 03-authentication-teams P01 | 6min | 3 tasks | 10 files |
+| Phase 03-authentication-teams P03 | 3min | 2 tasks | 5 files |
+| Phase 05-translation-core-search P01 | 7min | 2 tasks | 6 files |
+| Phase 05-translation-core-search P02 | 8min | 2 tasks | 3 files |
+| Phase 05-translation-core-search P03 | 7min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +95,20 @@ Recent decisions affecting current work:
 - [03-01] Used forwardRef(() => TeamService) in AuthService to handle circular DI for setup endpoint
 - [03-01] DB-backed isAdmin check replaces hardcoded SUPER_ADMINS email list across all controllers
 - [03-01] Register endpoint returns JWT token alongside user data for immediate auth after registration
+- [03-03] Merged sign-in and sign-up into single login page with toggle instead of separate /register route
+- [03-03] Used window.location.href for post-setup redirect to force full auth context reinit
+- [03-03] Used existing i18n keys for login page text, English literals for setup wizard
+- [05-01] Updated McpService to use TokenService (blocking fix - removed methods)
+- [05-01] Changed MCP system user ID from MongoDB ObjectId to UUID format
+- [05-01] Accepted linter-added search/progress methods for Plan 05-02 forward compatibility
+- [05-01] Used checkPermission helper in TokenController to DRY permission checks
+- [05-02] Used jsonb_each_text() + ILIKE for cross-language translation search (precise per-value matching)
+- [05-02] Simple loop for per-language completion calculation (clear for v1, optimize later if needed)
+- [05-02] Route ordering: static-prefix first, parameterized sub-paths next, catch-all :projectId last
+- [05-03] Used debouncedSearch state pattern instead of lodash debounce for search input
+- [05-03] Unified bulk endpoint (POST /api/tokens/bulk) with operation discriminator
+- [05-03] Server-side search with perPage=200 default covers most project sizes
+- [05-03] Derived totalTokens from languageProgress API when tokens not eagerly loaded
 
 ### Pending Todos
 
@@ -102,5 +121,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 03-01-PLAN.md (Auth migration, Feishu removal, setup endpoint)
-Resume file: .planning/phases/03-authentication-teams/03-01-SUMMARY.md
+Stopped at: Completed 05-03-PLAN.md (Bulk Operations + Frontend Integration)
+Resume file: .planning/phases/05-translation-core-search/05-03-SUMMARY.md
