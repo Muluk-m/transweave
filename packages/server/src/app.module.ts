@@ -14,6 +14,7 @@ import { JwtStrategy } from './jwt/strategy';
 import { PassportModule } from '@nestjs/passport';
 import { MembershipService } from './service/membership.service';
 import { DatabaseModule } from './modules/database.module';
+import { DrizzleModule } from './db/drizzle.module';
 import { HttpModule } from '@nestjs/axios';
 import { AiService } from './service/ai.service';
 import { AiController } from './controller/ai.controller';
@@ -23,12 +24,14 @@ import { ActivityLogService } from './service/activity-log.service';
 import { ActivityLogController } from './controller/activity-log.controller';
 import { McpService } from './service/mcp.service';
 import { McpController } from './controller/mcp.controller';
+import { FileStorageModule } from './modules/file-storage.module';
 
 @Module({
   imports: [
     PassportModule,
     DatabaseModule,
     HttpModule,
+    FileStorageModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
