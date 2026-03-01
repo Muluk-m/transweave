@@ -25,6 +25,8 @@ import { ActivityLogController } from './controller/activity-log.controller';
 import { McpService } from './service/mcp.service';
 import { McpController } from './controller/mcp.controller';
 import { FileStorageModule } from './modules/file-storage.module';
+import { TokenService } from './service/token.service';
+import { TokenController } from './controller/token.controller';
 
 @Module({
   imports: [
@@ -49,6 +51,7 @@ import { FileStorageModule } from './modules/file-storage.module';
     UserController,
     ActivityLogController,
     McpController,
+    TokenController,
   ],
   providers: [
     AppService,
@@ -62,6 +65,7 @@ import { FileStorageModule } from './modules/file-storage.module';
     AiService,
     ActivityLogService,
     McpService,
+    TokenService,
   ],
 })
 export class AppModule implements NestModule {
