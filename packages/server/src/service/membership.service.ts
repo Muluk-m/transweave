@@ -1,152 +1,92 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, DeleteResult } from 'mongoose';
-import { Membership, MembershipDocument, Team, TeamDocument, User, UserDocument } from '../models';
-import { MongooseService } from './mongoose.service';
-import { withTransaction } from 'src/utils/transaction';
+import { MembershipRepository } from '../repository/membership.repository';
 
 @Injectable()
 export class MembershipService {
-  constructor(
-    @InjectModel(Membership.name)
-    private membershipModel: Model<MembershipDocument>,
-    @InjectModel(User.name)
-    private userModel: Model<UserDocument>,
-    @InjectModel(Team.name)
-    private teamModel: Model<TeamDocument>,
-    private mongooseService: MongooseService,
-  ) {}
+  constructor(private membershipRepo: MembershipRepository) {}
 
-  async createMembership(data: { userId: string; teamId: string; role: string }) {
-    return withTransaction(this.mongooseService.getConnection(), async (session) => {
-      const membership = await this.membershipModel.findOneAndUpdate(
-        { userId: data.userId, teamId: data.teamId },
-        {
-          userId: data.userId,
-          user: data.userId,
-          teamId: data.teamId,
-          role: data.role,
-        },
-        {
-          new: true,
-          upsert: true,
-          session,
-        },
-      );
+  async createMembership(data: {
+    userId: string;
+    teamId: string;
+    role: string;
+  }) {
+    // Upsert the membership row (create or update role if exists)
+    const membership = await this.membershipRepo.upsert(data);
 
-      await this.teamModel.findByIdAndUpdate(data.teamId, { $addToSet: { memberships: membership._id } }, { session });
-
-      await this.userModel.findByIdAndUpdate(data.userId, { $addToSet: { memberships: membership._id } }, { session });
-
-      return this.membershipModel
-        .findById(membership._id)
-        .session(session)
-        .populate({ path: 'user', select: 'id name email' });
-    });
+    // Return membership with user data populated (matching old response shape)
+    const results = await this.membershipRepo.findByTeamIdWithUser(
+      data.teamId,
+    );
+    return (
+      results.find((r) => r.membership.id === membership.id) ?? {
+        membership,
+        user: null,
+      }
+    );
   }
 
   // Check if user is a team member
   async isMember(teamId: string, userId: string): Promise<boolean> {
-    const membership = await this.membershipModel
-      .findOne({
-        teamId,
-        userId,
-      })
-      .exec();
+    const membership = await this.membershipRepo.findByUserAndTeam(
+      userId,
+      teamId,
+    );
     return !!membership;
   }
 
   // Check if user is a team owner
   async isOwner(teamId: string, userId: string): Promise<boolean> {
-    const membership = await this.membershipModel
-      .findOne({
-        teamId,
-        userId,
-        role: 'owner',
-      })
-      .exec();
-    return !!membership;
+    const membership = await this.membershipRepo.findByUserAndTeam(
+      userId,
+      teamId,
+    );
+    return membership?.role === 'owner';
   }
 
   // Check if user is a team manager or owner
   async isManagerOrOwner(teamId: string, userId: string): Promise<boolean> {
-    const membership = await this.membershipModel
-      .findOne({
-        teamId,
-        userId,
-        role: { $in: ['manager', 'owner'] },
-      })
-      .exec();
-    return !!membership;
+    const membership = await this.membershipRepo.findByUserAndTeam(
+      userId,
+      teamId,
+    );
+    return membership?.role === 'owner' || membership?.role === 'manager';
   }
 
   // Get user's role in team
   async getUserRole(teamId: string, userId: string): Promise<string | null> {
-    const membership = await this.membershipModel
-      .findOne({
-        teamId,
-        userId,
-      })
-      .select('role')
-      .exec();
-    return membership ? membership.role : null;
+    const membership = await this.membershipRepo.findByUserAndTeam(
+      userId,
+      teamId,
+    );
+    return membership?.role ?? null;
   }
 
   // Get all members of a team
   async getTeamMembers(teamId: string) {
-    return this.membershipModel
-      .find({
-        teamId,
-      })
-      .populate({
-        path: 'user',
-        select: 'id name email',
-      })
-      .exec();
+    return this.membershipRepo.findByTeamIdWithUser(teamId);
   }
 
   // Get all team memberships for a user
   async getUserMemberships(userId: string) {
-    return this.membershipModel
-      .find({
-        userId,
-      })
-      .populate('team')
-      .exec();
+    return this.membershipRepo.findByUserIdWithTeam(userId);
   }
 
   // Update member role
-  async updateMemberRole(teamId: string, memberId: string, newRole: string) {
-    return this.membershipModel
-      .updateMany(
-        {
-          teamId,
-          _id: memberId,
-        },
-        {
-          role: newRole,
-        },
-      )
-      .exec();
+  async updateMemberRole(
+    teamId: string,
+    memberId: string,
+    newRole: string,
+  ): Promise<void> {
+    await this.membershipRepo.updateRole(teamId, memberId, newRole);
   }
 
   // Remove membership
-  async removeMember(teamId: string, memberId: string): Promise<DeleteResult> {
-    return this.membershipModel
-      .deleteMany({
-        teamId,
-        _id: memberId,
-      })
-      .exec();
+  async removeMember(teamId: string, memberId: string): Promise<void> {
+    await this.membershipRepo.delete(memberId);
   }
 
   // Find specific membership
   async findMembership(teamId: string, userId: string) {
-    return this.membershipModel
-      .findOne({
-        teamId,
-        userId,
-      })
-      .exec();
+    return this.membershipRepo.findByUserAndTeam(userId, teamId);
   }
 }

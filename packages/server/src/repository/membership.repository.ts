@@ -79,6 +79,37 @@ export class MembershipRepository extends BaseRepository<
       .where(eq(memberships.userId, userId));
   }
 
+  async upsert(data: NewMembership): Promise<Membership> {
+    const [result] = await (this.db as any)
+      .insert(memberships)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [memberships.userId, memberships.teamId],
+        set: { role: data.role },
+      })
+      .returning();
+    return result;
+  }
+
+  async updateRole(
+    teamId: string,
+    membershipId: string,
+    role: string,
+  ): Promise<void> {
+    await (this.db as any)
+      .update(memberships)
+      .set({ role })
+      .where(
+        and(eq(memberships.id, membershipId), eq(memberships.teamId, teamId)),
+      );
+  }
+
+  async deleteByTeamId(teamId: string): Promise<void> {
+    await (this.db as any)
+      .delete(memberships)
+      .where(eq(memberships.teamId, teamId));
+  }
+
   async deleteByUserAndTeam(userId: string, teamId: string): Promise<void> {
     await this.db
       .delete(memberships)

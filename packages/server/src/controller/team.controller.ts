@@ -12,10 +12,9 @@ import {
 } from '@nestjs/common';
 import { TeamService } from '../service/team.service';
 import { MembershipService } from '../service/membership.service';
+import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser } from '../jwt/current-user.decorator';
-import { DeleteResult } from 'mongoose';
-import { isSuperAdmin } from 'src/utils/superAdmin';
 
 interface UserPayload {
   userId: string;
@@ -28,6 +27,7 @@ export class TeamController {
   constructor(
     private teamService: TeamService,
     private membershipService: MembershipService,
+    private userService: UserService,
   ) {}
 
   @Post('create')
@@ -56,10 +56,11 @@ export class TeamController {
   async findAllEntireTeams(
     @CurrentUser() user: UserPayload,
   ) {
-    if (!isSuperAdmin(user.email)) {
-      throw new UnauthorizedException()
+    const isAdmin = await this.userService.isAdmin(user.userId);
+    if (!isAdmin) {
+      throw new UnauthorizedException();
     }
-    return this.teamService.findAllTeams()
+    return this.teamService.findAllTeams();
   }
 
   @Get('find/:id')
@@ -105,7 +106,7 @@ export class TeamController {
   @Get('list')
   @UseGuards(AuthGuard)
   async findMyTeams(@CurrentUser() user: UserPayload) {
-    return this.teamService.findTeamsByUserId(user.userId)
+    return this.teamService.findTeamsByUserId(user.userId);
   }
 
   @Post('addmember/:id')
@@ -148,10 +149,14 @@ export class TeamController {
     @Body() data: { role: string },
     @CurrentUser() user: UserPayload,
   ) {
-    // Ensure only team owners can update roles
-    const isOwner = await this.membershipService.isOwner(teamId, user.userId);
-    if (!isOwner && !isSuperAdmin(user.email)) {
-      throw new ForbiddenException('Only team owners can update member roles');
+    const callerRole = await this.membershipService.getUserRole(teamId, user.userId);
+    const isAdmin = await this.userService.isAdmin(user.userId);
+
+    if (callerRole !== 'owner' && callerRole !== 'manager' && !isAdmin) {
+      throw new ForbiddenException('Only owners, managers, or admins can update roles');
+    }
+    if (data.role === 'owner' && callerRole !== 'owner' && !isAdmin) {
+      throw new ForbiddenException('Only owners or admins can promote to owner');
     }
 
     return this.membershipService.updateMemberRole(teamId, memberId, data.role);
@@ -164,7 +169,7 @@ export class TeamController {
     @Param('id') teamId: string,
     @Param('memberId') memberId: string,
     @CurrentUser() user: UserPayload,
-  ): Promise<DeleteResult> {
+  ): Promise<void> {
     // Ensure only team owners or managers can remove members
     const isManagerOrOwner = await this.membershipService.isManagerOrOwner(
       teamId,
