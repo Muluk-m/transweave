@@ -47,6 +47,9 @@ Teams can self-host a complete i18n management platform with zero dependency on 
 - [ ] Role-based access control (admin/member/viewer) for open-source users
 - [ ] Team/organization management system (built-in, no Feishu dependency)
 - [ ] Configurable AI translation backend (optional, not required to run)
+- [ ] Multi-provider AI translation support (OpenAI, Claude, DeepL, Google Translate, etc.) — user provides their own API key
+- [ ] CLI tool for developers (pull/push translations, sync with codebase)
+- [ ] MCP server for AI coding assistants (enhance existing implementation for open-source use)
 
 ### Out of Scope
 
@@ -62,7 +65,7 @@ This is a brownfield conversion of an existing internal i18n platform. The curre
 - **Frontend:** Next.js 15 + React 19 + Radix UI + Tailwind CSS + Jotai
 - **Backend:** NestJS 11 + Mongoose + MongoDB + JWT auth
 - **External deps to remove:** Feishu OAuth, QiLiangJia CDN, Dify AI (make optional)
-- **Database shift:** MongoDB → SQLite (dev) + PostgreSQL (prod) with abstraction layer
+- **Database shift:** MongoDB → PGlite (dev) + PostgreSQL (prod) via Drizzle ORM (research finding: PGlite shares same schema as PostgreSQL, eliminating dual-schema problem)
 
 The conversion will happen on a git worktree branch (`opensource`) in the same repository, allowing parallel development of internal and open-source versions.
 
@@ -91,6 +94,9 @@ Key codebase locations:
 | SQLite + PostgreSQL over MongoDB | Lower barrier to entry (SQLite), production-ready (PostgreSQL), both relational | — Pending |
 | Docker-compose deployment | Industry standard for self-hosted tools, one command to start | — Pending |
 | Make AI features optional | Not everyone has Dify/AI API access, core i18n should work standalone | — Pending |
+| PGlite over SQLite for dev | Same PostgreSQL schema in dev and prod, no dual-schema maintenance (research finding) | — Pending |
+| Drizzle ORM over Prisma/TypeORM | Fastest Node.js ORM, 7kb bundle, first-class PGlite + PostgreSQL support | — Pending |
+| Multi-provider AI with user API keys | Users bring their own keys for OpenAI/Claude/DeepL/Google Translate | — Pending |
 
 ---
-*Last updated: 2026-03-01 after initialization*
+*Last updated: 2026-03-01 after initialization + user additions (multi-provider AI, CLI, MCP)*
