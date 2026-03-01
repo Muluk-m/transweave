@@ -156,77 +156,77 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLEAN-01 | — | Pending |
-| CLEAN-02 | — | Pending |
-| CLEAN-03 | — | Pending |
-| CLEAN-04 | — | Pending |
-| CLEAN-05 | — | Pending |
-| CLEAN-06 | — | Pending |
-| CLEAN-07 | — | Pending |
-| CLEAN-08 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| TEAM-01 | — | Pending |
-| TEAM-02 | — | Pending |
-| TEAM-03 | — | Pending |
-| TEAM-04 | — | Pending |
-| TEAM-05 | — | Pending |
-| TEAM-06 | — | Pending |
-| DB-01 | — | Pending |
-| DB-02 | — | Pending |
-| DB-03 | — | Pending |
-| DB-04 | — | Pending |
-| DB-05 | — | Pending |
-| DB-06 | — | Pending |
-| FILE-01 | — | Pending |
-| FILE-02 | — | Pending |
-| FILE-03 | — | Pending |
-| FILE-04 | — | Pending |
-| TRANS-01 | — | Pending |
-| TRANS-02 | — | Pending |
-| TRANS-03 | — | Pending |
-| TRANS-04 | — | Pending |
-| TRANS-05 | — | Pending |
-| TRANS-06 | — | Pending |
-| TRANS-07 | — | Pending |
-| TRANS-08 | — | Pending |
-| SRCH-01 | — | Pending |
-| SRCH-02 | — | Pending |
-| SRCH-03 | — | Pending |
-| IMEX-01 | — | Pending |
-| IMEX-02 | — | Pending |
-| IMEX-03 | — | Pending |
-| IMEX-04 | — | Pending |
-| IMEX-05 | — | Pending |
-| IMEX-06 | — | Pending |
-| AI-01 | — | Pending |
-| AI-02 | — | Pending |
-| AI-03 | — | Pending |
-| AI-04 | — | Pending |
-| AI-05 | — | Pending |
-| DEV-01 | — | Pending |
-| DEV-02 | — | Pending |
-| DEV-03 | — | Pending |
-| DEV-04 | — | Pending |
-| DEV-05 | — | Pending |
-| DEV-06 | — | Pending |
-| DEV-07 | — | Pending |
-| DEPL-01 | — | Pending |
-| DEPL-02 | — | Pending |
-| DEPL-03 | — | Pending |
-| DEPL-04 | — | Pending |
-| DEPL-05 | — | Pending |
-| DEPL-06 | — | Pending |
+| CLEAN-01 | Phase 1 | Pending |
+| CLEAN-02 | Phase 1 | Pending |
+| CLEAN-03 | Phase 1 | Pending |
+| CLEAN-04 | Phase 1 | Pending |
+| CLEAN-05 | Phase 1 | Pending |
+| CLEAN-06 | Phase 1 | Pending |
+| CLEAN-07 | Phase 1 | Pending |
+| CLEAN-08 | Phase 1 | Pending |
+| AUTH-01 | Phase 3 | Pending |
+| AUTH-02 | Phase 3 | Pending |
+| AUTH-03 | Phase 3 | Pending |
+| AUTH-04 | Phase 3 | Pending |
+| AUTH-05 | Phase 3 | Pending |
+| AUTH-06 | Phase 3 | Pending |
+| TEAM-01 | Phase 3 | Pending |
+| TEAM-02 | Phase 3 | Pending |
+| TEAM-03 | Phase 3 | Pending |
+| TEAM-04 | Phase 3 | Pending |
+| TEAM-05 | Phase 3 | Pending |
+| TEAM-06 | Phase 3 | Pending |
+| DB-01 | Phase 2 | Pending |
+| DB-02 | Phase 2 | Pending |
+| DB-03 | Phase 2 | Pending |
+| DB-04 | Phase 2 | Pending |
+| DB-05 | Phase 2 | Pending |
+| DB-06 | Phase 2 | Pending |
+| FILE-01 | Phase 4 | Pending |
+| FILE-02 | Phase 4 | Pending |
+| FILE-03 | Phase 4 | Pending |
+| FILE-04 | Phase 4 | Pending |
+| TRANS-01 | Phase 5 | Pending |
+| TRANS-02 | Phase 5 | Pending |
+| TRANS-03 | Phase 5 | Pending |
+| TRANS-04 | Phase 5 | Pending |
+| TRANS-05 | Phase 5 | Pending |
+| TRANS-06 | Phase 5 | Pending |
+| TRANS-07 | Phase 5 | Pending |
+| TRANS-08 | Phase 5 | Pending |
+| SRCH-01 | Phase 5 | Pending |
+| SRCH-02 | Phase 5 | Pending |
+| SRCH-03 | Phase 5 | Pending |
+| IMEX-01 | Phase 6 | Pending |
+| IMEX-02 | Phase 6 | Pending |
+| IMEX-03 | Phase 6 | Pending |
+| IMEX-04 | Phase 6 | Pending |
+| IMEX-05 | Phase 6 | Pending |
+| IMEX-06 | Phase 6 | Pending |
+| AI-01 | Phase 7 | Pending |
+| AI-02 | Phase 7 | Pending |
+| AI-03 | Phase 7 | Pending |
+| AI-04 | Phase 7 | Pending |
+| AI-05 | Phase 7 | Pending |
+| DEV-01 | Phase 8 | Pending |
+| DEV-02 | Phase 8 | Pending |
+| DEV-03 | Phase 8 | Pending |
+| DEV-04 | Phase 8 | Pending |
+| DEV-05 | Phase 8 | Pending |
+| DEV-06 | Phase 8 | Pending |
+| DEV-07 | Phase 8 | Pending |
+| DEPL-01 | Phase 9 | Pending |
+| DEPL-02 | Phase 9 | Pending |
+| DEPL-03 | Phase 9 | Pending |
+| DEPL-04 | Phase 9 | Pending |
+| DEPL-05 | Phase 9 | Pending |
+| DEPL-06 | Phase 9 | Pending |
 
 **Coverage:**
-- v1 requirements: 55 total
-- Mapped to phases: 0
-- Unmapped: 55
+- v1 requirements: 65 total
+- Mapped to phases: 65
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after initial definition*
+*Last updated: 2026-03-01 after roadmap creation (traceability updated)*
