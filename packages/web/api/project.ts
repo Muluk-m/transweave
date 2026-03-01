@@ -3,6 +3,7 @@ import { apiClient } from "../lib/api";
 
 // API Base Path
 const API_BASE = '/api/project';
+const TOKEN_API_BASE = '/api/tokens';
 
 // Get team project list
 export async function getTeamProjects(teamId: string): Promise<Project[]> {
@@ -66,7 +67,49 @@ export async function checkProjectPermission(projectId: string): Promise<boolean
 
 // Get all tokens of a project
 export async function getProjectTokens(projectId: string): Promise<Token[]> {
-  return apiClient.get(`${API_BASE}/tokens/${projectId}`);
+  return apiClient.get(`${TOKEN_API_BASE}/${projectId}`);
+}
+
+// Search tokens with server-side filtering
+export async function searchTokens(projectId: string, options?: {
+  query?: string;
+  module?: string;
+  status?: 'all' | 'completed' | 'incomplete';
+  language?: string;
+  tags?: string;
+  page?: number;
+  perPage?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}): Promise<{
+  tokens: Token[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}> {
+  const params = new URLSearchParams();
+  if (options?.query) params.append('q', options.query);
+  if (options?.module) params.append('module', options.module);
+  if (options?.status && options.status !== 'all') params.append('status', options.status);
+  if (options?.language) params.append('language', options.language);
+  if (options?.tags) params.append('tags', options.tags);
+  if (options?.page) params.append('page', options.page.toString());
+  if (options?.perPage) params.append('perPage', options.perPage.toString());
+  if (options?.sortBy) params.append('sortBy', options.sortBy);
+  if (options?.sortOrder) params.append('sortOrder', options.sortOrder);
+  const qs = params.toString();
+  return apiClient.get(`${TOKEN_API_BASE}/${projectId}/search${qs ? `?${qs}` : ''}`);
+}
+
+// Get per-language completion progress
+export async function getTokenProgress(projectId: string): Promise<Array<{
+  language: string;
+  total: number;
+  completed: number;
+  percentage: number;
+}>> {
+  return apiClient.get(`${TOKEN_API_BASE}/${projectId}/progress`);
 }
 
 // Create new token
@@ -75,10 +118,10 @@ export async function createToken(projectId: string, data: {
   module?: string;
   tags?: string[];
   comment?: string;
-  translations?: Record<string, string>; // Changed to directly use translation object
+  translations?: Record<string, string>;
   screenshots?: string[];
 }): Promise<Token> {
-  return apiClient.post(`${API_BASE}/token`, {
+  return apiClient.post(TOKEN_API_BASE, {
     projectId,
     ...data
   });
@@ -86,7 +129,7 @@ export async function createToken(projectId: string, data: {
 
 // Get single token details
 export async function getToken(tokenId: string): Promise<Token> {
-  return apiClient.get(`${API_BASE}/token/${tokenId}`);
+  return apiClient.get(`${TOKEN_API_BASE}/detail/${tokenId}`);
 }
 
 // Update token
@@ -96,25 +139,31 @@ export async function updateToken(tokenId: string, data: {
   tags?: string[];
   comment?: string;
   screenshots?: string[];
-  translations?: Record<string, string>; // Added translation object parameter
+  translations?: Record<string, string>;
 }): Promise<Token> {
-  return apiClient.put(`${API_BASE}/token/${tokenId}`, data);
+  return apiClient.put(`${TOKEN_API_BASE}/${tokenId}`, data);
 }
 
 // Delete token
 export async function deleteToken(tokenId: string): Promise<void> {
-  return apiClient.delete(`${API_BASE}/token/${tokenId}`);
+  return apiClient.delete(`${TOKEN_API_BASE}/${tokenId}`);
 }
 
-// Batch update token module
+// Bulk operation (delete, set-tags, set-module)
+export async function bulkTokenOperation(
+  tokenIds: string[],
+  operation: 'delete' | 'set-tags' | 'set-module',
+  payload?: { tags?: string[]; module?: string | null },
+): Promise<any> {
+  return apiClient.post(`${TOKEN_API_BASE}/bulk`, { tokenIds, operation, payload });
+}
+
+// Convenience wrapper for batch module update
 export async function batchUpdateTokenModule(
   tokenIds: string[],
   moduleCode: string | null,
 ): Promise<Token[]> {
-  return apiClient.post(`${API_BASE}/tokens/batch/module`, {
-    tokenIds,
-    moduleCode,
-  });
+  return bulkTokenOperation(tokenIds, 'set-module', { module: moduleCode });
 }
 
 // Module management

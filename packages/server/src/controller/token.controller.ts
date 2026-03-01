@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
@@ -56,6 +57,58 @@ export class TokenController {
     const token = await this.tokenService.findById(tokenId);
     await this.checkPermission(token.projectId, user.userId);
     return token;
+  }
+
+  /**
+   * POST /api/tokens/bulk
+   * Bulk operations: delete, set-tags, set-module.
+   * Must be defined BEFORE parameterized routes.
+   */
+  @Post('bulk')
+  @UseGuards(AuthGuard)
+  async bulkOperation(
+    @Body()
+    data: {
+      tokenIds: string[];
+      operation: 'delete' | 'set-tags' | 'set-module';
+      payload?: {
+        tags?: string[];
+        module?: string | null;
+      };
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    if (!data.tokenIds || data.tokenIds.length === 0) {
+      throw new BadRequestException('No tokens provided');
+    }
+
+    // Get first token to determine project for permission check
+    const firstToken = await this.tokenService.findById(data.tokenIds[0]);
+    await this.checkPermission(firstToken.projectId, user.userId);
+
+    switch (data.operation) {
+      case 'delete':
+        return this.tokenService.bulkDelete(data.tokenIds, user.userId);
+      case 'set-tags':
+        if (!data.payload?.tags) {
+          throw new BadRequestException('Tags required for set-tags operation');
+        }
+        return this.tokenService.bulkUpdateTags(
+          data.tokenIds,
+          data.payload.tags,
+          user.userId,
+        );
+      case 'set-module':
+        return this.tokenService.bulkUpdateModule(
+          data.tokenIds,
+          data.payload?.module ?? null,
+          user.userId,
+        );
+      default:
+        throw new BadRequestException(
+          `Unknown operation: ${(data as any).operation}`,
+        );
+    }
   }
 
   /**

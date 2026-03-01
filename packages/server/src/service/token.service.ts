@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
 import { tokens, type Token } from '../db/schema';
@@ -533,5 +533,184 @@ export class TokenService {
     }
 
     return results;
+  }
+
+  // ============= Bulk Operations (Plan 05-03) =============
+
+  /**
+   * Bulk delete tokens.
+   * Verifies all tokens exist and belong to the same project.
+   * FK CASCADE handles token_history cleanup.
+   */
+  async bulkDelete(
+    tokenIds: string[],
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ deleted: number }> {
+    if (tokenIds.length === 0) {
+      throw new BadRequestException('No token IDs provided');
+    }
+
+    // Verify all tokens exist and belong to the same project
+    const existingTokens: Token[] = await (this.db as any)
+      .select()
+      .from(tokens)
+      .where(inArray(tokens.id, tokenIds));
+
+    if (existingTokens.length !== tokenIds.length) {
+      throw new NotFoundException('One or more tokens not found');
+    }
+
+    const projectIds = new Set(existingTokens.map((t) => t.projectId));
+    if (projectIds.size > 1) {
+      throw new BadRequestException('All tokens must belong to the same project');
+    }
+
+    const projectId = existingTokens[0].projectId;
+    const deletedKeys = existingTokens.map((t) => t.key);
+
+    // Delete all tokens in a single query
+    await (this.db as any)
+      .delete(tokens)
+      .where(inArray(tokens.id, tokenIds));
+
+    // Log a single activity entry
+    await this.activityLogService.create({
+      type: ActivityType.TOKEN_BATCH_UPDATE,
+      projectId,
+      userId,
+      details: {
+        entityType: 'token',
+        metadata: {
+          operation: 'bulk-delete',
+          count: tokenIds.length,
+          deletedKeys,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return { deleted: tokenIds.length };
+  }
+
+  /**
+   * Bulk update tags on tokens.
+   * Verifies all tokens exist and belong to the same project.
+   * Sets the same tags array on all specified tokens.
+   */
+  async bulkUpdateTags(
+    tokenIds: string[],
+    tags: string[],
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<Token[]> {
+    if (tokenIds.length === 0) {
+      throw new BadRequestException('No token IDs provided');
+    }
+
+    // Verify all tokens exist and belong to the same project
+    const existingTokens: Token[] = await (this.db as any)
+      .select()
+      .from(tokens)
+      .where(inArray(tokens.id, tokenIds));
+
+    if (existingTokens.length !== tokenIds.length) {
+      throw new NotFoundException('One or more tokens not found');
+    }
+
+    const projectIds = new Set(existingTokens.map((t) => t.projectId));
+    if (projectIds.size > 1) {
+      throw new BadRequestException('All tokens must belong to the same project');
+    }
+
+    const projectId = existingTokens[0].projectId;
+
+    // Update all tokens with the new tags
+    const updatedTokens: Token[] = await (this.db as any)
+      .update(tokens)
+      .set({ tags, updatedAt: new Date() })
+      .where(inArray(tokens.id, tokenIds))
+      .returning();
+
+    // Log activity
+    await this.activityLogService.create({
+      type: ActivityType.TOKEN_BATCH_UPDATE,
+      projectId,
+      userId,
+      details: {
+        entityType: 'token',
+        metadata: {
+          operation: 'bulk-set-tags',
+          count: tokenIds.length,
+          tags,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return updatedTokens;
+  }
+
+  /**
+   * Bulk update module assignment on tokens.
+   * Verifies all tokens exist and belong to the same project.
+   */
+  async bulkUpdateModule(
+    tokenIds: string[],
+    moduleCode: string | null,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<Token[]> {
+    if (tokenIds.length === 0) {
+      throw new BadRequestException('No token IDs provided');
+    }
+
+    // Verify all tokens exist and belong to the same project
+    const existingTokens: Token[] = await (this.db as any)
+      .select()
+      .from(tokens)
+      .where(inArray(tokens.id, tokenIds));
+
+    if (existingTokens.length !== tokenIds.length) {
+      throw new NotFoundException('One or more tokens not found');
+    }
+
+    const projectIds = new Set(existingTokens.map((t) => t.projectId));
+    if (projectIds.size > 1) {
+      throw new BadRequestException('All tokens must belong to the same project');
+    }
+
+    const projectId = existingTokens[0].projectId;
+
+    // Update all tokens with the new module
+    const updatedTokens: Token[] = await (this.db as any)
+      .update(tokens)
+      .set({ module: moduleCode, updatedAt: new Date() })
+      .where(inArray(tokens.id, tokenIds))
+      .returning();
+
+    // Log activity
+    await this.activityLogService.create({
+      type: ActivityType.TOKEN_BATCH_UPDATE,
+      projectId,
+      userId,
+      details: {
+        entityType: 'token',
+        metadata: {
+          operation: 'bulk-set-module',
+          count: tokenIds.length,
+          moduleCode,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    return updatedTokens;
   }
 }
