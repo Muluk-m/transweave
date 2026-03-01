@@ -1,0 +1,14 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "gitleaks config"
+
+[allowlist]
+  description = "Known false positives"
+  regexTarget = "match"
+  regexes = [
+    '''abc123def456''',
+  ]
+  paths = [
+    '''(^|\/)\.gitleaks\.toml$''',
+  ]
