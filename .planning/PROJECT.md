@@ -1,12 +1,22 @@
-# qlj-i18n Open Source Edition
+# Transweave
 
 ## What This Is
 
-An open-source, self-hosted internationalization (i18n) management platform for development teams. It provides a full-stack solution for managing translation tokens, multi-language content, team collaboration, and AI-assisted translation — built on Next.js + NestJS. This is the community edition derived from the internal qlj-fe-i18n platform, with all business-specific dependencies removed and deployment simplified.
+Transweave is an open-source, self-hosted internationalization (i18n) management platform for development teams. It provides a full-stack solution for managing translation tokens, multi-language content, team collaboration, and AI-assisted translation — built on Next.js + NestJS. Weave your translations across languages with ease.
 
 ## Core Value
 
 Teams can self-host a complete i18n management platform with zero dependency on external proprietary services — just clone, configure, and run.
+
+## Current Milestone: v1.1 Branding & Promotion
+
+**Goal:** Establish Transweave as a recognizable brand with professional identity, project website, and polished documentation.
+
+**Target features:**
+- Project rename from qlj-i18n to Transweave (package names, code references, Docker images, CLI)
+- Logo and visual identity (logo, favicon, Open Graph images)
+- Landing page / project website for promotion
+- README rewrite with new branding and polished presentation
 
 ## Requirements
 
@@ -96,7 +106,8 @@ Key codebase locations:
 | Make AI features optional | Not everyone has Dify/AI API access, core i18n should work standalone | — Pending |
 | PGlite over SQLite for dev | Same PostgreSQL schema in dev and prod, no dual-schema maintenance (research finding) | — Pending |
 | Drizzle ORM over Prisma/TypeORM | Fastest Node.js ORM, 7kb bundle, first-class PGlite + PostgreSQL support | — Pending |
-| Multi-provider AI with user API keys | Users bring their own keys for OpenAI/Claude/DeepL/Google Translate | — Pending |
+| Multi-provider AI with user API keys | Users bring their own keys for OpenAI/Claude/DeepL/Google Translate | ✓ Good |
+| Project name: Transweave | Trans(翻译) + Weave(编织) — meaningful, unique, npm/GitHub clean | — Pending |
 
 ---
-*Last updated: 2026-03-01 after initialization + user additions (multi-provider AI, CLI, MCP)*
+*Last updated: 2026-03-01 after v1.1 milestone start (branding)*
