@@ -97,12 +97,12 @@ Plans:
   3. Translation progress is visible as per-language completion percentage on the project view
   4. User can search across token keys and translation values, and filter by language completion status or module
   5. User can perform bulk operations (delete, status change, tag) on selected translations
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
-- [ ] 05-03: TBD
+- [ ] 05-01-PLAN.md -- Token service & CRUD backend (extract from ProjectService to dedicated TokenService/TokenController)
+- [ ] 05-02-PLAN.md -- Search, filter & progress API (server-side search, module/completion filtering, per-language progress)
+- [ ] 05-03-PLAN.md -- Bulk operations & frontend integration (bulk delete/tag/module endpoint, connect frontend to new APIs)
 
 ### Phase 6: Import & Export
 **Goal**: Users can get translation data in and out of the platform in standard file formats with confidence about what will change
@@ -141,12 +141,12 @@ Plans:
   2. Running `qlj-i18n pull` downloads translation files from the server to local disk; running `qlj-i18n push` uploads local files to the server
   3. An AI coding assistant connected via MCP can list projects, list tokens, create tokens, and update token values
   4. A REST API reference document exists listing all endpoints with request/response examples
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
+- [ ] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
+- [ ] 08-03-PLAN.md -- REST API reference documentation
 
 ### Phase 9: Deployment & Production Readiness
 **Goal**: A new user can go from git clone to running platform in under 5 minutes with Docker, or run locally without Docker using PGlite
