@@ -16,10 +16,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
 - [x] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
 - [x] **Phase 4: Local File Storage** - Replace external CDN with local disk storage and static file serving
-- [ ] **Phase 5: Translation Core & Search** - Full translation token management with search, filtering, history, and bulk operations
-- [ ] **Phase 6: Import & Export** - Multi-format file import/export with preview and diff
-- [ ] **Phase 7: AI Translation** - Multi-provider AI translation with user-supplied API keys (optional feature)
-- [ ] **Phase 8: Developer Tools** - CLI tool, MCP server, API key management, and REST API documentation
+- [x] **Phase 5: Translation Core & Search** - Full translation token management with search, filtering, history, and bulk operations
+- [x] **Phase 6: Import & Export** - Multi-format file import/export with preview and diff
+- [x] **Phase 7: AI Translation** - Multi-provider AI translation with user-supplied API keys (optional feature)
+- [x] **Phase 8: Developer Tools** - CLI tool, MCP server, API key management, and REST API documentation
 - [x] **Phase 9: Deployment & Production Readiness** - Docker Compose packaging, environment config, health checks, and setup documentation
 
 ## Phase Details
@@ -102,7 +102,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md -- Token service & CRUD backend (extract from ProjectService to dedicated TokenService/TokenController)
 - [x] 05-02-PLAN.md -- Search, filter & progress API (server-side search, module/completion filtering, per-language progress)
-- [ ] 05-03-PLAN.md -- Bulk operations & frontend integration (bulk delete/tag/module endpoint, connect frontend to new APIs)
+- [x] 05-03-PLAN.md -- Bulk operations & frontend integration (bulk delete/tag/module endpoint, connect frontend to new APIs)
 
 ### Phase 6: Import & Export
 **Goal**: Users can get translation data in and out of the platform in standard file formats with confidence about what will change
@@ -146,7 +146,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
 - [x] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
-- [ ] 08-03-PLAN.md -- REST API reference documentation
+- [x] 08-03-PLAN.md -- REST API reference documentation
 
 ### Phase 9: Deployment & Production Readiness
 **Goal**: A new user can go from git clone to running platform in under 5 minutes with Docker, or run locally without Docker using PGlite
@@ -176,8 +176,8 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 2. Database Foundation | 3/3 | Complete | 2026-03-01 |
 | 3. Authentication & Teams | 3/3 | Complete | 2026-03-01 |
 | 4. Local File Storage | 1/1 | Complete | 2026-03-01 |
-| 5. Translation Core & Search | 2/3 | In progress | - |
+| 5. Translation Core & Search | 3/3 | Complete | 2026-03-01 |
 | 6. Import & Export | 2/2 | Complete | 2026-03-01 |
 | 7. AI Translation | 2/2 | Complete | 2026-03-01 |
-| 8. Developer Tools | 2/3 | In progress | - |
+| 8. Developer Tools | 3/3 | Complete | 2026-03-01 |
 | 9. Deployment & Production Readiness | 2/2 | Complete | 2026-03-01 |
