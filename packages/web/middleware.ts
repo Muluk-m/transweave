@@ -6,7 +6,6 @@ export function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/api/')) {
     const apiBaseUrl = process.env.NEXT_INTERNAL_API_URL || 'http://localhost:3001'
-    // const apiBaseUrl = process.env.NEXT_INTERNAL_API_URL || 'https://qlj-fe-i18n.qiliangjia.org'
     const url = new URL(pathname, apiBaseUrl)
     
     url.search = request.nextUrl.search

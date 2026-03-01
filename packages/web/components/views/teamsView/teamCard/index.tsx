@@ -119,7 +119,7 @@ export function TeamView(props: {
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                             <Link className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">bondma.com/team/{team.url}</span>
+                            <span className="truncate">app/team/{team.url}</span>
                         </div>
                     </div>
 

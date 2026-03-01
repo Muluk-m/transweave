@@ -23,7 +23,7 @@
     "welcome": {
       "title": {
         "zh-CN": "使用 <span>汤师爷</span> 简化翻译流程",
-        "en-US": "Simplify Translation Process with <span>Bondma</span>"
+        "en-US": "Simplify Translation Process with <span>i18n Platform</span>"
       },
       "tagline": {
         "zh-CN": "本地化管理解决方案",
@@ -44,7 +44,7 @@
     },
     "header": {
       "title": {
-        "zh-CN": "起量加-多语言",
+        "zh-CN": "i18n Platform",
         "en-US": "qlj-i18n"
       }
     },
@@ -54,8 +54,8 @@
         "en-US": "Powerful Features"
       },
       "description": {
-        "zh-CN": "Bondma 提供专业的本地化工具，帮助团队更高效地管理多语言内容",
-        "en-US": "Bondma provides professional localization tools to help teams manage multilingual content more efficiently"
+        "zh-CN": "i18n Platform 提供专业的本地化工具，帮助团队更高效地管理多语言内容",
+        "en-US": "i18n Platform provides professional localization tools to help teams manage multilingual content more efficiently"
       },
       "items": {
         "0": {
@@ -126,8 +126,8 @@
         "en-US": "Simplified Workflow"
       },
       "description": {
-        "zh-CN": "从导入项目到导出翻译，Bondma 提供端到端的本地化管理解决方案",
-        "en-US": "From project import to translation export, Bondma provides end-to-end localization management solutions"
+        "zh-CN": "从导入项目到导出翻译，i18n Platform 提供端到端的本地化管理解决方案",
+        "en-US": "From project import to translation export, i18n Platform provides end-to-end localization management solutions"
       },
       "tabs": {
         "import": {
@@ -235,8 +235,8 @@
         "en-US": "User Cases"
       },
       "description": {
-        "zh-CN": "看看其他团队如何使用 Bondma 提升本地化效率",
-        "en-US": "See how other teams use Bondma to improve localization efficiency"
+        "zh-CN": "看看其他团队如何使用 i18n Platform 提升本地化效率",
+        "en-US": "See how other teams use i18n Platform to improve localization efficiency"
       },
       "case1": {
         "title": {
@@ -248,8 +248,8 @@
           "en-US": "Localization challenges for global applications"
         },
         "quote": {
-          "zh-CN": "\"使用 Bondma 后，我们将翻译效率提高了60%，现在可以同时支持20种语言而不增加团队规模。\"",
-          "en-US": "\"After using Bondma, we increased our translation efficiency by 60% and now support 20 languages without expanding our team.\""
+          "zh-CN": "\"使用 i18n Platform 后，我们将翻译效率提高了60%，现在可以同时支持20种语言而不增加团队规模。\"",
+          "en-US": "\"After using i18n Platform, we increased our translation efficiency by 60% and now support 20 languages without expanding our team.\""
         },
         "readMore": {
           "zh-CN": "阅读完整案例",
@@ -266,8 +266,8 @@
           "en-US": "Consistent management of multi-platform content"
         },
         "quote": {
-          "zh-CN": "\"Bondma 帮助我们在多个平台上保持品牌信息的一致性，翻译错误减少了90%。\"",
-          "en-US": "\"Bondma helped us maintain brand messaging consistency across multiple platforms, reducing translation errors by 90%.\""
+          "zh-CN": "\"i18n Platform 帮助我们在多个平台上保持品牌信息的一致性，翻译错误减少了90%。\"",
+          "en-US": "\"i18n Platform helped us maintain brand messaging consistency across multiple platforms, reducing translation errors by 90%.\""
         },
         "readMore": {
           "zh-CN": "阅读完整案例",
@@ -281,8 +281,8 @@
         "en-US": "Ready to get started?"
       },
       "description": {
-        "zh-CN": "立即加入 Bondma，体验高效的本地化管理，让您的产品说出全世界的语言。",
-        "en-US": "Join Bondma now and experience efficient localization management, letting your product speak every language in the world."
+        "zh-CN": "立即加入 i18n Platform，体验高效的本地化管理，让您的产品说出全世界的语言。",
+        "en-US": "Join i18n Platform now and experience efficient localization management, letting your product speak every language in the world."
       },
       "register": {
         "zh-CN": "免费注册",

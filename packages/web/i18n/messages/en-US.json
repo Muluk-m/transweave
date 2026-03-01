@@ -1,14 +1,14 @@
 {
   "welcome": {
     "tagline": "Localization Management Solution",
-    "title": "Simplify Translation Process with <span>Bondma</span>",
+    "title": "Simplify Translation Process with <span>i18n Platform</span>",
     "description": "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly.",
     "getStarted": "Get Started",
     "learnMore": "Learn More"
   },
   "features": {
     "title": "Powerful Features",
-    "description": "Bondma provides professional localization tools to help teams manage multilingual content more efficiently",
+    "description": "i18n Platform provides professional localization tools to help teams manage multilingual content more efficiently",
     "items": [
       {
         "title": "Multilingual Support",
@@ -38,7 +38,7 @@
   },
   "workflow": {
     "title": "Simplified Workflow",
-    "description": "From project import to translation export, Bondma provides end-to-end localization management solutions",
+    "description": "From project import to translation export, i18n Platform provides end-to-end localization management solutions",
     "tabs": {
       "import": "Import Project",
       "translate": "Translation Management",
@@ -78,23 +78,23 @@
   },
   "cases": {
     "title": "User Cases",
-    "description": "See how other teams use Bondma to improve localization efficiency",
+    "description": "See how other teams use i18n Platform to improve localization efficiency",
     "case1": {
       "title": "TechGlobal",
       "subtitle": "Localization challenges for global applications",
-      "quote": "\"After using Bondma, we increased our translation efficiency by 60% and now support 20 languages without expanding our team.\"",
+      "quote": "\"After using i18n Platform, we increased our translation efficiency by 60% and now support 20 languages without expanding our team.\"",
       "readMore": "Read Full Case Study"
     },
     "case2": {
       "title": "CreativeStudio",
       "subtitle": "Consistent management of multi-platform content",
-      "quote": "\"Bondma helped us maintain brand messaging consistency across multiple platforms, reducing translation errors by 90%.\"",
+      "quote": "\"i18n Platform helped us maintain brand messaging consistency across multiple platforms, reducing translation errors by 90%.\"",
       "readMore": "Read Full Case Study"
     }
   },
   "cta": {
     "title": "Ready to get started?",
-    "description": "Join Bondma now and experience efficient localization management, letting your product speak every language in the world.",
+    "description": "Join i18n Platform now and experience efficient localization management, letting your product speak every language in the world.",
     "register": "Register for Free",
     "demo": "Schedule a Demo",
     "note": "Free version includes basic features, upgradeable anytime"

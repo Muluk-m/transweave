@@ -203,7 +203,7 @@ export default function WelcomeView() {
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 z-10"></div>
                             <Image 
                                 src="/fanyi.webp" 
-                                alt="Bondma 界面预览"
+                                alt="Platform preview"
                                 sizes="(min-width: 1024px) 50vw, 100vw"
                                 fill
                                 className="object-cover"

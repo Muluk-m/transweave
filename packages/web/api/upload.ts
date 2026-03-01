@@ -18,7 +18,7 @@ export async function uploadImage(file: File): Promise<UploadFile> {
   const formData = new FormData();
   formData.append('files', file);
 
-  const response = await fetch('https://qlj-devhub-homepage.qiliangjia.one/api/uploads', {
+  const response = await fetch('/api/uploads', {
     method: 'POST',
     body: formData,
     headers: {
@@ -53,7 +53,7 @@ export async function uploadFiles(files: File[]): Promise<UploadFile[]> {
     formData.append('file', file);
   });
 
-  const response = await fetch('https://qlj-devhub-homepage.qiliangjia.one/api/uploads', {
+  const response = await fetch('/api/uploads', {
     method: 'POST',
     body: formData,
   });

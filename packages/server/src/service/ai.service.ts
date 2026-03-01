@@ -3,8 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { safeParseJson } from 'src/utils/json';
 
-const DIFY_API_URL = 'https://api-ai.qiliangjia.org/v1/chat-messages';
-const DIFY_API_KEY = process.env.DIFY_API_KEY || 'app-QFt9YXsFIT9YMeVcvn9muuaR';
+const DIFY_API_URL = process.env.DIFY_API_URL || '';
+const DIFY_API_KEY = process.env.DIFY_API_KEY || '';
 
 @Injectable()
 export class AiService {

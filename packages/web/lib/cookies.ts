@@ -1,4 +1,4 @@
-export const LANGUAGE_COOKIE_KEY = 'bondma_language';
+export const LANGUAGE_COOKIE_KEY = 'i18n_language';
 export const DEFAULT_LANGUAGE = 'zh-CN';
 
 export const setCookie = (name: string, value: string, days?: number) => {

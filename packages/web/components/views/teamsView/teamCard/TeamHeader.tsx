@@ -27,7 +27,7 @@ export function TeamHeader({ name, url, onEditTeam, onDeleteTeam }: TeamHeaderPr
                     <CardTitle className="text-lg">{name}</CardTitle>
                     <CardDescription className="flex items-center mt-1 text-xs">
                         <Link className="h-3 w-3 mr-1 flex-shrink-0" />
-                        <span className="truncate">bondma.com/team/{url}</span>
+                        <span className="truncate">app/team/{url}</span>
                     </CardDescription>
                 </div>
 

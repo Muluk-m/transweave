@@ -31,7 +31,7 @@ import { McpController } from './controller/mcp.controller';
     HttpModule,
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || 'your-secret-key',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '15d' },
     }),
   ],

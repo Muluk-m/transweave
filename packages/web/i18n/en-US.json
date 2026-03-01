@@ -5,14 +5,14 @@
     "word": "dscedv"
   },
   "welcome": {
-    "title": "Simplify Translation Process with <span>BondMa</span>",
+    "title": "Simplify Translation Process with <span>i18n Platform</span>",
     "tagline": "Localization Management Solution",
     "description": "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
     "getStarted": "Get Started",
     "learnMore": "Learn More"
   },
   "header": {
-    "title": "BondMa",
+    "title": "i18n Platform",
     "githubRepo": "GitHub Repository",
     "switchLanguage": "Switch Language",
     "languages": {
@@ -27,7 +27,7 @@
   },
   "features": {
     "title": "Powerful Features",
-    "description": "Bondma provides professional localization tools to help teams manage multilingual content more efficiently",
+    "description": "i18n Platform provides professional localization tools to help teams manage multilingual content more efficiently",
     "items": {
       "0": {
         "title": "Multilingual Support",
@@ -57,7 +57,7 @@
   },
   "workflow": {
     "title": "Simplified Workflow",
-    "description": "From importing projects to exporting translations, Bondma provides an end-to-end localization management solution",
+    "description": "From importing projects to exporting translations, i18n Platform provides an end-to-end localization management solution",
     "tabs": {
       "import": "Import Project",
       "translate": "Translation Management",
@@ -97,23 +97,23 @@
   },
   "cases": {
     "title": "User Cases",
-    "description": "See how other teams use Bondma to improve localization efficiency",
+    "description": "See how other teams use i18n Platform to improve localization efficiency",
     "case1": {
       "title": "TechGlobal",
       "subtitle": "Localization Challenges for Global Applications",
-      "quote": "\"After using Bondma, we increased our translation efficiency by 60%, now we can support 20 languages simultaneously without expanding the team.\"",
+      "quote": "\"After using i18n Platform, we increased our translation efficiency by 60%, now we can support 20 languages simultaneously without expanding the team.\"",
       "readMore": "Read full case"
     },
     "case2": {
       "title": "CreativeStudio",
       "subtitle": "Consistent Management of Multi-platform Content",
-      "quote": "\"Bondma helps us maintain the consistency of brand information across multiple platforms, reducing translation errors by 90%.\"",
+      "quote": "\"i18n Platform helps us maintain the consistency of brand information across multiple platforms, reducing translation errors by 90%.\"",
       "readMore": "Read full case"
     }
   },
   "cta": {
     "title": "Ready to get started?",
-    "description": "Join Bondma now to experience efficient localization management and make your product speak the languages of the world.",
+    "description": "Join i18n Platform now to experience efficient localization management and make your product speak the languages of the world.",
     "register": "Register for Free",
     "demo": "Schedule a Demo",
     "note": "Free version includes basic features, upgradable anytime"
@@ -142,7 +142,7 @@
   },
   "register": {
     "title": "Create Account",
-    "description": "Register a new account to start using BondMa",
+    "description": "Register a new account to start using i18n Platform",
     "username": "Username",
     "email": "Email",
     "password": "Password",
@@ -224,7 +224,7 @@
       "namePlaceholder": "Enter team name",
       "url": "Team URL",
       "urlPlaceholder": "team-url",
-      "urlPrefix": "bondma.com/team/",
+      "urlPrefix": "app/team/",
       "create": "Create",
       "cancel": "Cancel"
     },
@@ -281,7 +281,7 @@
         "namePlaceholder": "Enter team name",
         "url": "Team URL",
         "urlPlaceholder": "your-team-url",
-        "urlPrefix": "bondma.com/team/",
+        "urlPrefix": "app/team/",
         "saveSettings": "Save Settings",
         "characters": "characters",
         "errors": {
@@ -447,8 +447,8 @@
     }
   },
   "tutorial": {
-    "pageTitle": "Bondma Usage Tutorial",
-    "pageDescription": "This tutorial will help you understand how to use the Bondma platform to efficiently manage multilingual translation projects, from basic features to advanced configurations.",
+    "pageTitle": "i18n Platform Usage Tutorial",
+    "pageDescription": "This tutorial will help you understand how to use the i18n Platform platform to efficiently manage multilingual translation projects, from basic features to advanced configurations.",
     "backToHome": "Back to Home",
     "needHelp": "Need More Help?",
     "helpDescription": "If you have other questions or need personalized support, please feel free to contact us.",
@@ -461,7 +461,7 @@
         "title": "Getting Started",
         "overview": {
           "title": "System Overview",
-          "description": "Bondma is a localization management platform that helps teams collaborate on translations and manage multilingual content.",
+          "description": "i18n Platform is a localization management platform that helps teams collaborate on translations and manage multilingual content.",
           "steps": {
             "0": "Register an account and log in to the system",
             "1": "Create or join a team",
@@ -553,7 +553,7 @@
         "title": "Advanced Features",
         "api": {
           "title": "API Integration",
-          "description": "How to use Bondma API to implement automated workflows.",
+          "description": "How to use i18n Platform API to implement automated workflows.",
           "steps": {
             "0": "API overview and authentication",
             "1": "Common API endpoints and use cases",
@@ -563,7 +563,7 @@
         },
         "customize": {
           "title": "Customization and Extension",
-          "description": "Customize the Bondma platform according to your needs.",
+          "description": "Customize the i18n Platform platform according to your needs.",
           "steps": {
             "0": "Custom workflows and statuses",
             "1": "Extension features and plugins",
