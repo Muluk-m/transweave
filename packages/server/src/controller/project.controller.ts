@@ -24,6 +24,7 @@ import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { Response } from 'express';
 import { UserService } from 'src/service/user.service';
 import { TeamService } from 'src/service/team.service';
+import type { SupportedImportFormat, SupportedExportFormat } from 'src/utils/formats/types';
 
 @Controller('api/project')
 export class ProjectController {
@@ -155,7 +156,7 @@ export class ProjectController {
     @Param('projectId') projectId: string,
     @Body()
     data: {
-      format: 'json' | 'csv' | 'xml' | 'yaml'; // Export format
+      format: SupportedExportFormat; // Export format
       scope?: 'all' | 'completed' | 'incomplete' | 'custom'; // Export scope
       languages?: string[]; // Selected languages
       showEmptyTranslations?: boolean; // Whether to include empty translations
@@ -192,7 +193,7 @@ export class ProjectController {
   @Header('Content-Type', 'application/zip')
   async downloadProject(
     @Param('projectId') projectId: string,
-    @Query('format') format: 'json' | 'csv' | 'xml' | 'yaml' = 'json', // Default to json
+    @Query('format') format: SupportedExportFormat = 'json', // Default to json
     @Query('scope')
     scope: 'all' | 'completed' | 'incomplete' | 'custom' = 'all',
     @Query('languages') languages: string, // Comma-separated language list, e.g. 'zh,en,ja'
@@ -270,7 +271,7 @@ export class ProjectController {
     data: {
       language: string; // Language to import
       content: string; // File content
-      format: 'json' | 'csv' | 'xml' | 'yaml'; // Import format
+      format: SupportedImportFormat; // Import format
       mode: 'append' | 'replace'; // Import mode
     },
     @CurrentUser() user: UserPayload,
@@ -302,7 +303,7 @@ export class ProjectController {
     data: {
       language: string; // Language to import
       content: string; // File content
-      format: 'json' | 'csv' | 'xml' | 'yaml'; // Import format
+      format: SupportedImportFormat; // Import format
       mode: 'append' | 'replace'; // Import mode
     },
     @CurrentUser() user: UserPayload,

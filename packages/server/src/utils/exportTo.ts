@@ -2,6 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as JSZip from 'jszip';
+import { createSingleLanguageXliff } from './formats/xliff.serializer';
+import { createSingleLanguagePo } from './formats/gettext.serializer';
+import type { SupportedExportFormat } from './formats/types';
 
 export function exportToJSON(
   tokens: any[],
@@ -231,16 +234,17 @@ export async function createZipWithLanguageFiles(
   tokens: any[],
   project: any,
   languages: string[],
-  format: 'json' | 'csv' | 'xml' | 'yaml',
+  format: SupportedExportFormat,
   options: {
     prettify?: boolean;
   } = {},
 ) {
   const zip = new JSZip();
   const { prettify = false } = options;
+  const sourceLanguage = languages[0] || 'en';
 
   // 1. Add files for each language
-  languages.forEach((language) => {
+  for (const language of languages) {
     let content: string;
     let extension: string;
 
@@ -262,12 +266,22 @@ export async function createZipWithLanguageFiles(
         content = exportToCSV([...tokens], [language]);
         extension = 'csv';
         break;
+      case 'xliff':
+        // XLIFF uses source + target language pair
+        content = await createSingleLanguageXliff(tokens, sourceLanguage, language);
+        extension = 'xlf';
+        break;
+      case 'po':
+        // Gettext .po is single-language by design
+        content = createSingleLanguagePo(tokens, language);
+        extension = 'po';
+        break;
     }
 
     zip.file(`${language}.${extension}`, content);
-  });
+  }
 
-  // 2. Add a merged file containing all languages
+  // 2. Add a merged file containing all languages (where format supports it)
   switch (format) {
     case 'json':
       zip.file(`all.json`, exportToJSON(tokens, project, languages, prettify));
@@ -280,6 +294,13 @@ export async function createZipWithLanguageFiles(
       break;
     case 'yaml':
       zip.file(`all.yaml`, exportToYAML(tokens, project, languages, prettify));
+      break;
+    case 'xliff':
+      // XLIFF is one source + one target per file, so no merged "all" file
+      // Each language file already contains source + target
+      break;
+    case 'po':
+      // .po is single-language by design, no merged "all" file
       break;
   }
 

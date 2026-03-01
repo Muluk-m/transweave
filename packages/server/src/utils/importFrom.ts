@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { parseXliff, parseXliffMultiLanguage } from './formats/xliff.parser';
+import { parsePo, parsePoMultiLanguage } from './formats/gettext.parser';
+import type { SupportedImportFormat } from './formats/types';
+
 /**
  * Parse imported file content
  */
-export function parseImportData(
+export async function parseImportData(
   content: string,
-  format: 'json' | 'csv' | 'xml' | 'yaml',
+  format: SupportedImportFormat,
   language?: string,
-): Record<string, string> {
+): Promise<Record<string, string>> {
   try {
     switch (format) {
       case 'json':
@@ -18,6 +22,10 @@ export function parseImportData(
         return parseXML(content);
       case 'yaml':
         return parseYAML(content);
+      case 'xliff':
+        return await parseXliff(content, language);
+      case 'po':
+        return parsePo(content, language);
       default:
         throw new Error(`Unsupported format: ${format}`);
     }
@@ -30,10 +38,10 @@ export function parseImportData(
  * Parse imported file content and return all languages
  * Used for import preview and multi-language import
  */
-export function parseImportDataMultiLanguage(
+export async function parseImportDataMultiLanguage(
   content: string,
-  format: 'json' | 'csv' | 'xml' | 'yaml',
-): Record<string, Record<string, string>> {
+  format: SupportedImportFormat,
+): Promise<Record<string, Record<string, string>>> {
   try {
     switch (format) {
       case 'json':
@@ -44,6 +52,10 @@ export function parseImportDataMultiLanguage(
         return parseXMLMultiLanguage(content);
       case 'yaml':
         return parseYAMLMultiLanguage(content);
+      case 'xliff':
+        return await parseXliffMultiLanguage(content);
+      case 'po':
+        return parsePoMultiLanguage(content);
       default:
         throw new Error(`Unsupported format: ${format}`);
     }

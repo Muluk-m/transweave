@@ -16,6 +16,7 @@ import {
 import { MembershipService } from './membership.service';
 import { createZipWithLanguageFiles } from 'src/utils/exportTo';
 import { parseImportData } from 'src/utils/importFrom';
+import type { SupportedImportFormat, SupportedExportFormat } from 'src/utils/formats/types';
 import { MongooseService } from './mongoose.service';
 import { ActivityLogService } from './activity-log.service';
 
@@ -504,7 +505,7 @@ export class ProjectService {
   async exportProjectTokens(
     projectId: string,
     options: {
-      format: 'json' | 'csv' | 'xml' | 'yaml';
+      format: SupportedExportFormat;
       scope?: 'all' | 'completed' | 'incomplete' | 'custom';
       languages?: string[];
       showEmptyTranslations?: boolean;
@@ -639,7 +640,7 @@ export class ProjectService {
     data: {
       language: string; // 要导入的语言
       content: string; // 文件内容
-      format: 'json' | 'csv' | 'xml' | 'yaml'; // 导入格式
+      format: SupportedImportFormat; // 导入格式
       mode: 'append' | 'replace'; // 导入模式
     },
   ) {
@@ -655,7 +656,7 @@ export class ProjectService {
     }
 
     // 解析导入的数据
-    const importData = parseImportData(
+    const importData = await parseImportData(
       data.content,
       data.format,
       data.language,
@@ -741,7 +742,7 @@ export class ProjectService {
     data: {
       language: string; // 要导入的语言
       content: string; // 文件内容
-      format: 'json' | 'csv' | 'xml' | 'yaml'; // 导入格式
+      format: SupportedImportFormat; // 导入格式
       mode: 'append' | 'replace'; // 导入模式
       userId?: string; // 用于记录操作日志
       ipAddress?: string;
@@ -767,7 +768,7 @@ export class ProjectService {
     }
 
     // 解析导入的数据
-    const importData = parseImportData(
+    const importData = await parseImportData(
       data.content,
       data.format,
       data.language,
