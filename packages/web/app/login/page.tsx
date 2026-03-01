@@ -8,49 +8,92 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import Link from "next/link";
-import { ArrowLeft, Loader2, LogIn, Languages, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Languages, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const t = useTranslations();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, register, isAuthenticated, needsSetup, isLoading: authLoading, error: authError } = useAuth();
+
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Redirect to /setup if first-run setup is needed
+  useEffect(() => {
+    if (!authLoading && needsSetup) {
+      router.push('/setup');
+    }
+  }, [authLoading, needsSetup, router]);
+
+  // Redirect to /teams if already logged in
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/teams');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast({
-        title: t("login.errors.requiredFields"),
-        variant: "destructive"
-      });
+    setFormError(null);
+
+    if (isSignUp && !name) {
+      setFormError(t("register.errors.requiredFields"));
       return;
     }
+    if (!email || !password) {
+      setFormError(t("login.errors.requiredFields"));
+      return;
+    }
+
     try {
-      setIsLoading(true);
-      await login(email, password);
-      toast({
-        title: t("login.success.title"),
-        description: t("login.success.description")
-      });
+      setIsSubmitting(true);
+      if (isSignUp) {
+        await register(name, email, password);
+        toast({
+          title: t("register.success.title"),
+          description: t("register.success.description"),
+        });
+      } else {
+        await login(email, password);
+        toast({
+          title: t("login.success.title"),
+          description: t("login.success.description"),
+        });
+      }
       router.push('/teams');
     } catch (error) {
+      const message = error instanceof Error ? error.message : (
+        isSignUp ? t("register.errors.defaultError") : t("login.errors.defaultError")
+      );
+      setFormError(message);
       toast({
-        title: t("login.errors.loginFailed"),
-        description: error instanceof Error ? error.message : t("login.errors.defaultError"),
-        variant: "destructive"
+        title: isSignUp ? t("register.errors.registerFailed") : t("login.errors.loginFailed"),
+        description: message,
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading while auth state is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-4 relative overflow-hidden">
@@ -60,16 +103,7 @@ export default function LoginPage() {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="w-full max-w-md mb-6 animate-fade-in">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent hover:text-primary">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("login.backToHome")}
-          </Button>
-        </Link>
-      </div>
-
-      <Card className="w-full max-w-md border-border/50 shadow-soft-lg animate-fade-in-up">
+      <Card className="w-full max-w-md border-border/50 shadow-lg">
         <CardHeader className="text-center pb-2">
           {/* Logo */}
           <div className="flex justify-center mb-4">
@@ -77,60 +111,91 @@ export default function LoginPage() {
               <Languages className="h-7 w-7 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">{t("login.title")}</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {isSignUp ? t("register.title") : t("login.title")}
+          </CardTitle>
           <CardDescription className="text-muted-foreground">
-            {t("login.description")}
+            {isSignUp ? t("register.description") : t("login.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="relative">
-                <div className="h-12 w-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-                <Sparkles className="h-5 w-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {isSignUp && (
+              <div>
+                <Input
+                  placeholder={t("register.placeholders.username")}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                />
               </div>
-              <p className="text-sm text-muted-foreground mt-4">{t("login.loginInProgress")}</p>
+            )}
+            <div>
+              <Input
+                type="email"
+                placeholder={t("register.placeholders.email")}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
             </div>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-3">
-              <div>
-                <input
-                  type="email"
-                  placeholder={t("login.email")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 rounded-xl border border-border/50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <div>
-                <input
-                  type="password"
-                  placeholder={t("login.password")}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 rounded-xl border border-border/50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
-              >
-                <LogIn className="mr-2 h-5 w-5" />
-                {t("login.loginButton")}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground pt-2">
-                {t("login.noAccount")} <Link href="/register" className="text-primary hover:underline">{t("login.register")}</Link>
+            <div>
+              <Input
+                type="password"
+                placeholder={t("register.placeholders.password")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            {formError && (
+              <p className="text-sm text-destructive">{formError}</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-xl font-medium"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isSignUp ? t("register.registerInProgress") : t("login.loginInProgress")}
+                </>
+              ) : (
+                isSignUp ? t("register.registerButton") : t("login.loginButton")
+              )}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            {isSignUp ? (
+              <p>
+                {t("register.hasAccount")}{' '}
+                <button
+                  type="button"
+                  onClick={() => { setIsSignUp(false); setFormError(null); }}
+                  className="text-primary hover:underline"
+                >
+                  {t("register.login")}
+                </button>
               </p>
-            </form>
-          )}
+            ) : (
+              <p>
+                {t("login.noAccount")}{' '}
+                <button
+                  type="button"
+                  onClick={() => { setIsSignUp(true); setFormError(null); }}
+                  className="text-primary hover:underline"
+                >
+                  {t("login.register")}
+                </button>
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
-
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-muted-foreground animate-fade-in">
-        <p>{t("login.description")}</p>
-      </div>
     </div>
   );
 }

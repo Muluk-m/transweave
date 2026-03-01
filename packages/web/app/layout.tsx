@@ -11,7 +11,7 @@ import { I18nClientProvider } from "@/components/i18n/client-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "多语言管理平台",
+  title: "i18n Manager",
   description:
     "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
 };
