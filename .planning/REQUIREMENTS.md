@@ -80,11 +80,11 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### AI Translation
 
-- [ ] **AI-01**: User can configure AI translation provider (OpenAI, Claude, DeepL, Google Translate, etc.)
-- [ ] **AI-02**: User provides their own API key for the selected AI provider
-- [ ] **AI-03**: User can trigger AI translation for individual tokens or batch of tokens
-- [ ] **AI-04**: AI translation is optional — platform runs fully without any AI provider configured
-- [ ] **AI-05**: AI provider configuration stored per team or per project
+- [x] **AI-01**: User can configure AI translation provider (OpenAI, Claude, DeepL, Google Translate, etc.)
+- [x] **AI-02**: User provides their own API key for the selected AI provider
+- [x] **AI-03**: User can trigger AI translation for individual tokens or batch of tokens
+- [x] **AI-04**: AI translation is optional — platform runs fully without any AI provider configured
+- [x] **AI-05**: AI provider configuration stored per team or per project
 
 ### Developer Tools
 
@@ -203,11 +203,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMEX-04 | Phase 6 | Pending |
 | IMEX-05 | Phase 6 | Pending |
 | IMEX-06 | Phase 6 | Pending |
-| AI-01 | Phase 7 | Pending |
-| AI-02 | Phase 7 | Pending |
-| AI-03 | Phase 7 | Pending |
-| AI-04 | Phase 7 | Pending |
-| AI-05 | Phase 7 | Pending |
+| AI-01 | Phase 7 | Complete |
+| AI-02 | Phase 7 | Complete |
+| AI-03 | Phase 7 | Complete |
+| AI-04 | Phase 7 | Complete |
+| AI-05 | Phase 7 | Complete |
 | DEV-01 | Phase 8 | Pending |
 | DEV-02 | Phase 8 | Pending |
 | DEV-03 | Phase 8 | Pending |

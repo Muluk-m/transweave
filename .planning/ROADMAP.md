@@ -129,7 +129,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md -- Multi-provider backend: provider interface, adapters (OpenAI, Claude, DeepL, Google Translate), encrypted API key storage, config CRUD, AI service rewrite
+- [x] 07-01-PLAN.md -- Multi-provider backend: provider interface, adapters (OpenAI, Claude, DeepL, Google Translate), encrypted API key storage, config CRUD, AI service rewrite
 - [ ] 07-02-PLAN.md -- Frontend: AI provider settings UI, conditional translate buttons, updated API client
 
 ### Phase 8: Developer Tools
@@ -178,6 +178,6 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 4. Local File Storage | 1/1 | Complete | 2026-03-01 |
 | 5. Translation Core & Search | 2/3 | In progress | - |
 | 6. Import & Export | 0/2 | Not started | - |
-| 7. AI Translation | 0/2 | Not started | - |
+| 7. AI Translation | 1/2 | In progress | - |
 | 8. Developer Tools | 0/3 | Planned | - |
 | 9. Deployment & Production Readiness | 0/2 | Planned | - |
