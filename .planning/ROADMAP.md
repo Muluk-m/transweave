@@ -50,12 +50,12 @@ Plans:
   3. Setting DATABASE_URL to a PostgreSQL connection string uses the PostgreSQL driver; omitting it or setting it to a file path uses PGlite
   4. Repository classes exist for every entity, and no service code imports Drizzle or database drivers directly
   5. A simple integration test can create, read, update, and delete a record through the repository layer on both database backends
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md -- Drizzle schema definitions, DrizzleModule with conditional provider, drizzle-kit migration
+- [ ] 02-02-PLAN.md -- Repository abstraction layer (base + 7 entity repositories)
+- [ ] 02-03-PLAN.md -- Integration tests verifying CRUD, JSONB, aggregation on PGlite
 
 ### Phase 3: Authentication & Teams
 **Goal**: Users can register, log in, manage teams, and control access -- all without any external auth provider
@@ -173,7 +173,7 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Branch Setup | 0/2 | Not started | - |
-| 2. Database Foundation | 0/3 | Not started | - |
+| 2. Database Foundation | 0/3 | Planned | - |
 | 3. Authentication & Teams | 0/3 | Planned | - |
 | 4. Local File Storage | 0/1 | Planned | - |
 | 5. Translation Core & Search | 0/3 | Not started | - |
