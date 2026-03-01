@@ -67,12 +67,12 @@ Plans:
   3. A team owner can invite members, assign roles (owner/manager/member), change roles, and remove members
   4. A user who belongs to multiple teams can view and switch between them
   5. An admin can reset any other user's password
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md -- Backend auth & user services: remove Feishu, migrate to repositories, add setup + admin reset endpoints
+- [ ] 03-02-PLAN.md -- Backend team & membership services: migrate to repositories, replace Mongoose patterns with Drizzle
+- [ ] 03-03-PLAN.md -- Frontend auth: rewrite login page, add setup wizard, clean auth context
 
 ### Phase 4: Local File Storage
 **Goal**: File uploads and screenshots work using local disk storage with no external CDN dependency
@@ -174,10 +174,10 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Branch Setup | 0/2 | Not started | - |
 | 2. Database Foundation | 0/3 | Not started | - |
-| 3. Authentication & Teams | 0/3 | Not started | - |
+| 3. Authentication & Teams | 0/3 | Planned | - |
 | 4. Local File Storage | 0/1 | Planned | - |
 | 5. Translation Core & Search | 0/3 | Not started | - |
 | 6. Import & Export | 0/2 | Not started | - |
 | 7. AI Translation | 0/2 | Not started | - |
-| 8. Developer Tools | 0/3 | Not started | - |
+| 8. Developer Tools | 0/3 | Planned | - |
 | 9. Deployment & Production Readiness | 0/2 | Planned | - |
