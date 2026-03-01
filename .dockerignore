@@ -1,42 +1,19 @@
-# Dependencies
 node_modules
-**/node_modules
-
-# Build output
-.next
-dist
-build
-out
-
-# Version control
 .git
 .gitignore
-
-# Environment files (secrets)
+.next
+dist
+coverage
 .env
 .env.*
 !.env.example
-
-# IDE
-.vscode
-.idea
-.cursor
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Test and coverage
-coverage
-.nyc_output
-*.spec.ts
-*.test.ts
-
-# Documentation and planning
 .planning
 *.md
-!README.md
-
-# Misc
-*.pem
+!packages/*/README.md
+.DS_Store
 *.log
+.vscode
+.idea
+.turbo
+conf/
+init/

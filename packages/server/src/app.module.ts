@@ -28,6 +28,7 @@ import { TokenService } from './service/token.service';
 import { TokenController } from './controller/token.controller';
 import { ApiKeyService } from './service/api-key.service';
 import { ApiKeyController } from './controller/api-key.controller';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ApiKeyController } from './controller/api-key.controller';
     HttpModule,
     FileStorageModule,
     AiModule,
+    HealthModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
