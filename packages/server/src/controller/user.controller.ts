@@ -1,43 +1,41 @@
 import {
   Controller,
   Get,
+  Put,
   Delete,
   Param,
+  Body,
   Query,
   UseGuards,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
-import { CurrentUser } from '../jwt/current-user.decorator';
-
-interface UserPayload {
-  userId: string;
-  email: string;
-  name: string;
-}
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 
 @Controller('api/user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
-  
-   // Current user information
-   @Get('me')
-   @UseGuards(AuthGuard)
-   async getMe(@CurrentUser() user: UserPayload) {
-     return this.userService.findUserById(user.userId);
-   }
- 
-   // Search users
-   @Get('search')
-   @UseGuards(AuthGuard)
-   async searchUsers(@Query('keyword') keyword: string) {
-     try {
-       return this.userService.searchUsers(keyword);
-     } catch (error) {
-       console.error(error);
-       return { status: 500, message: 'Failed to search users' };
-     }
-   }
+  constructor(private readonly userService: UserService) {}
+
+  // Current user information
+  @Get('me')
+  @UseGuards(AuthGuard)
+  async getMe(@CurrentUser() user: UserPayload) {
+    return this.userService.findUserById(user.userId);
+  }
+
+  // Search users
+  @Get('search')
+  @UseGuards(AuthGuard)
+  async searchUsers(@Query('keyword') keyword: string) {
+    try {
+      return this.userService.searchUsers(keyword);
+    } catch (error) {
+      console.error(error);
+      return { status: 500, message: 'Failed to search users' };
+    }
+  }
 
   // Get specific user information
   @Get(':id')
@@ -49,9 +47,32 @@ export class UserController {
     }
 
     // Don't return sensitive information like password
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    delete (user as any).password;
-    return user;
+    const { password: _, ...safeUser } = user;
+    return safeUser;
+  }
+
+  // Admin password reset
+  @Put(':id/reset-password')
+  @UseGuards(AuthGuard)
+  async resetPassword(
+    @Param('id') userId: string,
+    @Body() data: { newPassword: string },
+    @CurrentUser() admin: UserPayload,
+  ) {
+    // Check if the caller is an admin
+    const isAdmin = await this.userService.isAdmin(admin.userId);
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can reset passwords');
+    }
+
+    // Prevent admin from resetting their own password via this endpoint
+    if (admin.userId === userId) {
+      throw new BadRequestException('Use change-password for your own account');
+    }
+
+    await this.userService.resetPassword(userId, data.newPassword);
+
+    return { success: true, message: 'Password reset successful' };
   }
 
   @Delete(':id')
