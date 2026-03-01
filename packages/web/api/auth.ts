@@ -23,6 +23,7 @@ interface LoginResponse {
 interface RegisterResponse {
   success: boolean;
   message: string;
+  token: string;
   user: User;
 }
 
@@ -90,5 +91,28 @@ export async function changePassword(oldPassword: string, newPassword: string): 
   return apiClient.post<{success: boolean; message: string}>(`/api/users/change-password`, {
     oldPassword,
     newPassword
+  });
+}
+
+/**
+ * Check if first-run setup is needed
+ */
+export async function checkSetupStatus(): Promise<{ needsSetup: boolean }> {
+  return apiClient.get<{ needsSetup: boolean }>(`${API_BASE}/setup/status`, {
+    requireAuth: false,
+  });
+}
+
+/**
+ * Run first-time setup (create admin user and team)
+ */
+export async function runSetup(data: {
+  name: string;
+  email: string;
+  password: string;
+  teamName: string;
+}): Promise<LoginResponse> {
+  return apiClient.post<LoginResponse>(`${API_BASE}/setup`, data, {
+    requireAuth: false,
   });
 }

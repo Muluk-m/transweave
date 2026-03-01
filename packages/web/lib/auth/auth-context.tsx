@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, login as apiLogin, register as apiRegister, checkAuthStatus } from '@/api/auth';
+import { User, login as apiLogin, register as apiRegister, checkAuthStatus, checkSetupStatus } from '@/api/auth';
 
 type AuthContextType = {
   user: User | null;
@@ -10,6 +10,7 @@ type AuthContextType = {
   logout: () => void;
   isAuthenticated: boolean;
   error: string | null;
+  needsSetup: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,9 +19,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   const checkAuth = async () => {
     try {
+      // Check if setup is needed first
+      const setupStatus = await checkSetupStatus();
+      setNeedsSetup(setupStatus.needsSetup);
+      if (setupStatus.needsSetup) {
+        setIsLoading(false);
+        return; // Don't check auth if setup needed
+      }
+
       const response = await checkAuthStatus();
       setUser(response.user);
     } catch (error) {
@@ -54,9 +64,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     try {
       const response = await apiRegister(name, email, password);
-      const loginResponse = await apiLogin(email, password);
-      setUser(loginResponse.user);
-      localStorage.setItem('authToken', loginResponse.token);
+      setUser(response.user);
+      localStorage.setItem('authToken', response.token);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'signup failed');
       throw error;
@@ -80,6 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         isAuthenticated: !!user,
         error,
+        needsSetup,
       }}
     >
       {children}
