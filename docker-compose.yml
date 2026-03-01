@@ -16,22 +16,22 @@ services:
       --replSet rs0
       --bind_ip_all
     networks:
-      - bondma-network
+      - i18n-network
 
   # server:
-  #   image: bondma-server:latest
+  #   image: i18n-server:latest
   #   ports:
   #     - "3001:3001"
   #   environment:
   #     - NODE_ENV=production
-  #     - DATABASE_URL=mongodb://admin:secret@mongodb:27017/bondma?authSource=admin&replicaSet=rs0
+  #     - DATABASE_URL=mongodb://admin:secret@mongodb:27017/i18n?authSource=admin&replicaSet=rs0
   #   depends_on:
   #     - mongodb
   #   networks:
-  #     - bondma-network
+  #     - i18n-network
 
   # web:
-  #   image: bondma-web:latest
+  #   image: i18n-web:latest
   #   ports:
   #     - "3000:3000"
   #   environment:
@@ -40,10 +40,10 @@ services:
   #   depends_on:
   #     - server
   #   networks:
-  #     - bondma-network
+  #     - i18n-network
 
 networks:
-  bondma-network:
+  i18n-network:
     driver: bridge
 
 volumes:
