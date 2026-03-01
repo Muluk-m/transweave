@@ -43,7 +43,7 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 - [x] **DB-03**: PostgreSQL works as production database
 - [x] **DB-04**: Database driver selected automatically based on DATABASE_URL environment variable
 - [x] **DB-05**: Database migrations managed via drizzle-kit
-- [ ] **DB-06**: Repository abstraction layer isolates all database operations from service logic
+- [x] **DB-06**: Repository abstraction layer isolates all database operations from service logic
 
 ### File Storage
 
@@ -181,7 +181,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DB-03 | Phase 2 | Complete |
 | DB-04 | Phase 2 | Complete |
 | DB-05 | Phase 2 | Complete |
-| DB-06 | Phase 2 | Pending |
+| DB-06 | Phase 2 | Complete |
 | FILE-01 | Phase 4 | Pending |
 | FILE-02 | Phase 4 | Pending |
 | FILE-03 | Phase 4 | Pending |
