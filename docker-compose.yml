@@ -1,50 +1,49 @@
 services:
-  mongodb:
-    image: mongodb/mongodb-community-server:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
+  postgres:
+    image: postgres:17-alpine
     environment:
-      MONGODB_INITDB_ROOT_USERNAME: admin
-      MONGODB_INITDB_ROOT_PASSWORD: secret
+      POSTGRES_DB: ${POSTGRES_DB:-i18n}
+      POSTGRES_USER: ${POSTGRES_USER:-i18n}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
-      - ./conf/mongo-keyfile:/data/keyfile/mongo-keyfile
-      - mongodb_data:/data/db
-      - ./init/init-replica.js:/docker-entrypoint-initdb.d/init-replica.js
-    command: >
-      --keyFile /data/keyfile/mongo-keyfile
-      --replSet rs0
-      --bind_ip_all
-    networks:
-      - i18n-network
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-i18n} -d ${POSTGRES_DB:-i18n}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  # server:
-  #   image: i18n-server:latest
-  #   ports:
-  #     - "3001:3001"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - DATABASE_URL=mongodb://admin:secret@mongodb:27017/i18n?authSource=admin&replicaSet=rs0
-  #   depends_on:
-  #     - mongodb
-  #   networks:
-  #     - i18n-network
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-i18n}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-i18n}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      PORT: 3001
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
 
-  # web:
-  #   image: i18n-web:latest
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - NEXT_INTERNAL_API_URL=http://server:3001
-  #   depends_on:
-  #     - server
-  #   networks:
-  #     - i18n-network
-
-networks:
-  i18n-network:
-    driver: bridge
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    depends_on:
+      - server
+    environment:
+      NEXT_INTERNAL_API_URL: http://server:3001
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    restart: unless-stopped
 
 volumes:
-  mongodb_data:
+  pgdata:
+  uploads:
