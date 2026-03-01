@@ -16,8 +16,7 @@ import { MembershipService } from './service/membership.service';
 import { DatabaseModule } from './modules/database.module';
 import { DrizzleModule } from './db/drizzle.module';
 import { HttpModule } from '@nestjs/axios';
-import { AiService } from './service/ai.service';
-import { AiController } from './controller/ai.controller';
+import { AiModule } from './ai/ai.module';
 import { AuthService } from './service/auth.service';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
 import { ActivityLogService } from './service/activity-log.service';
@@ -37,6 +36,7 @@ import { ApiKeyController } from './controller/api-key.controller';
     DrizzleModule,
     HttpModule,
     FileStorageModule,
+    AiModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
@@ -47,7 +47,6 @@ import { ApiKeyController } from './controller/api-key.controller';
     AppController,
     UserController,
     AuthController,
-    AiController,
     TeamController,
     ProjectController,
     UserController,
@@ -65,7 +64,6 @@ import { ApiKeyController } from './controller/api-key.controller';
     ProjectService,
     JwtStrategy,
     MembershipService,
-    AiService,
     ActivityLogService,
     McpService,
     TokenService,

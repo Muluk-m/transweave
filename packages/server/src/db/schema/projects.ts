@@ -20,6 +20,7 @@ export const projects = pgTable(
     languages: jsonb('languages').$type<string[]>().default([]),
     languageLabels: jsonb('language_labels').$type<Record<string, string>>().default({}),
     modules: jsonb('modules').$type<ProjectModule[]>().default([]),
+    aiConfig: jsonb('ai_config').$type<import('../../ai/providers/translation-provider.interface').AiConfigStored>(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

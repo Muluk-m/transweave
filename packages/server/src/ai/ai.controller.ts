@@ -1,0 +1,63 @@
+import {
+  Body,
+  Controller,
+  HttpException,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { AiService } from './ai.service';
+import { AuthGuard } from '../jwt/guard';
+
+@Controller('api/ai')
+@UseGuards(AuthGuard)
+export class AiController {
+  constructor(private readonly aiService: AiService) {}
+
+  @Post('translate')
+  async translate(
+    @Body()
+    data: {
+      text: string;
+      from: string;
+      to: string[];
+      projectId: string;
+    },
+  ) {
+    const result = await this.aiService.translate(data);
+
+    if (!result) {
+      throw new HttpException(
+        'Failed to translate',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return result;
+  }
+
+  @Post('generate/key')
+  async generateKey(
+    @Body()
+    data: {
+      remark: string;
+      tag?: string;
+      module?: string;
+      projectId: string;
+    },
+  ) {
+    const result = await this.aiService.generateTokenKey(data);
+
+    if (!result) {
+      throw new HttpException(
+        'Failed to generate key',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+}
