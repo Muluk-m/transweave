@@ -82,10 +82,10 @@ Plans:
   1. Uploading a file via the API stores it on the local disk in a configurable directory
   2. Uploaded files are accessible via a built-in static file server URL (no external CDN needed)
   3. Attaching a screenshot to a translation token saves and displays correctly using local storage
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md -- Server-side file storage (Multer + serve-static) and frontend upload integration
 
 ### Phase 5: Translation Core & Search
 **Goal**: Users can fully manage translation tokens with multi-language values, organize them, track history, and find what they need through search and filtering
@@ -175,7 +175,7 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 1. Cleanup & Branch Setup | 0/2 | Not started | - |
 | 2. Database Foundation | 0/3 | Not started | - |
 | 3. Authentication & Teams | 0/3 | Not started | - |
-| 4. Local File Storage | 0/1 | Not started | - |
+| 4. Local File Storage | 0/1 | Planned | - |
 | 5. Translation Core & Search | 0/3 | Not started | - |
 | 6. Import & Export | 0/2 | Not started | - |
 | 7. AI Translation | 0/2 | Not started | - |
