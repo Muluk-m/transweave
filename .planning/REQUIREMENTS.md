@@ -29,11 +29,11 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### Users & Teams
 
-- [ ] **TEAM-01**: User can create teams
-- [ ] **TEAM-02**: Team owner can invite members to team
-- [ ] **TEAM-03**: Team supports role-based access: owner, manager, member
-- [ ] **TEAM-04**: Team owner/manager can change member roles
-- [ ] **TEAM-05**: Team owner/manager can remove members from team
+- [x] **TEAM-01**: User can create teams
+- [x] **TEAM-02**: Team owner can invite members to team
+- [x] **TEAM-03**: Team supports role-based access: owner, manager, member
+- [x] **TEAM-04**: Team owner/manager can change member roles
+- [x] **TEAM-05**: Team owner/manager can remove members from team
 - [ ] **TEAM-06**: User can view and switch between their teams
 
 ### Database
@@ -47,10 +47,10 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### File Storage
 
-- [ ] **FILE-01**: File uploads stored on local disk (replacing external CDN)
-- [ ] **FILE-02**: Uploaded files served via built-in static file server
-- [ ] **FILE-03**: Screenshot/image attachment on translation tokens uses local storage
-- [ ] **FILE-04**: Upload directory path configurable via environment variable
+- [x] **FILE-01**: File uploads stored on local disk (replacing external CDN)
+- [x] **FILE-02**: Uploaded files served via built-in static file server
+- [x] **FILE-03**: Screenshot/image attachment on translation tokens uses local storage
+- [x] **FILE-04**: Upload directory path configurable via environment variable
 
 ### Translation Core
 
@@ -170,11 +170,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-04 | Phase 3 | Pending |
 | AUTH-05 | Phase 3 | Pending |
 | AUTH-06 | Phase 3 | Pending |
-| TEAM-01 | Phase 3 | Pending |
-| TEAM-02 | Phase 3 | Pending |
-| TEAM-03 | Phase 3 | Pending |
-| TEAM-04 | Phase 3 | Pending |
-| TEAM-05 | Phase 3 | Pending |
+| TEAM-01 | Phase 3 | Complete |
+| TEAM-02 | Phase 3 | Complete |
+| TEAM-03 | Phase 3 | Complete |
+| TEAM-04 | Phase 3 | Complete |
+| TEAM-05 | Phase 3 | Complete |
 | TEAM-06 | Phase 3 | Pending |
 | DB-01 | Phase 2 | Complete |
 | DB-02 | Phase 2 | Complete |
@@ -182,10 +182,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DB-04 | Phase 2 | Complete |
 | DB-05 | Phase 2 | Complete |
 | DB-06 | Phase 2 | Complete |
-| FILE-01 | Phase 4 | Pending |
-| FILE-02 | Phase 4 | Pending |
-| FILE-03 | Phase 4 | Pending |
-| FILE-04 | Phase 4 | Pending |
+| FILE-01 | Phase 4 | Complete |
+| FILE-02 | Phase 4 | Complete |
+| FILE-03 | Phase 4 | Complete |
+| FILE-04 | Phase 4 | Complete |
 | TRANS-01 | Phase 5 | Pending |
 | TRANS-02 | Phase 5 | Pending |
 | TRANS-03 | Phase 5 | Pending |
