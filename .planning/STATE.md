@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-03-01T13:36:00Z"
+last_updated: "2026-03-01T13:37:00Z"
 progress:
   total_phases: 9
   completed_phases: 5
   total_plans: 21
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Teams can self-host a complete i18n management platform with zero dependency on external proprietary services
-**Current focus:** Phase 7 AI Translation in progress
+**Current focus:** Phase 8 Developer Tools in progress
 
 ## Current Position
 
-Phase: 7 of 9 (AI Translation)
-Plan: 1 of 2 in current phase (07-01 complete)
-Status: Executing Phase 7
-Last activity: 2026-03-01 -- Completed 07-01 Multi-provider AI Translation Backend
+Phase: 8 of 9 (Developer Tools)
+Plan: 2 of 3 in current phase (08-01 complete)
+Status: Executing Phase 8
+Last activity: 2026-03-01 -- Completed 08-01 API Key Management
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 6min
-- Total execution time: 1.28 hours
+- Total execution time: 1.40 hours
 
 **By Phase:**
 
@@ -46,9 +46,10 @@ Progress: [██████░░░░] 62%
 | 04-local-file-storage | 1 | 4min | 4min |
 | 05-translation-core-search | 3 | 22min | 7.3min |
 | 07-ai-translation | 1 | 6min | 6min |
+| 08-developer-tools | 1 | 7min | 7min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (4min), 05-01 (7min), 05-02 (8min), 05-03 (7min), 07-01 (6min)
+- Last 5 plans: 05-01 (7min), 05-02 (8min), 05-03 (7min), 07-01 (6min), 08-01 (7min)
 - Trend: Consistent 6-8min for feature plans
 
 *Updated after each plan completion*
@@ -59,6 +60,7 @@ Progress: [██████░░░░] 62%
 | Phase 05-translation-core-search P02 | 8min | 2 tasks | 3 files |
 | Phase 05-translation-core-search P03 | 7min | 2 tasks | 6 files |
 | Phase 07-ai-translation P01 | 6min | 2 tasks | 17 files |
+| Phase 08-developer-tools P01 | 7min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -115,6 +117,10 @@ Recent decisions affecting current work:
 - [07-01] Lazy dynamic import for OpenAI SDK to avoid loading at startup when AI not configured
 - [07-01] Added json-extract.ts utility for robust JSON parsing from LLM responses
 - [07-01] Used 'as any' cast for aiConfig repository updates since JSONB column type not inferred in generic BaseRepository
+- [08-01] Used Drizzle ORM + Repository pattern instead of Mongoose for ApiKey (consistent with migrated architecture)
+- [08-01] API key prefix is first 13 chars (qlji_ + 8 hex) for efficient DB lookup before hash verification
+- [08-01] AuthGuard rewritten as custom CanActivate to support dual JWT + API key auth
+- [08-01] Background lastUsedAt update in validateKey to avoid adding latency to authenticated requests
 
 ### Pending Todos
 
@@ -127,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 07-01-PLAN.md (Multi-provider AI Translation Backend)
-Resume file: .planning/phases/07-ai-translation/07-01-SUMMARY.md
+Stopped at: Completed 08-01-PLAN.md (API Key Management)
+Resume file: .planning/phases/08-developer-tools/08-01-SUMMARY.md

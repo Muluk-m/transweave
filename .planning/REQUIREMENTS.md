@@ -90,8 +90,8 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 - [ ] **DEV-01**: CLI tool can pull translations from server to local files (qlj-i18n pull)
 - [ ] **DEV-02**: CLI tool can push local translation files to server (qlj-i18n push)
-- [ ] **DEV-03**: CLI authenticates via API key
-- [ ] **DEV-04**: User can generate and manage API keys from the web UI
+- [x] **DEV-03**: CLI authenticates via API key
+- [x] **DEV-04**: User can generate and manage API keys from the web UI
 - [ ] **DEV-05**: MCP server allows AI coding assistants to list projects and tokens
 - [ ] **DEV-06**: MCP server allows AI coding assistants to create and update tokens
 - [ ] **DEV-07**: REST API documented with endpoint reference
@@ -210,8 +210,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-05 | Phase 7 | Complete |
 | DEV-01 | Phase 8 | Pending |
 | DEV-02 | Phase 8 | Pending |
-| DEV-03 | Phase 8 | Pending |
-| DEV-04 | Phase 8 | Pending |
+| DEV-03 | Phase 8 | Complete |
+| DEV-04 | Phase 8 | Complete |
 | DEV-05 | Phase 8 | Pending |
 | DEV-06 | Phase 8 | Pending |
 | DEV-07 | Phase 8 | Pending |
