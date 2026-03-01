@@ -6,11 +6,13 @@ import { projects } from './projects';
 import { tokens } from './tokens';
 import { tokenHistory } from './token-history';
 import { activityLogs } from './activity-logs';
+import { apiKeys } from './api-keys';
 
 export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(memberships),
   tokenHistory: many(tokenHistory),
   activityLogs: many(activityLogs),
+  apiKeys: many(apiKeys),
 }));
 
 export const teamsRelations = relations(teams, ({ many }) => ({
@@ -64,6 +66,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
   user: one(users, {
     fields: [activityLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
     references: [users.id],
   }),
 }));

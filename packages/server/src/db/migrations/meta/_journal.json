@@ -15,6 +15,13 @@
       "when": 1772369168475,
       "tag": "0001_organic_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772371982471,
+      "tag": "0002_nasty_blade",
+      "breakpoints": true
     }
   ]
 }

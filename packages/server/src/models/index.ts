@@ -4,3 +4,4 @@ export * from './schemas/membership.schema';
 export * from './schemas/project.schema';
 export * from './schemas/token.schema';
 export * from './schemas/activity-log.schema';
+export * from './schemas/api-key.schema';

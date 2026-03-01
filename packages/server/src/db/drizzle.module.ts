@@ -7,6 +7,7 @@ import { ProjectRepository } from '../repository/project.repository';
 import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ActivityLogRepository } from '../repository/activity-log.repository';
+import { ApiKeyRepository } from '../repository/api-key.repository';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ import { ActivityLogRepository } from '../repository/activity-log.repository';
     TokenRepository,
     TokenHistoryRepository,
     ActivityLogRepository,
+    ApiKeyRepository,
   ],
   exports: [
     DRIZZLE,
@@ -29,6 +31,7 @@ import { ActivityLogRepository } from '../repository/activity-log.repository';
     TokenRepository,
     TokenHistoryRepository,
     ActivityLogRepository,
+    ApiKeyRepository,
   ],
 })
 export class DrizzleModule {}

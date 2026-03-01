@@ -15,6 +15,8 @@ import {
   TokenHistorySchema,
   ActivityLog,
   ActivityLogSchema,
+  ApiKey,
+  ApiKeySchema,
 } from '../models';
 
 @Module({
@@ -37,6 +39,7 @@ import {
       { name: Token.name, schema: TokenSchema },
       { name: TokenHistory.name, schema: TokenHistorySchema },
       { name: ActivityLog.name, schema: ActivityLogSchema },
+      { name: ApiKey.name, schema: ApiKeySchema },
     ]),
   ],
   exports: [
@@ -48,6 +51,7 @@ import {
       { name: Token.name, schema: TokenSchema },
       { name: TokenHistory.name, schema: TokenHistorySchema },
       { name: ActivityLog.name, schema: ActivityLogSchema },
+      { name: ApiKey.name, schema: ApiKeySchema },
     ]),
   ],
 })
