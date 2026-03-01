@@ -126,11 +126,11 @@ Plans:
   1. The platform starts and operates fully (all CRUD, search, import/export) with no AI provider configured
   2. User can configure an AI provider (OpenAI, Claude, DeepL, or Google Translate) by entering their own API key at the team or project level
   3. User can trigger AI translation for a single token or a batch of selected tokens, and the translated values appear in the UI
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md -- Multi-provider backend: provider interface, adapters (OpenAI, Claude, DeepL, Google Translate), encrypted API key storage, config CRUD, AI service rewrite
+- [ ] 07-02-PLAN.md -- Frontend: AI provider settings UI, conditional translate buttons, updated API client
 
 ### Phase 8: Developer Tools
 **Goal**: Developers can interact with the platform programmatically -- pulling/pushing translations from the command line, using AI coding assistants via MCP, and integrating via documented REST APIs
