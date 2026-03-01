@@ -71,11 +71,11 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### Import & Export
 
-- [ ] **IMEX-01**: User can import translations from JSON files
-- [ ] **IMEX-02**: User can import translations from YAML files
-- [ ] **IMEX-03**: User can import translations from XLIFF files
-- [ ] **IMEX-04**: User can import translations from Gettext (.po) files
-- [ ] **IMEX-05**: User can export translations in JSON, YAML, CSV, XLIFF, and Gettext formats
+- [x] **IMEX-01**: User can import translations from JSON files
+- [x] **IMEX-02**: User can import translations from YAML files
+- [x] **IMEX-03**: User can import translations from XLIFF files
+- [x] **IMEX-04**: User can import translations from Gettext (.po) files
+- [x] **IMEX-05**: User can export translations in JSON, YAML, CSV, XLIFF, and Gettext formats
 - [ ] **IMEX-06**: Import preview shows diff of changes before applying
 
 ### AI Translation
@@ -197,11 +197,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-01 | Phase 5 | Complete |
 | SRCH-02 | Phase 5 | Complete |
 | SRCH-03 | Phase 5 | Complete |
-| IMEX-01 | Phase 6 | Pending |
-| IMEX-02 | Phase 6 | Pending |
-| IMEX-03 | Phase 6 | Pending |
-| IMEX-04 | Phase 6 | Pending |
-| IMEX-05 | Phase 6 | Pending |
+| IMEX-01 | Phase 6 | Complete |
+| IMEX-02 | Phase 6 | Complete |
+| IMEX-03 | Phase 6 | Complete |
+| IMEX-04 | Phase 6 | Complete |
+| IMEX-05 | Phase 6 | Complete |
 | IMEX-06 | Phase 6 | Pending |
 | AI-01 | Phase 7 | Complete |
 | AI-02 | Phase 7 | Complete |

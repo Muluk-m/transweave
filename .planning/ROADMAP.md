@@ -115,7 +115,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Add XLIFF and Gettext parsers/serializers, integrate into import/export pipeline (TDD)
+- [x] 06-01-PLAN.md -- Add XLIFF and Gettext parsers/serializers, integrate into import/export pipeline (TDD)
 - [ ] 06-02-PLAN.md -- Update frontend UI for new formats, end-to-end verification
 
 ### Phase 7: AI Translation
@@ -177,7 +177,7 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 3. Authentication & Teams | 3/3 | Complete | 2026-03-01 |
 | 4. Local File Storage | 1/1 | Complete | 2026-03-01 |
 | 5. Translation Core & Search | 2/3 | In progress | - |
-| 6. Import & Export | 0/2 | Not started | - |
+| 6. Import & Export | 1/2 | In progress | - |
 | 7. AI Translation | 1/2 | In progress | - |
 | 8. Developer Tools | 1/3 | In progress | - |
 | 9. Deployment & Production Readiness | 0/2 | Planned | - |
