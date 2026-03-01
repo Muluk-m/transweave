@@ -69,19 +69,22 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
         accept: {
             'application/json': ['.json'],
             'text/csv': ['.csv'],
-            'application/xml': ['.xml'],
+            'application/xml': ['.xml', '.xlf', '.xliff'],
             'text/yaml': ['.yaml', '.yml'],
+            'application/x-gettext': ['.po'],
         },
         multiple: false
     });
 
     // Get file format
-    const getFileFormat = (filename: string): 'json' | 'csv' | 'xml' | 'yaml' => {
+    const getFileFormat = (filename: string): 'json' | 'csv' | 'xml' | 'yaml' | 'xliff' | 'po' => {
         const ext = filename.split('.').pop()?.toLowerCase();
         if (ext === 'json') return 'json';
         if (ext === 'csv') return 'csv';
         if (ext === 'xml') return 'xml';
         if (ext === 'yaml' || ext === 'yml') return 'yaml';
+        if (ext === 'xlf' || ext === 'xliff') return 'xliff';
+        if (ext === 'po') return 'po';
         return 'json'; // Default
     };
 
@@ -231,6 +234,8 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
         if (ext === 'csv') return <TableIcon className="h-12 w-12 text-success" />;
         if (ext === 'xml') return <FileText className="h-12 w-12 text-warning" />;
         if (ext === 'yaml' || ext === 'yml') return <FileText className="h-12 w-12 text-accent" />;
+        if (ext === 'xlf' || ext === 'xliff') return <FileText className="h-12 w-12 text-blue-500" />;
+        if (ext === 'po') return <FileText className="h-12 w-12 text-orange-500" />;
         return <FileText className="h-12 w-12 text-muted-foreground" />;
     };
 
@@ -345,6 +350,8 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                 <li>{t('project.import.importNotes.jsonNote')}</li>
                                 <li>{t('project.import.importNotes.csvNote')}</li>
                                 <li>{t('project.import.importNotes.formatNote')}</li>
+                                <li>XLIFF files (.xlf) import both source and target language translations</li>
+                                <li>Gettext files (.po) import the target language specified in the PO header</li>
                             </ul>
                         </div>
 

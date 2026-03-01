@@ -697,7 +697,7 @@
       "dragDropArea": {
         "dragActive": "Drop the file here",
         "instructions": "Click or drag file here to import",
-        "supportedFormats": "Supports JSON, CSV, XML, YAML formats",
+        "supportedFormats": "Supports JSON, CSV, XML, YAML, XLIFF, Gettext (.po) formats",
         "chooseAnotherFile": "Choose another file"
       },
       "importNotes": {

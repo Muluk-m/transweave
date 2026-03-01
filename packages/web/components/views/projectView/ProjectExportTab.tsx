@@ -77,7 +77,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
     try {
       // Call API to export file
       const response = await exportProjectTokens(project.id, {
-        format: fileFormat as "json" | "csv" | "xml" | "yaml",
+        format: fileFormat as "json" | "csv" | "xml" | "yaml" | "xliff" | "po",
         scope: exportScope as "all" | "completed" | "incomplete" | "custom",
         languages: selectedLanguages.length ? selectedLanguages : undefined,
         showEmptyTranslations,
@@ -146,7 +146,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                 <RadioGroup
                   value={fileFormat}
                   onValueChange={setFileFormat}
-                  className="grid grid-cols-2 gap-4 pt-2"
+                  className="grid grid-cols-3 gap-4 pt-2"
                 >
                   <Label
                     htmlFor="json"
@@ -209,6 +209,34 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                     <div className="font-medium text-foreground">{t("yamlFormat")}</div>
                     <span className="text-xs text-muted-foreground">
                       {t("yamlDesc")}
+                    </span>
+                  </Label>
+
+                  <Label
+                    htmlFor="xliff"
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "xliff" ? "border-primary bg-primary/10" : "border-border"
+                    }`}
+                  >
+                    <FileText className="h-8 w-8 text-blue-500" />
+                    <RadioGroupItem value="xliff" id="xliff" className="sr-only" />
+                    <div className="font-medium text-foreground">XLIFF</div>
+                    <span className="text-xs text-muted-foreground">
+                      Industry standard for CAT tools
+                    </span>
+                  </Label>
+
+                  <Label
+                    htmlFor="po"
+                    className={`flex flex-col items-center space-y-2 border rounded-md p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      fileFormat === "po" ? "border-primary bg-primary/10" : "border-border"
+                    }`}
+                  >
+                    <FileText className="h-8 w-8 text-orange-500" />
+                    <RadioGroupItem value="po" id="po" className="sr-only" />
+                    <div className="font-medium text-foreground">Gettext (.po)</div>
+                    <span className="text-xs text-muted-foreground">
+                      Standard for open-source projects
                     </span>
                   </Label>
                 </RadioGroup>

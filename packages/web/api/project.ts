@@ -177,7 +177,7 @@ export async function removeModule(projectId: string, module: string): Promise<P
 
 // Export project copy
 export async function exportProjectTokens(projectId: string, options: {
-  format: 'json' | 'csv' | 'xml' | 'yaml';
+  format: 'json' | 'csv' | 'xml' | 'yaml' | 'xliff' | 'po';
   scope?: 'all' | 'completed' | 'incomplete' | 'custom';
   languages?: string[];
   showEmptyTranslations?: boolean;
@@ -196,7 +196,7 @@ export async function exportProjectTokens(projectId: string, options: {
 export async function previewImportTokens(projectId: string, data: {
   language: string;
   content: string;
-  format: 'json' | 'csv' | 'xml' | 'yaml';
+  format: 'json' | 'csv' | 'xml' | 'yaml' | 'xliff' | 'po';
   mode: 'append' | 'replace';
 }): Promise<{
   success: boolean;
@@ -227,7 +227,7 @@ export async function previewImportTokens(projectId: string, data: {
 export async function importProjectTokens(projectId: string, data: {
   language: string;
   content: string;
-  format: 'json' | 'csv' | 'xml' | 'yaml';
+  format: 'json' | 'csv' | 'xml' | 'yaml' | 'xliff' | 'po';
   mode: 'append' | 'replace';
 }): Promise<{
   success: boolean;
