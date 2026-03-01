@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 1 of 9 (Cleanup & Branch Setup)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-01 -- Roadmap created with 9 phases covering 65 requirements
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-01 -- Completed 01-01 proprietary code cleanup
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 8min
+- Total execution time: 0.13 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-cleanup | 1 | 8min | 8min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 01-01 (8min)
+- Trend: Starting
 
 *Updated after each plan completion*
 
@@ -46,6 +46,10 @@ Recent decisions affecting current work:
 - Drizzle ORM over Prisma/TypeORM (fastest, smallest bundle, first-class PGlite support)
 - Orphan branch for opensource (clean history, no secret leaks)
 - Multi-provider AI with user API keys (not locked to Dify)
+- [01-01] Removed HttpService from auth.service.ts (only Feishu used it; ai.service still uses HttpModule)
+- [01-01] All env var fallbacks for secrets removed -- server requires JWT_SECRET and DATABASE_URL
+- [01-01] Cookie renamed from bondma_language to i18n_language
+- [01-01] Upload URLs changed to relative paths through Next.js middleware proxy
 
 ### Pending Todos
 
@@ -58,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Roadmap created, ready to plan Phase 1
-Resume file: None
+Stopped at: Completed 01-01-PLAN.md (proprietary code cleanup)
+Resume file: .planning/phases/01-cleanup-branch-setup/01-01-SUMMARY.md
