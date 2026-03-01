@@ -25,7 +25,7 @@ import {
   Package,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { getProjectRecentActivities } from "@/api/project";
+import { getProjectRecentActivities, getTokenProgress } from "@/api/project";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { formatLanguageDisplay } from "@/constants";
@@ -38,6 +38,12 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const t = useTranslations("project.overview");
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [languageProgress, setLanguageProgress] = useState<Array<{
+    language: string;
+    total: number;
+    completed: number;
+    percentage: number;
+  }>>([]);
 
   // Fetch recent activities
   useEffect(() => {
@@ -52,6 +58,19 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         })
         .finally(() => {
           setLoading(false);
+        });
+    }
+  }, [project?.id]);
+
+  // Fetch per-language completion progress from server
+  useEffect(() => {
+    if (project?.id) {
+      getTokenProgress(project.id)
+        .then((data) => {
+          setLanguageProgress(data);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch token progress:", err);
         });
     }
   }, [project?.id]);
@@ -197,20 +216,12 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     const tokens = project.tokens || [];
     const languages = project.languages || [];
 
-    // Calculate translation progress
-    let totalTranslations = 0;
-    let completedTranslations = 0;
-
-    tokens.forEach((token) => {
-      const expectedTranslations = languages.length;
-      totalTranslations += expectedTranslations;
-      completedTranslations += Object.keys(token.translations || {}).length;
-    });
-
-    const completionRate =
-      totalTranslations > 0
-        ? Math.round((completedTranslations / totalTranslations) * 100)
-        : 0;
+    // Derive completion rate from server-side language progress
+    const totalCompleted = languageProgress.reduce((sum, lp) => sum + lp.completed, 0);
+    const totalExpected = languageProgress.reduce((sum, lp) => sum + lp.total, 0);
+    const completionRate = totalExpected > 0
+      ? Math.round((totalCompleted / totalExpected) * 100)
+      : 0;
 
     // Collect all tags
     const allTags = new Set<string>();
@@ -243,8 +254,13 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       }
     });
 
+    // Use server-side token count if available, fall back to local tokens
+    const totalTokens = languageProgress.length > 0
+      ? languageProgress[0].total
+      : tokens.length;
+
     return {
-      totalTokens: tokens.length,
+      totalTokens,
       languages,
       completionRate,
       tags: Array.from(allTags),
@@ -254,7 +270,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       moduleStats,
       tokensWithoutModule,
     };
-  }, [project, t]);
+  }, [project, t, languageProgress]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -436,6 +452,43 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Per-Language Translation Progress */}
+      {languageProgress.length > 0 && (
+        <Card className="border-border/50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/10 to-primary/10">
+                <Globe className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">{t("translationProgress")}</CardTitle>
+                <CardDescription>
+                  {t("supportedLanguages")}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {languageProgress.map((lp) => (
+                <div key={lp.language} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {formatLanguageDisplay(lp.language, project?.languageLabels)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress value={lp.percentage} className="h-2 w-32" />
+                    <span className="text-sm text-muted-foreground">{lp.percentage}%</span>
+                    <span className="text-xs text-muted-foreground">({lp.completed}/{lp.total})</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Module Statistics */}
       {Array.isArray(projectStats.modules) && projectStats.modules.length > 0 && (

@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Project, Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  searchTokens,
   createToken,
   updateToken,
   deleteToken,
-  batchUpdateTokenModule,
+  bulkTokenOperation,
 } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
@@ -36,10 +37,13 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const t = useTranslations("projectTokens");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [totalTokens, setTotalTokens] = useState<number>(0);
   const { toast } = useToast();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [sorting] = useQueryState(
     "sort",
@@ -75,12 +79,47 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const [isBatchSettingModule, setIsBatchSettingModule] = useState<boolean>(false);
   const [batchModuleProgress, setBatchModuleProgress] = useState<number>(0);
 
-  // Initialize tokens data
+  // Debounced search: delays 300ms after user stops typing
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   useEffect(() => {
-    if (project?.tokens) {
-      setTokens(project.tokens);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
-  }, [project]);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  // Fetch tokens from server-side search API
+  const fetchTokens = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const sortField = sorting[0];
+      const result = await searchTokens(project.id, {
+        query: debouncedSearch || undefined,
+        module: selectedModule || undefined,
+        status: (selectedStatus as 'all' | 'completed' | 'incomplete') || 'all',
+        tags: selectedTag || undefined,
+        sortBy: sortField?.id || 'createdAt',
+        sortOrder: sortField?.desc ? 'desc' : 'asc',
+        perPage: 200,
+      });
+      setTokens(result.tokens);
+      setTotalTokens(result.total);
+    } catch (error) {
+      console.error("Error fetching tokens:", error);
+    }
+  }, [project?.id, debouncedSearch, selectedModule, selectedStatus, selectedTag, sorting]);
+
+  // Fetch tokens on mount and when filter/sort params change
+  useEffect(() => {
+    fetchTokens();
+  }, [fetchTokens]);
 
   // Initialize translation fields in form data
   useEffect(() => {
@@ -105,68 +144,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     return Array.from(new Set(tags));
   }, [tokens]);
 
-  const filteredAndSortedTokens = useMemo(() => {
-    let result = [...tokens];
-
-    // Filter by module
-    if (selectedModule) {
-      if (selectedModule === "__no_module__") {
-        // 筛选无模块的词条
-        result = result.filter((token) => !token.module);
-      } else {
-        // 筛选指定模块的词条
-        result = result.filter((token) => token.module === selectedModule);
-      }
-    }
-
-    // Filter by tag
-    if (selectedTag) {
-      result = result.filter((token) => token.tags.includes(selectedTag));
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      result = result.filter(
-        (token) =>
-          token.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          Object.values(token.translations || {}).some((t) =>
-            t.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
-    }
-
-    // Sort
-    if (sorting.length > 0) {
-      const sort = sorting[0];
-      if (sort) {
-        result.sort((a, b) => {
-          let aValue: any;
-          let bValue: any;
-          if (
-            sort.id === "key" ||
-            sort.id === "tags" ||
-            sort.id === "createdAt"
-          ) {
-            aValue = a[sort.id];
-            bValue = b[sort.id];
-          } else {
-            aValue = a.translations?.[sort.id] || "";
-            bValue = b.translations?.[sort.id] || "";
-          }
-
-          if (aValue < bValue) {
-            return sort.desc ? 1 : -1;
-          }
-          if (aValue > bValue) {
-            return sort.desc ? -1 : 1;
-          }
-          return 0;
-        });
-      }
-    }
-
-    return result;
-  }, [tokens, selectedModule, selectedTag, searchTerm, sorting]);
+  // Tokens are now fetched server-side with filtering/sorting applied.
+  // No client-side filteredAndSortedTokens needed.
 
   // Check if a new key conflicts with existing keys
   // Conflict occurs when:
@@ -251,12 +230,12 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       setBatchModuleProgress(30);
 
       const tokenIds = selectedTokens.map((t) => t.id);
-      const updatedTokens = await batchUpdateTokenModule(tokenIds, moduleCode);
+      await bulkTokenOperation(tokenIds, 'set-module', { module: moduleCode });
 
-      // 更新本地 tokens 列表
-      setTokens((prev) =>
-        prev.map((t) => updatedTokens.find((u) => u.id === t.id) ?? t),
-      );
+      setBatchModuleProgress(80);
+
+      // Refresh token list from server
+      await fetchTokens();
 
       setBatchModuleProgress(100);
 
@@ -272,6 +251,26 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     } finally {
       setIsBatchSettingModule(false);
       setBatchModuleProgress(0);
+    }
+  };
+
+  // 批量设置标签
+  const handleBatchSetTags = async (selectedTokens: Token[], tags: string[]) => {
+    if (!project?.id) return;
+
+    try {
+      const tokenIds = selectedTokens.map((t) => t.id);
+      await bulkTokenOperation(tokenIds, 'set-tags', { tags });
+      await fetchTokens();
+      toast({
+        title: "批量更新标签成功",
+      });
+    } catch (error) {
+      console.error("Batch set tags error:", error);
+      toast({
+        title: "批量更新标签失败",
+        variant: "destructive",
+      });
     }
   };
 
@@ -329,37 +328,35 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
       if (isEditing && currentTokenId) {
         // Update token and its translations
-        const updatedToken = await updateToken(currentTokenId, {
+        await updateToken(currentTokenId, {
           key: formData.key,
           module: formData.module,
           tags: tagArray,
           comment: formData.comment,
-          translations: formData.translations, // Pass translations object directly
-          screenshots: formData.screenshots, // Include screenshots
+          translations: formData.translations,
+          screenshots: formData.screenshots,
         });
 
-        // Update local state
-        setTokens((prev) =>
-          prev.map((token) =>
-            token.id === currentTokenId ? { ...token, ...updatedToken } : token
-          )
-        );
+        // Refresh token list from server
+        await fetchTokens();
 
         toast({
           title: t("success.tokenUpdated"),
         });
       } else {
         // Create new token with translations
-        const newToken = await createToken(project.id, {
+        await createToken(project.id, {
           key: formData.key,
           module: formData.module,
           tags: tagArray,
           comment: formData.comment,
-          translations: formData.translations, // Pass translations object directly
-          screenshots: formData.screenshots, // Include screenshots
+          translations: formData.translations,
+          screenshots: formData.screenshots,
         });
 
-        setTokens((prev) => [...prev, newToken]);
+        // Refresh token list from server
+        await fetchTokens();
+
         toast({
           title: t("success.tokenCreated"),
         });
@@ -461,7 +458,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const handleDeleteToken = async (tokenId: string) => {
     try {
       await deleteToken(tokenId);
-      setTokens((prev) => prev.filter((token) => token.id !== tokenId));
+      await fetchTokens();
       toast({
         title: t("success.tokenDeleted"),
       });
@@ -509,8 +506,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
   const handleDeleteSelected = async (selected: string[]) => {
     try {
-      await Promise.all(selected.map((id) => deleteToken(id)));
-      setTokens((prev) => prev.filter((token) => !selected.includes(token.id)));
+      await bulkTokenOperation(selected, 'delete');
+      await fetchTokens();
       toast({
         title: t("success.tokensDeleted"),
       });
@@ -523,8 +520,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   };
 
   const currentToken = useMemo(() => {
-    return filteredAndSortedTokens.find((token) => token.id === currentTokenId);
-  }, [filteredAndSortedTokens, currentTokenId]);
+    return tokens.find((token) => token.id === currentTokenId);
+  }, [tokens, currentTokenId]);
 
   // Handle batch create
   const handleBatchSubmit = async (batchTokens: BatchTokenInput[]) => {
@@ -614,8 +611,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         )
       );
 
-      // Update local state
-      setTokens((prev) => [...prev, ...createdTokens]);
+      // Refresh token list from server
+      await fetchTokens();
 
       toast({
         title: t("success.batchTokensCreated", { count: createdTokens.length }),
@@ -689,18 +686,16 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         };
 
         // Update token
-        const updatedToken = await updateToken(token.id, {
+        await updateToken(token.id, {
           translations: updatedTranslations,
         });
-
-        // Update local state
-        setTokens((prev) =>
-          prev.map((t) => (t.id === token.id ? { ...t, ...updatedToken } : t))
-        );
 
         completed++;
         setTranslateProgress(Math.round((completed / total) * 100));
       }
+
+      // Refresh all tokens from server after batch translate
+      await fetchTokens();
 
       toast({
         title: t("success.batchTranslated"),
@@ -785,7 +780,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       )}
 
       <TokenTable
-        tokens={filteredAndSortedTokens}
+        tokens={tokens}
         languages={project?.languages || []}
         languageLabels={project?.languageLabels}
         modules={project?.modules || []}
@@ -793,6 +788,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onDelete={handleDeleteToken}
         onDeleteSelected={handleDeleteSelected}
         onBatchSetModule={handleBatchSetModule}
+        onBatchSetTags={handleBatchSetTags}
         onBatchTranslate={handleBatchTranslateSelected}
         isBatchTranslating={isBatchTranslating || isBatchSettingModule}
         toolBar={
@@ -806,6 +802,19 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
               />
             </div>
             <div className="flex gap-2">
+              <Select
+                value={selectedStatus}
+                onValueChange={setSelectedStatus}
+              >
+                <SelectTrigger className="h-[32px] w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="incomplete">Incomplete</SelectItem>
+                </SelectContent>
+              </Select>
               <Select
                 value={selectedModule || "all"}
                 onValueChange={(value) => setSelectedModule(value === "all" ? null : value)}

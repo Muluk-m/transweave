@@ -2,7 +2,8 @@
 import React, { useMemo, useState } from "react";
 import { Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Pencil, Trash2, ChevronLeft, ChevronRight, Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Check, Copy, Pencil, Trash2, ChevronLeft, ChevronRight, Package, TagIcon } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,6 +67,7 @@ interface TokenTableProps {
   onDeleteSelected: (selected: string[]) => void;
   onBatchTranslate?: (tokens: Token[]) => Promise<void>;
   onBatchSetModule?: (tokens: Token[], moduleCode: string | null) => Promise<void>;
+  onBatchSetTags?: (tokens: Token[], tags: string[]) => Promise<void>;
   isBatchTranslating?: boolean;
   toolBar: React.ReactNode;
 }
@@ -123,6 +125,7 @@ export function TokenTable({
   onDeleteSelected,
   onBatchTranslate,
   onBatchSetModule,
+  onBatchSetTags,
   isBatchTranslating = false,
 }: TokenTableProps) {
   const t = useTranslations("tokenTable");
@@ -136,6 +139,10 @@ export function TokenTable({
   const [isBatchModuleDialogOpen, setIsBatchModuleDialogOpen] = useState(false);
   const [batchModuleTargetTokens, setBatchModuleTargetTokens] = useState<Token[]>([]);
   const [batchSelectedModuleCode, setBatchSelectedModuleCode] = useState<string>("__no_module__");
+
+  const [isBatchTagDialogOpen, setIsBatchTagDialogOpen] = useState(false);
+  const [batchTagTargetTokens, setBatchTagTargetTokens] = useState<Token[]>([]);
+  const [batchTagInput, setBatchTagInput] = useState<string>("");
 
   
 
@@ -545,6 +552,61 @@ export function TokenTable({
         </DialogContent>
       </Dialog>
 
+      {/* 批量设置标签对话框 */}
+      <Dialog
+        open={isBatchTagDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsBatchTagDialogOpen(false);
+            setBatchTagTargetTokens([]);
+            setBatchTagInput("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量设置标签</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              已选择 {batchTagTargetTokens.length} 个词条，设置它们的标签（逗号分隔）：
+            </p>
+            <Input
+              value={batchTagInput}
+              onChange={(e) => setBatchTagInput(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsBatchTagDialogOpen(false);
+                  setBatchTagTargetTokens([]);
+                  setBatchTagInput("");
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!onBatchSetTags) return;
+                  const tags = batchTagInput
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter((t) => t.length > 0);
+                  await onBatchSetTags(batchTagTargetTokens, tags);
+                  setIsBatchTagDialogOpen(false);
+                  setBatchTagTargetTokens([]);
+                  setBatchTagInput("");
+                }}
+              >
+                确认应用
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!previewImages} onOpenChange={(open) => !open && setPreviewImages(null)}>
         <DialogContent className="max-w-4xl w-full">
           <DialogHeader>
@@ -630,6 +692,25 @@ export function TokenTable({
                   disabled={isBatchTranslating || !hasSelection}
                 >
                   <Package />
+                </DataTableActionBarAction>
+              )}
+              {onBatchSetTags && (
+                <DataTableActionBarAction
+                  size="icon"
+                  tooltip="批量设置标签"
+                  onClick={() => {
+                    const selectedTokens = table
+                      .getFilteredSelectedRowModel()
+                      .rows.map((row) => getToken(row.id)!)
+                      .filter(Boolean);
+                    if (selectedTokens.length === 0) return;
+                    setBatchTagTargetTokens(selectedTokens);
+                    setBatchTagInput("");
+                    setIsBatchTagDialogOpen(true);
+                  }}
+                  disabled={isBatchTranslating || !hasSelection}
+                >
+                  <TagIcon />
                 </DataTableActionBarAction>
               )}
               <AlertDialog>
