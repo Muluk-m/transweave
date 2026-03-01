@@ -30,6 +30,14 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# environment variables
+.env
+.env.*
+!.env.example
+
+# planning docs (not needed in opensource)
+.planning/
+
 # vercel
 .vercel
 
