@@ -144,9 +144,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
-- [ ] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
-- [x] 08-03-PLAN.md -- REST API reference documentation
+- [x] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
+- [x] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
+- [ ] 08-03-PLAN.md -- REST API reference documentation
 
 ### Phase 9: Deployment & Production Readiness
 **Goal**: A new user can go from git clone to running platform in under 5 minutes with Docker, or run locally without Docker using PGlite
