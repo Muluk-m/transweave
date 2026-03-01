@@ -1,153 +1,154 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Team, TeamDocument, Membership, MembershipDocument, UserDocument, User } from '../models';
-import { MongooseService } from './mongoose.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { DRIZZLE } from '../db/drizzle.provider';
+import type { DrizzleDB } from '../db/drizzle.types';
+import { teams, memberships, users, type NewTeam } from '../db/schema';
+import { eq, inArray } from 'drizzle-orm';
+import { TeamRepository } from '../repository/team.repository';
+import { MembershipRepository } from '../repository/membership.repository';
 
 @Injectable()
 export class TeamService {
   constructor(
-    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Membership.name)
-    private membershipModel: Model<MembershipDocument>,
-    private mongooseService: MongooseService,
+    private teamRepo: TeamRepository,
+    private membershipRepo: MembershipRepository,
+    @Inject(DRIZZLE) private db: DrizzleDB,
   ) {}
 
   async createTeam(data: { name: string; url: string; userId: string }) {
-    const session = await this.mongooseService.getConnection().startSession();
-    try {
-      let result: any = null;
-      await session.withTransaction(async () => {
-        const name = (data.name ?? '').trim();
-        const url =
-          (data.url ?? '').trim() || Math.random().toString(36).slice(2, 10);
+    const name = (data.name ?? '').trim();
+    const url =
+      (data.url ?? '').trim() || Math.random().toString(36).slice(2, 10);
 
-        // 创建团队
-        const team = new this.teamModel({
-          name,
-          url,
-        });
-        await team.save({ session });
+    // Use Drizzle transaction for atomicity
+    return (this.db as any).transaction(async (tx: any) => {
+      // 1. Create team
+      const [team] = await tx
+        .insert(teams)
+        .values({ name, url })
+        .returning();
 
-        // 创建会员关系
-        const membership = new this.membershipModel({
-          userId: data.userId,
-          user: data.userId,
-          teamId: team._id,
-          role: 'owner',
-        });
-
-        await membership.save({ session });
-
-        team.memberships.push(membership);
-
-        await team.save({ session }); // 保存修改
-
-        await this.userModel.findByIdAndUpdate(
-          data.userId,
-          { $addToSet: { memberships: membership._id } },
-          { session },
-        )
-          .session(session);
-
-        // 查询团队并填充成员信息
-        result = await this.teamModel
-          .findById(team._id)
-          .populate({
-            path: 'memberships',
-            populate: {
-              path: 'user',
-              select: 'id name email',
-            },
-          })
-          .session(session)
-          .exec();
+      // 2. Create owner membership
+      await tx.insert(memberships).values({
+        userId: data.userId,
+        teamId: team.id,
+        role: 'owner',
       });
-      return result;
-    } finally {
-      session.endSession();
-    }
+
+      // 3. Return team with members populated
+      const teamWithMembers = await tx.query.teams.findFirst({
+        where: eq(teams.id, team.id),
+        with: {
+          memberships: {
+            with: {
+              user: {
+                columns: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return teamWithMembers;
+    });
   }
 
   async findAllTeams() {
-    return this.teamModel.find().populate({
-      path: 'memberships',
-      populate: {
-        path: 'user',
-        select: 'id name email avatar',
+    return (this.db as any).query.teams.findMany({
+      with: {
+        memberships: {
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
       },
-    }).exec();
+    });
   }
 
   async findTeamsByUserId(userId: string) {
-    const memberships = await this.membershipModel
-      .find({ userId })
-      .select('_id')
-      .lean();
-    const membershipIds = memberships.map((m) => m._id);
+    // Find all memberships for this user
+    const userMemberships = await this.membershipRepo.findByUserId(userId);
+    if (userMemberships.length === 0) {
+      return [];
+    }
 
-    return this.teamModel
-      .find({ memberships: { $in: membershipIds } })
-      .populate({
-        path: 'memberships',
-        populate: {
-          path: 'user',
-          select: 'id name email avatar',
+    const teamIds = userMemberships.map((m) => m.teamId);
+
+    // Fetch those teams with full membership data
+    return (this.db as any).query.teams.findMany({
+      where: inArray(teams.id, teamIds),
+      with: {
+        memberships: {
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
         },
-      })
-      .exec();
+      },
+    });
   }
 
   async findTeamById(id: string) {
-    return this.teamModel
-      .findById(id)
-      .populate({
-        path: 'memberships',
-        populate: {
-          path: 'user',
-          select: 'id name email avatar',
+    return (this.db as any).query.teams.findFirst({
+      where: eq(teams.id, id),
+      with: {
+        memberships: {
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
         },
-      })
-      .exec();
+      },
+    });
   }
 
   // Update team information
   async updateTeam(id: string, data: { name?: string; url?: string }) {
-    return this.teamModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    return this.teamRepo.update(id, data);
   }
 
   // Delete team
   async deleteTeam(id: string) {
-    // First delete all related membership records
-    await this.membershipModel.deleteMany({ teamId: id }).exec();
-
-    // Then delete the team
-    return this.teamModel.findByIdAndDelete(id).exec();
+    // Use transaction: delete memberships first, then team
+    return (this.db as any).transaction(async (tx: any) => {
+      await tx
+        .delete(memberships)
+        .where(eq(memberships.teamId, id));
+      await tx
+        .delete(teams)
+        .where(eq(teams.id, id));
+    });
   }
 
   // Get all member information for a specific team
   async getTeamMembers(teamId: string) {
-    const result = await this.teamModel
-      .findById(teamId)
-      .populate({
-        path: 'memberships',
-        populate: {
-          path: 'user',
-          select: 'id name email avatar',
-        },
-      })
-      .exec();
-    
-    const team = result?.toObject()
+    const results = await this.membershipRepo.findByTeamIdWithUser(teamId);
 
-    if (!team || !team.memberships) {
-      return [];
-    }    
-    
-    return team.memberships.map((membership) => ({
-      ...membership.user,
-      role: membership.role,
+    return results.map((row) => ({
+      ...row.user,
+      role: row.membership.role,
     }));
   }
 }
