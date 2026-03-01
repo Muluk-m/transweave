@@ -1,70 +1,180 @@
-# QLJ I18N Manager
+# qlj-i18n
 
-## 项目简介
+Self-hosted internationalization management platform.
 
-QLJ I18N Manager 是一个用于管理多语言资源的平台，帮助开发团队高效地管理多语言项目并实现无缝协作。
+- Multi-language translation management with modules and namespaces
+- Team collaboration with role-based access control (owner / manager / member)
+- AI-assisted translation via OpenAI, Claude, DeepL, or Google Translate (optional, bring your own API key)
+- Import and export in JSON, YAML, CSV, XLIFF, and Gettext (.po) formats
+- CLI tool for CI/CD integration (`qlj-i18n pull` / `qlj-i18n push`)
+- MCP server for AI coding assistants
+- PGlite support for zero-config local development (no PostgreSQL install needed)
 
-## 项目结构
+**Tech stack:** Next.js, NestJS, PostgreSQL / PGlite, Drizzle ORM, pnpm monorepo
+
+## Quick Start with Docker
 
 ```bash
-.
-├── packages/
-│   ├── server/
-│   └── web/
-├── README.md
-└── package.json
+# 1. Clone the repository
+git clone https://github.com/your-org/qlj-i18n.git
+cd qlj-i18n
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env: set POSTGRES_PASSWORD and JWT_SECRET (both required)
+# Generate a JWT secret:
+openssl rand -base64 64
+
+# 3. Start the platform
+docker compose up -d
+# Open http://localhost:3000
+# On first launch, a setup wizard creates your admin account
 ```
 
+## Quick Start without Docker (PGlite)
 
-## 安装依赖
+No PostgreSQL installation needed. PGlite runs an embedded database automatically when `DATABASE_URL` is not set.
 
 ```bash
+# 1. Clone and install
+git clone https://github.com/your-org/qlj-i18n.git
+cd qlj-i18n
 pnpm install
+
+# 2. Configure environment
+cp .env.example packages/server/.env
+# Edit packages/server/.env:
+#   - Set JWT_SECRET (required). Generate with: openssl rand -base64 64
+#   - Do NOT set DATABASE_URL -- PGlite will be used automatically
+
+# 3. Start the backend
+pnpm dev:server
+
+# 4. Start the frontend (in a new terminal)
+pnpm dev:web
+# Open http://localhost:3000
 ```
 
-## 初始化数据库
+## Environment Variables
+
+All variables are defined in `.env.example`. Copy it and edit as needed.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Docker: yes, Local: no | -- | PostgreSQL connection string. Omit for PGlite. |
+| `POSTGRES_DB` | No | `i18n` | PostgreSQL database name (Docker Compose only). |
+| `POSTGRES_USER` | No | `i18n` | PostgreSQL user (Docker Compose only). |
+| `POSTGRES_PASSWORD` | Docker: yes | -- | PostgreSQL password (Docker Compose only). |
+| `JWT_SECRET` | Yes | -- | Secret for signing JWT tokens. Generate with `openssl rand -base64 64`. |
+| `PORT` | No | `3001` | Port the backend API listens on. |
+| `UPLOAD_DIR` | No | `./uploads` | Directory for uploaded files (screenshots, etc.). |
+| `NEXT_PUBLIC_API_URL` | No | `http://localhost:3001` | Backend API URL as seen from the browser. **Build-time** -- changing this requires rebuilding the web Docker image. |
+| `NEXT_INTERNAL_API_URL` | No | `http://server:3001` | Backend API URL for server-side rendering inside Docker network. |
+| `WEB_PORT` | No | `3000` | Host port for the web UI (Docker Compose only). |
+| `AI_PROVIDER` | No | -- | AI translation provider: `openai`, `claude`, `deepl`, or `google`. Leave empty to disable. |
+| `AI_API_KEY` | No | -- | API key for the configured AI provider. |
+| `PGLITE_DATA_DIR` | No | `./data/pglite` | PGlite data directory (used when `DATABASE_URL` is not set). |
+
+> **Note:** `NEXT_PUBLIC_*` variables are baked into the frontend JavaScript bundle at build time. Changing them after the build has no effect. In Docker, rebuild the web image: `docker compose build web`.
+
+## Architecture
+
+```
+qlj-i18n/
+  packages/
+    server/     NestJS API (authentication, teams, translations, AI, file storage)
+    web/        Next.js frontend
+    cli/        CLI tool for pull/push operations
+```
+
+- **Database:** PostgreSQL in production (Docker) or PGlite for local development (zero-config).
+- **File storage:** Local disk. In Docker, persisted via a named volume.
+- **Monorepo:** Managed with pnpm workspaces.
+
+## Development
+
+**Prerequisites:**
+
+- Node.js >= 22
+- pnpm >= 10.8.0
+
+**Run tests:**
 
 ```bash
-chmod 600 conf/mongo-keyfile
-docker compose up -d
-docker exec -it mongodb mongosh -u admin -p secret --authenticationDatabase admin --eval "$(cat init/init-replica.js)"
+pnpm --filter server test
 ```
 
-## 运行项目
+**Drizzle Studio** (database browser):
 
 ```bash
-cd packages/server
-pnpm run start:dev
+pnpm --filter server drizzle-kit studio
 ```
+
+## Docker Details
+
+### Services
+
+| Service | Image / Build | Port | Description |
+|---------|---------------|------|-------------|
+| `postgres` | `postgres:17-alpine` | Internal only | PostgreSQL database with health check |
+| `server` | `packages/server/Dockerfile` | Internal only | NestJS API server |
+| `web` | `packages/web/Dockerfile` | `${WEB_PORT:-3000}:3000` | Next.js frontend |
+
+### Volumes
+
+| Volume | Container path | Purpose |
+|--------|---------------|---------|
+| `pgdata` | `/var/lib/postgresql/data` | PostgreSQL data (persists across restarts) |
+| `uploads` | `/app/uploads` | Uploaded files (screenshots, etc.) |
+
+### Common commands
 
 ```bash
-cd packages/web
-pnpm run dev
+# Rebuild after code changes
+docker compose build && docker compose up -d
+
+# View server logs
+docker compose logs -f server
+
+# Stop (data is preserved in volumes)
+docker compose down
+
+# Reset all data (WARNING: deletes database and uploads)
+docker compose down -v
 ```
+
+## Troubleshooting
+
+**Server won't start**
+Check that `POSTGRES_PASSWORD` and `JWT_SECRET` are set in your `.env` file. Both are required.
+
+**Frontend shows wrong API URL**
+`NEXT_PUBLIC_API_URL` is a build-time variable. Rebuild the web image after changing it:
+```bash
+docker compose build web && docker compose up -d web
+```
+
+**Data lost after restart**
+Make sure you are using `docker compose down` (not `docker compose down -v`). The `-v` flag removes named volumes and all data with them.
+
+**Port already in use**
+Change `WEB_PORT` in your `.env` file to an available port (e.g., `WEB_PORT=8080`).
+
+**PGlite errors in local development**
+Delete the PGlite data directory and restart:
+```bash
+rm -rf data/pglite
+pnpm dev:server
+```
+
+## Contributing
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). Prefix your commit messages with `feat:`, `fix:`, `docs:`, `chore:`, etc.
 
 ```bash
-docker compose up -d
+git commit -m "feat: add new export format"
 ```
 
+## License
 
-
-## RoadMap
-
-[x] 上下文截图 - 为每个词条添加上下文截图，帮助理解使用场景
-  - 支持点击上传和拖拽上传
-  - 支持直接粘贴截图（Ctrl/Cmd + V）
-  - 图片自动上传至 CDN，全球加速访问
-  - 表格中快速预览截图缩略图
-  - 点击查看大图，支持左右切换多张截图
-[x] 模块管理 - 为项目添加功能模块管理，规范翻译 key 的命名空间
-  - 模块包含中文名称和英文代码（如：智能绿盾 / smartShield）
-  - 独立的模块管理 Tab，可视化管理所有模块
-  - 模块列表显示名称、代码、词条数量和示例
-  - 创建词条时可选择所属模块
-  - AI 生成 key 时自动带上模块代码前缀（如 smartShield.link）
-  - 词条列表支持按模块筛选（显示中文名称）
-  - 词条表格显示模块名称和代码
-  - 项目概览中展示模块统计和分布情况
-  - 防止删除包含词条的模块，确保数据完整性
-  - 自动处理旧数据迁移
-[ ] 操作记录优化 - 优化操作记录的查询和展示
+MIT
