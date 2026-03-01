@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText } from "lucide-react";
+import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText, Bot } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Languages, formatLanguageDisplay, isBuiltInLanguage } from "@/constants";
 import { deleteProject, updateProject } from "@/api/project";
@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { nowProjectAtom } from "@/jotai";
 import { useSetAtom } from "jotai";
+import { AiProviderSettings } from "@/components/views/settings/AiProviderSettings";
 
 interface ProjectSettingTabProps {
     project: Project | null;
@@ -200,6 +201,10 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                     <TabsTrigger value="advanced" className="flex gap-2 items-center">
                         <Settings className="h-4 w-4" />
                         {t('project.settings.tabs.advanced')}
+                    </TabsTrigger>
+                    <TabsTrigger value="ai" className="flex gap-2 items-center">
+                        <Bot className="h-4 w-4" />
+                        {t('aiSettings.title')}
                     </TabsTrigger>
                     <TabsTrigger value="danger" className="flex gap-2 items-center text-red-500">
                         <AlertTriangle className="h-4 w-4" />
@@ -436,6 +441,34 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             </Button>
                         </CardFooter>
                     </Card>
+                </TabsContent>
+
+                {/* AI Settings */}
+                <TabsContent value="ai">
+                    <div className="space-y-6">
+                        {/* Project-level AI config */}
+                        {project?.id && (
+                            <AiProviderSettings
+                                scope="project"
+                                scopeId={project.id}
+                                projectId={project.id}
+                            />
+                        )}
+
+                        {/* Team-level AI config */}
+                        {project?.teamId && (
+                            <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground px-1">
+                                    {t('aiSettings.teamDefaultHint')}
+                                </p>
+                                <AiProviderSettings
+                                    scope="team"
+                                    scopeId={project.teamId}
+                                    projectId={project.id}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
 
                 {/* Danger zone */}

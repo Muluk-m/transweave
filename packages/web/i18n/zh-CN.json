@@ -974,5 +974,25 @@
       "notifications": "通知设置",
       "notificationsDesc": "管理系统通知与邮件提醒"
     }
+  },
+  "aiSettings": {
+    "title": "AI 翻译",
+    "provider": "服务商",
+    "apiKey": "API 密钥",
+    "model": "模型",
+    "baseUrl": "自定义 Base URL",
+    "save": "保存配置",
+    "remove": "移除配置",
+    "removeConfirm": "确定要移除 AI 服务商配置吗？",
+    "configured": "已配置 AI 服务商",
+    "notConfigured": "未配置 AI 服务商",
+    "configuredAt": "在{level}级别配置",
+    "saveSuccess": "AI 服务商配置成功",
+    "removeSuccess": "已移除 AI 服务商配置",
+    "invalidKey": "API 密钥无效，请检查后重试",
+    "projectSettings": "项目 AI 设置",
+    "teamDefault": "团队默认配置",
+    "teamDefaultHint": "项目级别配置会覆盖团队默认配置。未在此处设置时，使用团队默认配置。",
+    "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译"
   }
 }

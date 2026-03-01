@@ -23,7 +23,7 @@ import { TokenTable } from "./TokenTable";
 import { BatchAddDialog, BatchTokenInput } from "./BatchAddDialog";
 import { Plus, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { translateWithAi } from "@/api/ai";
+import { translateWithAi, getAiConfigStatus } from "@/api/ai";
 import { useQueryState } from "nuqs";
 import { getSortingStateParser } from "@/lib/parsers";
 import { Progress } from "@/components/ui/progress";
@@ -78,6 +78,21 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const [translateProgress, setTranslateProgress] = useState<number>(0);
   const [isBatchSettingModule, setIsBatchSettingModule] = useState<boolean>(false);
   const [batchModuleProgress, setBatchModuleProgress] = useState<number>(0);
+
+  // AI configuration status
+  const [aiConfigured, setAiConfigured] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (project?.id) {
+      getAiConfigStatus(project.id)
+        .then((status) => {
+          setAiConfigured(status.configured);
+        })
+        .catch(() => {
+          setAiConfigured(false);
+        });
+    }
+  }, [project?.id]);
 
   // Debounced search: delays 300ms after user stops typing
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -403,7 +418,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     const result = await translateWithAi(
       formData.translations[from],
       from,
-      to
+      to,
+      project?.id || ""
     ).catch((error) => {
       console.error("Error translating:", error);
       toast({
@@ -676,7 +692,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         const translationResult = await translateWithAi(
           sourceText,
           sourceLang,
-          emptyLangs
+          emptyLangs,
+          project?.id || ""
         );
 
         // Merge existing and new translations
@@ -732,6 +749,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onSubmit={handleSubmit}
         onAddNew={handleOpenAddDrawer}
         onTranslate={handleTranslate}
+        aiConfigured={aiConfigured}
+        projectId={project?.id}
       />
 
       <div className="flex justify-between items-center mb-4">
@@ -789,7 +808,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onDeleteSelected={handleDeleteSelected}
         onBatchSetModule={handleBatchSetModule}
         onBatchSetTags={handleBatchSetTags}
-        onBatchTranslate={handleBatchTranslateSelected}
+        onBatchTranslate={aiConfigured ? handleBatchTranslateSelected : undefined}
         isBatchTranslating={isBatchTranslating || isBatchSettingModule}
         toolBar={
           <div className="flex gap-2 items-center justify-between w-full">

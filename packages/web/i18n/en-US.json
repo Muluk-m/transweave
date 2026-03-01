@@ -961,5 +961,25 @@
       "notifications": "Notification Settings",
       "notificationsDesc": "Manage system notifications and email alerts"
     }
+  },
+  "aiSettings": {
+    "title": "AI Translation",
+    "provider": "Provider",
+    "apiKey": "API Key",
+    "model": "Model",
+    "baseUrl": "Custom Base URL",
+    "save": "Save Configuration",
+    "remove": "Remove Configuration",
+    "removeConfirm": "Are you sure you want to remove the AI provider configuration?",
+    "configured": "AI provider configured",
+    "notConfigured": "No AI provider configured",
+    "configuredAt": "Configured at {level} level",
+    "saveSuccess": "AI provider configured successfully",
+    "removeSuccess": "AI provider configuration removed",
+    "invalidKey": "Invalid API key. Please check and try again.",
+    "projectSettings": "Project AI Settings",
+    "teamDefault": "Team Default",
+    "teamDefaultHint": "Project-level configuration overrides team default. If not set here, the team default is used.",
+    "enableAiHint": "Configure an AI provider in project settings to enable AI translation"
   }
 }

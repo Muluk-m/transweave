@@ -82,6 +82,8 @@ interface TokenFormDrawerProps {
   onSubmit: () => void;
   onAddNew: () => void;
   onTranslate: () => void;
+  aiConfigured?: boolean;
+  projectId?: string;
 }
 
 const formatDate = (dateString: string) => {
@@ -114,6 +116,8 @@ export function TokenFormDrawer({
   onSubmit,
   onAddNew,
   onTranslate,
+  aiConfigured = false,
+  projectId,
 }: TokenFormDrawerProps) {
   const t = useTranslations("tokenForm");
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
@@ -138,6 +142,7 @@ export function TokenFormDrawer({
     setIsGeneratingKey(true);
     const result = await generateTokenKeyWithAi(
       formData.comment,
+      projectId || "",
       formData.tags,
       formData.module
     ).catch(() => null);
@@ -380,14 +385,16 @@ export function TokenFormDrawer({
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-6 h-6"
-                  onClick={handleGenerateKey}
-                >
-                  <Bot className="w-4 h-4" />
-                </Button>
+                {aiConfigured && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-6 h-6"
+                    onClick={handleGenerateKey}
+                  >
+                    <Bot className="w-4 h-4" />
+                  </Button>
+                )}
               </Label>
               <Input
                 id="key"
@@ -547,15 +554,17 @@ export function TokenFormDrawer({
         </ScrollArea>
 
         <SheetFooter className="mt-6 flex-row gap-2 items-center sm:justify-end">
-          <Button
-            size="icon"
-            onClick={onTranslate}
-            variant="outline"
-            disabled={isTranslating}
-            className="flex-1 sm:flex-initial"
-          >
-            <LanguagesIcon className="w-6 h-6" />
-          </Button>
+          {aiConfigured && (
+            <Button
+              size="icon"
+              onClick={onTranslate}
+              variant="outline"
+              disabled={isTranslating}
+              className="flex-1 sm:flex-initial"
+            >
+              <LanguagesIcon className="w-6 h-6" />
+            </Button>
+          )}
           <Button
             onClick={onSubmit}
             disabled={isLoading}
