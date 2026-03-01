@@ -14,9 +14,9 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 - [x] **CLEAN-03**: All hardcoded internal URLs (qiliangjia.org, qiliangjia.one) removed or replaced
 - [x] **CLEAN-04**: All hardcoded business config (internal API keys, MongoDB ObjectIds, emails) removed
 - [x] **CLEAN-05**: Business-specific logic modules not relevant to OSS users removed
-- [ ] **CLEAN-06**: Clean orphan git branch created with no secret/business data in history
-- [ ] **CLEAN-07**: .gitignore updated to exclude .env files, .dockerignore created
-- [ ] **CLEAN-08**: Secret scan passes with zero findings (gitleaks or equivalent)
+- [x] **CLEAN-06**: Clean orphan git branch created with no secret/business data in history
+- [x] **CLEAN-07**: .gitignore updated to exclude .env files, .dockerignore created
+- [x] **CLEAN-08**: Secret scan passes with zero findings (gitleaks or equivalent)
 
 ### Authentication
 
@@ -161,9 +161,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLEAN-03 | Phase 1 | Complete |
 | CLEAN-04 | Phase 1 | Complete |
 | CLEAN-05 | Phase 1 | Complete |
-| CLEAN-06 | Phase 1 | Pending |
-| CLEAN-07 | Phase 1 | Pending |
-| CLEAN-08 | Phase 1 | Pending |
+| CLEAN-06 | Phase 1 | Complete |
+| CLEAN-07 | Phase 1 | Complete |
+| CLEAN-08 | Phase 1 | Complete |
 | AUTH-01 | Phase 3 | Pending |
 | AUTH-02 | Phase 3 | Pending |
 | AUTH-03 | Phase 3 | Pending |

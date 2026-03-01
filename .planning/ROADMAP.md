@@ -12,7 +12,7 @@ This roadmap converts an internal i18n management platform into an open-source, 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Cleanup & Branch Setup** - Remove all proprietary code, secrets, and internal references; create clean orphan branch
+- [x] **Phase 1: Cleanup & Branch Setup** - Remove all proprietary code, secrets, and internal references; create clean orphan branch
 - [ ] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
 - [ ] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
 - [ ] **Phase 4: Local File Storage** - Replace external CDN with local disk storage and static file serving
@@ -37,8 +37,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Remove all proprietary code (Feishu OAuth, company references, hardcoded secrets, branding)
-- [ ] 01-02-PLAN.md -- Update .gitignore, create .dockerignore, create clean orphan branch, verify with secret scanner
+- [x] 01-01-PLAN.md -- Remove all proprietary code (Feishu OAuth, company references, hardcoded secrets, branding)
+- [x] 01-02-PLAN.md -- Update .gitignore, create .dockerignore, create clean orphan branch, verify with secret scanner
 
 ### Phase 2: Database Foundation
 **Goal**: All data models are defined in Drizzle ORM with a repository abstraction layer, and the application can connect to either PGlite or PostgreSQL based on configuration
@@ -172,7 +172,7 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Cleanup & Branch Setup | 0/2 | Not started | - |
+| 1. Cleanup & Branch Setup | 2/2 | Complete | 2026-03-01 |
 | 2. Database Foundation | 0/3 | Planned | - |
 | 3. Authentication & Teams | 0/3 | Planned | - |
 | 4. Local File Storage | 0/1 | Planned | - |
