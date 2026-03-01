@@ -34,11 +34,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. No internal company references exist (qiliangjia.org, qiliangjia.one, bondma, internal emails, hardcoded MongoDB ObjectIds)
   4. A secret scanner (gitleaks or equivalent) returns zero findings on the entire branch
   5. .gitignore excludes .env files and .dockerignore exists
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Remove all proprietary code (Feishu OAuth, company references, hardcoded secrets, branding)
+- [ ] 01-02-PLAN.md -- Update .gitignore, create .dockerignore, create clean orphan branch, verify with secret scanner
 
 ### Phase 2: Database Foundation
 **Goal**: All data models are defined in Drizzle ORM with a repository abstraction layer, and the application can connect to either PGlite or PostgreSQL based on configuration
