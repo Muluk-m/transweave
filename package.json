@@ -9,7 +9,9 @@
     "dev:web": "pnpm --filter ./packages/web dev",
     "dev:server": "pnpm --filter ./packages/server start:dev",
     "build:web": "pnpm --filter ./packages/web build",
-    "build:server": "pnpm --filter ./packages/server build"
+    "build:server": "pnpm --filter ./packages/server build",
+    "dev:cli": "pnpm --filter ./packages/cli dev",
+    "build:cli": "pnpm --filter ./packages/cli build"
   },
   "keywords": [],
   "author": "",

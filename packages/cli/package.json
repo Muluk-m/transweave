@@ -1,0 +1,22 @@
+{
+  "name": "qlj-i18n",
+  "version": "1.0.0",
+  "description": "CLI tool for qlj-i18n translation management",
+  "bin": {
+    "qlj-i18n": "./bin/qlj-i18n.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "ts-node": "^10.9.2",
+    "@types/node": "^22.10.7"
+  }
+}
