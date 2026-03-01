@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ProjectService } from './project.service';
+import { TokenService } from './token.service';
 import { z } from 'zod';
 
 type ListProjectsParams = Record<string, any>;
@@ -13,7 +14,10 @@ export class McpService {
   private readonly logger = new Logger(McpService.name);
   private readonly server: McpServer;
 
-  constructor(private readonly projectService: ProjectService) {
+  constructor(
+    private readonly projectService: ProjectService,
+    private readonly tokenService: TokenService,
+  ) {
     // 初始化 MCP Server
     this.server = new McpServer({
       name: 'qlj-i18n-mcp-server',
@@ -153,9 +157,9 @@ export class McpService {
   // 查询项目词条列表
   private async listProjectTokens(projectId: string) {
     try {
-      const tokens = await this.projectService.getProjectTokens(projectId);
+      const tokens = await this.tokenService.findByProject(projectId);
       return tokens.map((token: any) => ({
-        id: token.id || token._id?.toString(),
+        id: token.id,
         key: token.key,
         module: token.module,
         translations: token.translations,
@@ -172,19 +176,19 @@ export class McpService {
   // 获取词条详情
   private async getTokenDetails(tokenId: string) {
     try {
-      const token = await this.projectService.getTokenById(tokenId);
+      const token = await this.tokenService.findById(tokenId);
       if (!token) {
         throw new Error('词条不存在');
       }
       return {
-        id: token.id || token._id?.toString(),
+        id: token.id,
         key: token.key,
         module: token.module,
         translations: token.translations,
         tags: token.tags,
         comment: token.comment,
         screenshots: token.screenshots,
-        projectId: token.projectId?.toString(),
+        projectId: token.projectId,
         history: token.history,
         createdAt: token.createdAt,
         updatedAt: token.updatedAt,
@@ -206,7 +210,7 @@ export class McpService {
     screenshots?: string[],
   ): Promise<any> {
     try {
-      const token: any = await this.projectService.createToken({
+      const token: any = await this.tokenService.create({
         projectId,
         key,
         translations,
@@ -214,7 +218,7 @@ export class McpService {
         tags,
         comment,
         screenshots,
-        userId: '000000000000000000000000', // MCP 调用使用固定的系统用户 ID
+        userId: '00000000-0000-0000-0000-000000000000', // MCP calls use a fixed system user UUID
       });
 
       if (!token) {
@@ -222,7 +226,7 @@ export class McpService {
       }
 
       return {
-        id: token.id || token._id?.toString(),
+        id: token.id,
         key: token.key,
         module: token.module,
         translations: token.translations,
