@@ -112,11 +112,11 @@ Plans:
   1. User can import translations from JSON, YAML, XLIFF, and Gettext (.po) files
   2. User can export translations in JSON, YAML, CSV, XLIFF, and Gettext formats
   3. Before applying an import, the user sees a preview diff showing which tokens will be added, modified, or unchanged
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md -- Add XLIFF and Gettext parsers/serializers, integrate into import/export pipeline (TDD)
+- [ ] 06-02-PLAN.md -- Update frontend UI for new formats, end-to-end verification
 
 ### Phase 7: AI Translation
 **Goal**: Users who have their own AI/translation API keys can use AI-assisted translation, while the platform works fully without any AI configured
@@ -158,11 +158,11 @@ Plans:
   3. A .env.example file documents every required and optional environment variable
   4. Data (database and uploads) persists across container restarts via Docker volumes
   5. A README exists with clear step-by-step instructions for both Docker and local development setup
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md -- Docker infrastructure: Dockerfiles, docker-compose.yml, .dockerignore, .env.example, health check endpoint
+- [ ] 09-02-PLAN.md -- README documentation and Next.js standalone config for Docker + PGlite setup paths
 
 ## Progress
 
@@ -180,4 +180,4 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 6. Import & Export | 0/2 | Not started | - |
 | 7. AI Translation | 0/2 | Not started | - |
 | 8. Developer Tools | 0/3 | Not started | - |
-| 9. Deployment & Production Readiness | 0/2 | Not started | - |
+| 9. Deployment & Production Readiness | 0/2 | Planned | - |
