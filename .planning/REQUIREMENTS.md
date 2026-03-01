@@ -38,11 +38,11 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 
 ### Database
 
-- [ ] **DB-01**: All data models migrated from Mongoose/MongoDB to Drizzle ORM with PostgreSQL schema
-- [ ] **DB-02**: PGlite works as zero-config development/quick-start database
-- [ ] **DB-03**: PostgreSQL works as production database
-- [ ] **DB-04**: Database driver selected automatically based on DATABASE_URL environment variable
-- [ ] **DB-05**: Database migrations managed via drizzle-kit
+- [x] **DB-01**: All data models migrated from Mongoose/MongoDB to Drizzle ORM with PostgreSQL schema
+- [x] **DB-02**: PGlite works as zero-config development/quick-start database
+- [x] **DB-03**: PostgreSQL works as production database
+- [x] **DB-04**: Database driver selected automatically based on DATABASE_URL environment variable
+- [x] **DB-05**: Database migrations managed via drizzle-kit
 - [ ] **DB-06**: Repository abstraction layer isolates all database operations from service logic
 
 ### File Storage
@@ -176,11 +176,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEAM-04 | Phase 3 | Pending |
 | TEAM-05 | Phase 3 | Pending |
 | TEAM-06 | Phase 3 | Pending |
-| DB-01 | Phase 2 | Pending |
-| DB-02 | Phase 2 | Pending |
-| DB-03 | Phase 2 | Pending |
-| DB-04 | Phase 2 | Pending |
-| DB-05 | Phase 2 | Pending |
+| DB-01 | Phase 2 | Complete |
+| DB-02 | Phase 2 | Complete |
+| DB-03 | Phase 2 | Complete |
+| DB-04 | Phase 2 | Complete |
+| DB-05 | Phase 2 | Complete |
 | DB-06 | Phase 2 | Pending |
 | FILE-01 | Phase 4 | Pending |
 | FILE-02 | Phase 4 | Pending |
