@@ -25,14 +25,8 @@ export class User {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Membership' }] })
   memberships: Membership[];
 
-  @Prop({ unique: true })
-  feishuId: string;
-
-  @Prop({ unique: true })
-  feishuUnionId: string;
-
-  @Prop({ required: true, enum: ['local', 'feishu'] })
-  loginProvider: 'local' | 'feishu';
+  @Prop({ required: true, enum: ['local'] })
+  loginProvider: 'local';
 
   @Prop()
   createdAt: Date;

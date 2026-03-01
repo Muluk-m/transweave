@@ -130,7 +130,6 @@
     "noAccount": "还没有账户?",
     "register": "立即注册",
     "backToHome": "返回首页",
-    "feishuLogin": "飞书登录",
     "errors": {
       "requiredFields": "请填写所有必填字段",
       "loginFailed": "登录失败",

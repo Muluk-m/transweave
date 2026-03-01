@@ -71,35 +71,6 @@ export class AuthController {
     }
   }
 
-  @Post('login_feishu')
-  async loginWithFeishu(@Body() data: { code: string }, @Request() req) {
-    try {
-      const referer = req.headers.referer || '';
-      const origin = referer ? new URL(referer).origin : '';
-      const redirectUri = `${origin}/login`;
-
-      const { token, user } = await this.authService.loginWithFeishu(data.code, redirectUri);
-
-      return {
-        success: true,
-        message: 'Login successful',
-        token,
-        user,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-
-      if (error instanceof Error) {
-        error.message = 'Login failed';
-        throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   @Post('token')
   @UseGuards(AuthGuard)
   async getToken(@CurrentUser() user) {

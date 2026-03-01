@@ -15,8 +15,6 @@ export class UserService {
       email: data.email,
       password: data.password,
       avatar: data.avatar,
-      feishuId: data.feishuId,
-      feishuUnionId: data.feishuUnionId,
       loginProvider: data.loginProvider,
     }).save();
     const { password:_, ...user } = createdUser.toObject();
@@ -26,15 +24,6 @@ export class UserService {
   // Query all users
   async findAllUsers(): Promise<User[]> {
     return this.userModel.find().exec();
-  }
-
-  // Query user by Feishu ID
-  async findUserByFeishuId(feishuId: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ feishuId }).exec();
-    if (!user) {
-      return null;
-    }
-    return { ...user.toObject(), userId: user.id }
   }
 
   // Query user by ID

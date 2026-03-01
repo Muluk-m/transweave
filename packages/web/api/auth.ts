@@ -45,15 +45,6 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 /**
- * User login with Feishu
- */
-export async function loginWithFeishu(code: string): Promise<LoginResponse> {
-  return apiClient.post<LoginResponse>(`${API_BASE}/login_feishu`, { code }, {
-    requireAuth: false // Login doesn't require authentication header
-  });
-}
-
-/**
  * User registration
  */
 export async function register(name: string, email: string, password: string): Promise<RegisterResponse> {
