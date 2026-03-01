@@ -13,7 +13,7 @@ This roadmap converts an internal i18n management platform into an open-source, 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Cleanup & Branch Setup** - Remove all proprietary code, secrets, and internal references; create clean orphan branch
-- [ ] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
+- [x] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
 - [ ] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
 - [ ] **Phase 4: Local File Storage** - Replace external CDN with local disk storage and static file serving
 - [ ] **Phase 5: Translation Core & Search** - Full translation token management with search, filtering, history, and bulk operations
@@ -53,9 +53,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 02-01-PLAN.md -- Drizzle schema definitions, DrizzleModule with conditional provider, drizzle-kit migration
-- [ ] 02-02-PLAN.md -- Repository abstraction layer (base + 7 entity repositories)
-- [ ] 02-03-PLAN.md -- Integration tests verifying CRUD, JSONB, aggregation on PGlite
+- [x] 02-01-PLAN.md -- Drizzle schema definitions, DrizzleModule with conditional provider, drizzle-kit migration
+- [x] 02-02-PLAN.md -- Repository abstraction layer (base + 7 entity repositories)
+- [x] 02-03-PLAN.md -- Integration tests verifying CRUD, JSONB, aggregation on PGlite
 
 ### Phase 3: Authentication & Teams
 **Goal**: Users can register, log in, manage teams, and control access -- all without any external auth provider
@@ -173,7 +173,7 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Cleanup & Branch Setup | 2/2 | Complete | 2026-03-01 |
-| 2. Database Foundation | 0/3 | Planned | - |
+| 2. Database Foundation | 3/3 | Complete | 2026-03-01 |
 | 3. Authentication & Teams | 0/3 | Planned | - |
 | 4. Local File Storage | 0/1 | Planned | - |
 | 5. Translation Core & Search | 0/3 | Not started | - |
