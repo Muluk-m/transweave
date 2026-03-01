@@ -11,12 +11,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '../jwt/guard';
 import { AuthService } from '../service/auth.service';
+import { UserService } from '../service/user.service';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 
 @Controller('api/auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly userService: UserService,
   ) {}
 
   @Get('status')
@@ -33,15 +35,16 @@ export class AuthController {
     @Body() data: { name: string; email: string; password: string; avatar: string },
   ) {
     try {
-      const user = await this.authService.register(data);
+      const result = await this.authService.register(data);
 
       return {
         success: true,
         message: 'Registration successful',
-        user,
+        token: result.token,
+        user: result.user,
       };
     } catch (error) {
-      Logger.log('zws register error', error);
+      Logger.log('register error', error);
       if (error instanceof HttpException) {
         throw error;
       }
@@ -61,7 +64,7 @@ export class AuthController {
         success: true,
         message: 'Login successful',
         token,
-        user
+        user,
       };
     } catch (error) {
       if (error instanceof HttpException) {
@@ -80,5 +83,34 @@ export class AuthController {
       message: 'Token generated',
       token,
     };
+  }
+
+  @Get('setup/status')
+  async getSetupStatus() {
+    const count = await this.userService.getUserCount();
+    return { needsSetup: count === 0 };
+  }
+
+  @Post('setup')
+  async setup(
+    @Body() data: { name: string; email: string; password: string; teamName: string },
+  ) {
+    try {
+      const result = await this.authService.setup(data);
+
+      return {
+        success: true,
+        token: result.token,
+        user: result.user,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Setup failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

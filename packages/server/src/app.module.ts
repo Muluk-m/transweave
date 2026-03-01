@@ -30,6 +30,7 @@ import { FileStorageModule } from './modules/file-storage.module';
   imports: [
     PassportModule,
     DatabaseModule,
+    DrizzleModule,
     HttpModule,
     FileStorageModule,
     JwtModule.register({

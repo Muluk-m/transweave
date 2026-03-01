@@ -1,39 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../models';
-import { verifyPassword } from '../utils/crypto';
+import { UserRepository } from '../repository/user.repository';
+import { hashPassword, verifyPassword } from '../utils/crypto';
+import type { User, NewUser } from '../db/schema/users';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(private readonly userRepo: UserRepository) {}
 
   // Create user
-  async createUser(data: Partial<Omit<User, '_id' | 'memberships'>>): Promise<User> {
-    const createdUser = await new this.userModel({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      avatar: data.avatar,
-      loginProvider: data.loginProvider,
-    }).save();
-    const { password:_, ...user } = createdUser.toObject();
-    return { ...user, userId: user.id }
+  async createUser(
+    data: Partial<Omit<NewUser, 'id'>> & { name: string; email: string },
+  ): Promise<Omit<User, 'password'>> {
+    const created = await this.userRepo.create(data as NewUser);
+    const { password: _, ...user } = created;
+    return user;
   }
 
   // Query all users
   async findAllUsers(): Promise<User[]> {
-    return this.userModel.find().exec();
+    return this.userRepo.findAll();
   }
 
   // Query user by ID
   async findUserById(id: string): Promise<User | null> {
-    return this.userModel.findById(id).exec();
+    return this.userRepo.findById(id);
   }
 
   // Query user by email
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userRepo.findByEmail(email);
   }
 
   // Update user information
@@ -41,22 +36,12 @@ export class UserService {
     id: string,
     data: { name?: string; email?: string },
   ): Promise<User | null> {
-    return this.userModel
-      .findByIdAndUpdate(
-        id,
-        {
-          ...(data.name && { name: data.name }),
-          ...(data.email && { email: data.email }),
-          updatedAt: new Date(),
-        },
-        { new: true },
-      )
-      .exec();
+    return this.userRepo.update(id, data);
   }
 
   // Delete user
-  async deleteUser(id: string): Promise<User | null> {
-    return this.userModel.findByIdAndDelete(id).exec();
+  async deleteUser(id: string): Promise<void> {
+    return this.userRepo.delete(id);
   }
 
   // Search users
@@ -64,40 +49,46 @@ export class UserService {
     if (!keyword || keyword.trim().length < 2) {
       return []; // Require at least 2 characters
     }
-
-    return this.userModel
-      .find({
-        $or: [
-          { name: { $regex: keyword, $options: 'i' } },
-          { email: { $regex: keyword, $options: 'i' } },
-        ],
-      })
-      .select('id name email')
-      .limit(10)
-      .exec();
+    return this.userRepo.search(keyword);
   }
 
+  // Validate user credentials
   async validateUser(
     nameOrEmail: string,
     password: string,
   ): Promise<User | null> {
-    // First try to find user by email or name
-    const user = await this.userModel
-      .findOne({
-        $or: [{ email: nameOrEmail }, { name: nameOrEmail }],
-      })
-      .exec();
+    // Try email first
+    let user = await this.userRepo.findByEmail(nameOrEmail);
 
-    // If user is found and password matches
-    if (user) {
-      // Verify password
+    // If not found by email, try by name
+    if (!user) {
+      user = await this.userRepo.findByName(nameOrEmail);
+    }
+
+    if (user && user.password) {
       const isPasswordValid = verifyPassword(password, user.password);
       if (isPasswordValid) {
         return user;
       }
     }
 
-    // Validation failed
     return null;
+  }
+
+  // Get total user count
+  async getUserCount(): Promise<number> {
+    return this.userRepo.count();
+  }
+
+  // Reset user password
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    const hashed = hashPassword(newPassword);
+    await this.userRepo.update(userId, { password: hashed });
+  }
+
+  // Check if user is admin
+  async isAdmin(userId: string): Promise<boolean> {
+    const user = await this.userRepo.findById(userId);
+    return user?.isAdmin ?? false;
   }
 }
