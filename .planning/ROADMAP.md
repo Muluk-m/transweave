@@ -146,7 +146,7 @@ Plans:
 Plans:
 - [ ] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
 - [ ] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
-- [ ] 08-03-PLAN.md -- REST API reference documentation
+- [x] 08-03-PLAN.md -- REST API reference documentation
 
 ### Phase 9: Deployment & Production Readiness
 **Goal**: A new user can go from git clone to running platform in under 5 minutes with Docker, or run locally without Docker using PGlite
@@ -179,5 +179,5 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 5. Translation Core & Search | 2/3 | In progress | - |
 | 6. Import & Export | 2/2 | Complete | 2026-03-01 |
 | 7. AI Translation | 1/2 | In progress | - |
-| 8. Developer Tools | 1/3 | In progress | - |
+| 8. Developer Tools | 2/3 | In progress | - |
 | 9. Deployment & Production Readiness | 0/2 | Planned | - |
