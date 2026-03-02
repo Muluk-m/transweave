@@ -3,7 +3,7 @@ import { getApiKey, getServer, saveProjectConfig } from '../config.js';
 import { createApiClient } from '../api-client.js';
 
 export const initCommand = new Command('init')
-  .description('Initialize project config (.qlj-i18n.json) in the current directory')
+  .description('Initialize project config (.transweave.json) in the current directory')
   .requiredOption('--project-id <id>', 'Project ID')
   .option('--output-dir <dir>', 'Output directory for translations', './src/locales')
   .option('--format <fmt>', 'Translation file format', 'json')
@@ -13,7 +13,7 @@ export const initCommand = new Command('init')
     // Load credentials
     const apiKey = await getApiKey();
     if (!apiKey) {
-      console.error('Error: No API key found. Run "qlj-i18n login" first.');
+      console.error('Error: No API key found. Run "transweave login" first.');
       process.exit(1);
     }
 
@@ -41,12 +41,12 @@ export const initCommand = new Command('init')
         languages,
       });
 
-      console.log(`Initialized qlj-i18n config for project: ${project.name}`);
+      console.log(`Initialized Transweave config for project: ${project.name}`);
       console.log(`  Project ID: ${projectId}`);
       console.log(`  Languages: ${languages.join(', ') || '(none)'}`);
       console.log(`  Output dir: ${outputDir}`);
       console.log(`  Format: ${format}`);
-      console.log(`  Config saved to .qlj-i18n.json`);
+      console.log(`  Config saved to .transweave.json`);
     } catch (err: any) {
       console.error(`Error: ${err.message}`);
       process.exit(1);

@@ -5,8 +5,8 @@ import { pullCommand } from './commands/pull.js';
 import { pushCommand } from './commands/push.js';
 
 const program = new Command()
-  .name('qlj-i18n')
-  .description('CLI for qlj-i18n translation management')
+  .name('transweave')
+  .description('CLI for Transweave translation management')
   .version('1.0.0');
 
 program.addCommand(loginCommand);

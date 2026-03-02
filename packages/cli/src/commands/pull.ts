@@ -19,14 +19,14 @@ export const pullCommand = new Command('pull')
     // Load project config
     const projectConfig = await loadProjectConfig();
     if (!projectConfig.projectId) {
-      console.error('Error: No project config found. Run "qlj-i18n init" first.');
+      console.error('Error: No project config found. Run "transweave init" first.');
       process.exit(1);
     }
 
     // Load credentials
     const apiKey = await getApiKey();
     if (!apiKey) {
-      console.error('Error: No API key found. Run "qlj-i18n login" first.');
+      console.error('Error: No API key found. Run "transweave login" first.');
       process.exit(1);
     }
 
