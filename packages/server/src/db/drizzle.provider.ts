@@ -29,7 +29,9 @@ export const DrizzleProvider: Provider = {
       logger.log('Using PostgreSQL database');
       const { drizzle } = await import('drizzle-orm/postgres-js');
       const { migrate } = await import('drizzle-orm/postgres-js/migrator');
-      const postgres = (await import('postgres')).default;
+      // postgres is ESM-only; handle CJS interop where .default may be missing
+      const pgModule = await import('postgres');
+      const postgres = (pgModule as any).default ?? pgModule;
       const schema = await import('./schema');
       const migrationClient = postgres(databaseUrl, { max: 1 });
       const migrationDb = drizzle(migrationClient, { schema });
