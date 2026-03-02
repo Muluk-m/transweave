@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 11 of 13 (Project Rename)
-Plan: 02 (next plan — 11-01 complete)
-Status: In progress -- 11-01 complete (package names renamed to Transweave)
-Last activity: 2026-03-02 -- 11-01 complete (all 4 package.json names and 2 Dockerfiles updated)
+Plan: 05 (next plan — 11-04 complete)
+Status: In progress -- 11-04 complete (docker-compose.yml volumes renamed to Transweave)
+Last activity: 2026-03-02 -- 11-04 complete (docker-compose.yml volumes explicitly named transweave-pgdata and transweave-uploads)
 
 Progress: [####░░░░░░] ~42%
 
@@ -48,6 +48,7 @@ Progress: [####░░░░░░] ~42%
 | 10-visual-identity | 03 | 8min | 2 | 10 |
 | 10-visual-identity | 04 | 12min | 2 | 2 |
 | 11-project-rename | 01 | 2min | 3 | 6 |
+| 11-project-rename | 04 | 5min | 2 | 1 |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ New for v1.1:
 - [Phase 10-visual-identity]: Dark gradient (#0f172a to #1e1b4b) chosen for social preview — matches app dark mode aesthetic
 - [Phase 11-project-rename]: CLI bin file rename deferred to Plan 02 — package.json reference updated now, file rename in Plan 02
 - [Phase 11-project-rename]: Root package.json scripts use path-based --filter ./packages/* which do not need changing when renaming package names
+- [Phase 11-project-rename]: Docker service keys (postgres, server, web) left unchanged — internal identifiers, not brand names; only volumes section renamed
 
 ### Pending Todos
 
@@ -78,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 11-01-PLAN.md (all 4 package.json names + 2 Dockerfiles renamed to Transweave)
-Resume file: .planning/phases/11-project-rename/11-02-PLAN.md
+Stopped at: Completed 11-04-PLAN.md (docker-compose.yml volumes renamed to Transweave)
+Resume file: .planning/phases/11-project-rename/11-05-PLAN.md

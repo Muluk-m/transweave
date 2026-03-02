@@ -124,7 +124,7 @@ Requirements for branding and promotion. Each maps to roadmap phases 10-13.
 - [ ] **REN-03**: CLI binary renamed from qlj-i18n to transweave (bin, commands, config paths, env vars)
 - [ ] **REN-04**: MCP server name updated from qlj-i18n-mcp-server to transweave-mcp-server
 - [ ] **REN-05**: Web UI titles, i18n strings, and SVG asset IDs updated to Transweave
-- [ ] **REN-06**: Docker Compose service names and volume names updated with explicit name fields
+- [x] **REN-06**: Docker Compose service names and volume names updated with explicit name fields
 - [ ] **REN-07**: Documentation (README, API reference, .env.example) updated to Transweave
 - [ ] **REN-08**: API key prefix qlji_ and encryption salt qlj-i18n-ai-salt preserved unchanged (load-bearing infrastructure)
 - [ ] **REN-09**: grep verification passes — zero remaining qlj-i18n/qlj_/nextjs references except intentionally preserved ones
@@ -284,7 +284,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REN-03 | Phase 11 | Pending |
 | REN-04 | Phase 11 | Pending |
 | REN-05 | Phase 11 | Pending |
-| REN-06 | Phase 11 | Pending |
+| REN-06 | Phase 11 | Complete |
 | REN-07 | Phase 11 | Pending |
 | REN-08 | Phase 11 | Pending |
 | REN-09 | Phase 11 | Pending |
