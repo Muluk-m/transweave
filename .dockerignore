@@ -12,6 +12,7 @@ coverage
 !packages/*/README.md
 .DS_Store
 *.log
+*.tsbuildinfo
 .vscode
 .idea
 .turbo
