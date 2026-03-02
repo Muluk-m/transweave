@@ -1,4 +1,4 @@
-# Requirements: qlj-i18n Open Source Edition
+# Requirements: Transweave
 
 **Defined:** 2026-03-01
 **Core Value:** Teams can self-host a complete i18n management platform with zero dependency on external proprietary services
@@ -105,6 +105,45 @@ Requirements for initial open-source release. Each maps to roadmap phases.
 - [ ] **DEPL-05**: Data persists across container restarts via Docker volumes
 - [ ] **DEPL-06**: README with clear setup instructions for both Docker and local development
 
+## v1.1 Requirements
+
+Requirements for branding and promotion. Each maps to roadmap phases 10-13.
+
+### Visual Identity
+
+- [ ] **VIS-01**: Project has an SVG logo with icon + wordmark variant
+- [ ] **VIS-02**: Project has an icon-only logo variant (for favicon and small contexts)
+- [ ] **VIS-03**: Favicon set generated from logo (favicon.ico, favicon.svg with dark mode, apple-touch-icon.png)
+- [ ] **VIS-04**: Brand color system defined as Tailwind theme extension and CSS custom properties
+- [ ] **VIS-05**: GitHub social preview image uploaded (1280x640px with logo and tagline)
+
+### Project Rename
+
+- [ ] **REN-01**: All package.json names updated from qlj-i18n/nextjs to transweave scoped names
+- [ ] **REN-02**: Dockerfile --filter flags updated to match new package names
+- [ ] **REN-03**: CLI binary renamed from qlj-i18n to transweave (bin, commands, config paths, env vars)
+- [ ] **REN-04**: MCP server name updated from qlj-i18n-mcp-server to transweave-mcp-server
+- [ ] **REN-05**: Web UI titles, i18n strings, and SVG asset IDs updated to Transweave
+- [ ] **REN-06**: Docker Compose service names and volume names updated with explicit name fields
+- [ ] **REN-07**: Documentation (README, API reference, .env.example) updated to Transweave
+- [ ] **REN-08**: API key prefix qlji_ and encryption salt qlj-i18n-ai-salt preserved unchanged (load-bearing infrastructure)
+- [ ] **REN-09**: grep verification passes — zero remaining qlj-i18n/qlj_/nextjs references except intentionally preserved ones
+
+### Landing Page
+
+- [ ] **LAND-01**: Landing page accessible at root URL with hero section (headline, tagline, dual CTAs)
+- [ ] **LAND-02**: Feature highlights section showcasing 4-6 core capabilities
+- [ ] **LAND-03**: Getting started section with docker-compose code block and copy button
+- [ ] **LAND-04**: OG meta tags and dynamic OG image generated via next/og for link sharing
+- [ ] **LAND-05**: Landing page supports dark/light mode
+
+### README & Community
+
+- [ ] **DOC-01**: Branded README with logo, badge row, feature list, quick start, and screenshots
+- [ ] **DOC-02**: CONTRIBUTING.md with development setup, coding standards, and PR process
+- [ ] **DOC-03**: LICENSE file (MIT) added to repository root
+- [ ] **DOC-04**: GitHub Issue templates and PR template configured
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -149,6 +188,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | Email verification / password reset via email | Requires SMTP config, adds deployment complexity |
 | 50+ file format support | Diminishing returns — top 6-8 formats cover 80% of users |
 | Public crowdsource translation portal | Different user persona, moderation complexity |
+| Interactive playground / demo instance | High complexity, maintenance burden for v1.1 |
+| Animated terminal showcase | Nice-to-have, defer to after core branding |
+| Separate documentation site (Starlight/Astro) | Over-engineering for current stage, use Next.js pages |
+| Product Hunt / HN launch | Execution task, not engineering requirement |
+| Competitor comparison table | Content task for later, not v1.1 scope |
 
 ## Traceability
 
