@@ -1,9 +1,9 @@
 {
-  "name": "qlj-i18n",
+  "name": "transweave",
   "version": "1.0.0",
-  "description": "CLI tool for qlj-i18n translation management",
+  "description": "CLI tool for Transweave translation management",
   "bin": {
-    "qlj-i18n": "./bin/qlj-i18n.js"
+    "transweave": "./bin/transweave.js"
   },
   "main": "dist/index.js",
   "scripts": {
