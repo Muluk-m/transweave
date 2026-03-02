@@ -29,6 +29,7 @@ import { TokenController } from './controller/token.controller';
 import { ApiKeyService } from './service/api-key.service';
 import { ApiKeyController } from './controller/api-key.controller';
 import { HealthModule } from './health/health.module';
+import { requireEnv } from './config/env';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { HealthModule } from './health/health.module';
     HealthModule,
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET,
+      secret: requireEnv('JWT_SECRET'),
       signOptions: { expiresIn: '15d' },
     }),
   ],

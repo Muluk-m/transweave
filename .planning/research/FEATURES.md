@@ -1,245 +1,239 @@
 # Feature Research
 
-**Domain:** Self-hosted open-source i18n / translation management platform
+**Domain:** Open-source developer tool branding and promotion (i18n management platform)
 **Researched:** 2026-03-01
-**Confidence:** MEDIUM-HIGH (based on analysis of Tolgee, Weblate, Crowdin, Lokalise, Traduora, Localazy, SimpleLocalize)
+**Confidence:** HIGH (based on analysis of Biome, Drizzle ORM, shadcn/ui, Turso, Tolgee, Astro, and Evil Martians' study of 100+ dev tool landing pages)
 
 ## Feature Landscape
 
+This research focuses exclusively on branding and promotion features for the Transweave i18n management platform. The core product features (auth, teams, translation CRUD, AI translation, import/export, CLI, MCP server, Docker deployment) are already built. This milestone is about making Transweave discoverable, professional, and compelling to developers encountering it for the first time.
+
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete. These are non-negotiable for a self-hosted i18n tool to be taken seriously.
+Features developers assume a credible open-source project has. Missing these = project looks abandoned or amateur. Developers form impressions in under 10 seconds.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Translation key CRUD** | Core function of any TMS; every platform has it | LOW | **Already exists.** Token creation, reading, updating, deleting with multi-language values. |
-| **Multi-language support** | Pointless without it; users need to manage 2-50+ languages per project | LOW | **Already exists.** Languages per project with add/remove. |
-| **File import/export (JSON, YAML, CSV, XLIFF)** | Developers need to get translations in/out of their codebase; every competitor supports 4+ formats | MEDIUM | **Partially exists.** Current: JSON, CSV, XML, YAML export as ZIP. Missing: XLIFF (industry standard), Gettext (.po), Android XML, iOS Strings. Add XLIFF and Gettext minimum. |
-| **Project organization** | Teams manage multiple products/apps; need project isolation | LOW | **Already exists.** Projects with team association. |
-| **Team management & RBAC** | Multi-user access with roles (admin/manager/translator/viewer); every competitor has this | LOW | **Already exists.** Owner/manager/member roles with membership service. |
-| **Search & filter translations** | With 1000+ keys, finding things fast is essential; all platforms have instant search | LOW | **Partially exists.** Need: full-text search across keys and values, filter by language completion status, filter by module/namespace. |
-| **Translation progress/completeness tracking** | Users need to see "French is 85% done"; every competitor shows this prominently | LOW | **Not built yet.** Per-language completion percentage per project. Visible on dashboard. |
-| **Docker/docker-compose deployment** | Self-hosted tools that don't offer one-command deployment lose users immediately; Tolgee, Weblate, Traduora all have this | MEDIUM | **Planned.** Listed in PROJECT.md active requirements. |
-| **REST API** | Developers integrate TMS into CI/CD; Crowdin, Tolgee, Weblate, Traduora all expose REST APIs | LOW | **Partially exists.** Controllers expose endpoints but no documented public API contract. Need: versioned API, API documentation, API keys for programmatic access. |
-| **Activity/audit log** | Teams need to know who changed what and when; Tolgee, Weblate, Crowdin all track this | LOW | **Already exists.** ActivityLog service with project timelines and user stats. |
-| **Username/password auth** | Baseline for self-hosted; users need to create accounts without external OAuth | LOW | **Planned.** Current system relies on Feishu OAuth. Must add standalone auth. |
-| **Responsive web UI** | Users expect it to work on tablets at minimum; Weblate explicitly supports mobile | LOW | **Already exists.** Radix + Tailwind responsive layout. |
-| **Bulk operations** | Moving/tagging/deleting multiple keys at once; tedious without it | MEDIUM | **Partially exists.** Batch module assignment exists. Need: bulk delete, bulk status change, bulk tag assignment. |
-| **Translation comments/notes** | Translators need context from developers; every TMS has per-key comments | LOW | **Not built yet.** Add comment thread per translation key. |
+| **Project logo (SVG, multiple sizes)** | Every serious OSS project has a logo. Biome has a flame, Drizzle has a lightning bolt, Tolgee has a parrot. A project without a logo signals "weekend side project." Logo appears in README, docs, landing page, favicon, OG images. | MEDIUM | Need: primary logo (icon + wordmark), icon-only variant, monochrome variant. SVG source for scalability. Must work at 16px (favicon) through 512px (landing page hero). "Transweave" concept (Trans + Weave) lends itself to interlocking/weaving visual motif. |
+| **Favicon set (ICO + SVG + Apple Touch)** | Browsers display favicons in tabs, bookmarks, and PWA installs. Missing favicon = default globe icon = looks unprofessional. Evil Martians' 2026 favicon guide recommends exactly 3 files. | LOW | Requires: `favicon.ico` (16/32/48px), `favicon.svg` (with dark mode CSS media query), `apple-touch-icon.png` (180x180). Derive all from the logo. Next.js supports file-based favicon via `app/favicon.ico`. |
+| **GitHub social preview image** | When someone shares the repo link on Twitter/Discord/Slack, GitHub shows the social preview. Default generated preview looks generic. Every major project (Biome, Drizzle, shadcn) has a custom one. | LOW | Dimensions: 1280x640px (1.91:1 ratio). Include: logo, project name, tagline, brand colors. Upload via Settings > General > Social preview. |
+| **Professional README with branding** | The README is the single most important branding asset -- it's what developers see first on GitHub. Tolgee's README has logo, badges, GIFs, competitive positioning, 4-step getting started. Studies show README quality directly correlates with star growth. | MEDIUM | Structure: hero image/logo, badge row, one-line description, screenshot/GIF, key features, quick start (docker-compose), comparison table, contributing link. Must be scannable in 10 seconds. |
+| **README badge row** | Shields.io badges signal project health and maturity. Every credible project has 4-8 badges. Tolgee has build status, Docker, releases, license, stars. Missing badges = "is this maintained?" | LOW | Essential badges: license, version/release, Docker pulls, build status, GitHub stars. Use consistent style (flat or flat-square). Limit to 5-8 badges. shields.io is the standard. |
+| **Open Graph meta tags** | When the landing page URL is shared on social media, OG tags control the preview card. Without them, platforms show random page text or nothing. | LOW | Next.js has built-in support via `metadata` export or file conventions (`opengraph-image.tsx`). Need: `og:title`, `og:description`, `og:image` (1200x630), `og:type`, `twitter:card`. |
+| **Landing page with hero section** | Evil Martians' study of 100+ dev tool pages: centered hero with bold headline, supporting description, and two CTAs is the universal pattern. Biome: "One toolchain for your web project." Drizzle: "ORM for you to ship." Shadcn: "The Foundation for your Design System." A project without a landing page has no web presence beyond GitHub. | HIGH | Build as a route in the existing Next.js app OR as a separate lightweight site (Astro). Hero needs: headline, tagline, primary CTA (Get Started / docker-compose), secondary CTA (View on GitHub). |
+| **Getting started section on landing page** | Every dev tool landing page shows how to start in 1-3 steps. Biome shows `npx @biomejs/biome init`. Tolgee shows `docker run`. Developers want to evaluate in under 5 minutes. | LOW | Show the docker-compose command prominently. Terminal-style code block with copy button. Must be above the fold or immediately after hero. |
+| **Feature highlights on landing page** | Biome shows formatter/linter/checker with code examples. Drizzle shows performance benchmarks. Turso shows use case segmentation. Features section translates "what is this?" into "why should I use this?" | MEDIUM | Highlight 4-6 key features: AI translation, MCP server, self-hosted, team management, import/export, CLI. Each with icon, short description, and optional code/screenshot snippet. |
+| **Dark/light mode support** | Biome, Drizzle, shadcn, Turso -- every modern dev tool supports dark mode by default. Developers overwhelmingly use dark themes. The existing app already uses Tailwind which supports this. | LOW | Already partially exists via Tailwind + Radix. Ensure landing page respects `prefers-color-scheme` and has a toggle. Logo/favicon must work in both modes (SVG dark mode via CSS media query). |
+| **LICENSE file** | Open-source credibility requires a visible license. Shields.io badge links to it. GitHub displays it prominently. Projects without a clear license get skipped by cautious developers. | LOW | Choose MIT or Apache 2.0 (permissive, standard for dev tools). Tolgee uses Apache 2.0. Drizzle uses Apache 2.0. Add LICENSE file to repo root and badge to README. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but create real competitive advantage. Focus on areas where qlj-i18n already has a head start or can leapfrog competitors.
+Features that make Transweave stand out in a crowded space of dev tool landing pages. Not required, but create memorable first impressions and drive sharing.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **AI-assisted translation (multi-provider)** | Most self-hosted platforms have basic MT (Google/DeepL). Qlj already integrates Dify for AI translation. Make this configurable: OpenAI, DeepL, Google, self-hosted LLMs. Few OSS competitors offer flexible AI backends. | MEDIUM | **Partially exists.** Current Dify integration works. Make provider-agnostic with config. Tolgee supports DeepL/Google/AWS; we can differentiate by supporting self-hosted LLMs (Ollama, vLLM). |
-| **AI-assisted key generation** | No competitor offers AI-generated translation key names from context. Reduces bikeshedding on key naming conventions. | LOW | **Already exists.** Unique feature not found in Tolgee, Weblate, or Traduora. Market this prominently. |
-| **MCP server for AI coding assistants** | Tolgee has MCP support, but most platforms don't. This lets Claude/Copilot/Cursor manage translations from the IDE. Growing demand as AI coding assistants become standard. | LOW | **Already exists.** MCP controller and service built. This is a genuine differentiator over Weblate, Traduora, Crowdin. |
-| **Module/namespace organization** | Group keys by feature/page/domain. Tolgee has namespaces, Weblate has components, but many smaller platforms lack this. Enables lazy-loading translations in apps. | LOW | **Already exists.** Module support with CRUD. Strengthen by adding nested namespaces and filtering. |
-| **CLI tool for CI/CD integration** | Push/pull translations from terminal. Crowdin, Tolgee, Lokalise all have CLIs. A dedicated CLI makes developer adoption frictionless. | MEDIUM | **Not built yet.** Build a simple `qlj-i18n pull/push` CLI. Traduora only has an unofficial community CLI -- this is an opportunity. |
-| **Import preview/diff** | See exactly what will change before importing. Reduces accidental overwrites. Not common in OSS platforms. | LOW | **Already exists.** `previewImport` endpoint shows changes before committing. Uncommon feature -- differentiator. |
-| **Dual database support (SQLite + PostgreSQL)** | SQLite for 5-minute getting started, PostgreSQL for production. Tolgee requires PostgreSQL. Weblate requires PostgreSQL. Lower barrier to entry. | HIGH | **Planned.** Listed in PROJECT.md. Genuine advantage for quick evaluation. |
-| **In-context editing SDK** | Tolgee's flagship feature: ALT+click to translate in-app. Extremely compelling for non-technical translators. | HIGH | **Not built.** This is Tolgee's biggest draw. Consider as v2+ feature. Requires JS SDK embedded in user's app. |
-| **Translation memory** | Reuse past translations to speed up work and ensure consistency. Tolgee, Weblate, Crowdin all have this. | MEDIUM | **Not built yet.** Store translation pairs, compute fuzzy match similarity. Moves from differentiator to table stakes at scale. |
-| **Webhook support** | Notify external systems when translations change. Enables custom workflows without polling. Crowdin and Lokalise have comprehensive webhook systems. | LOW | **Not built yet.** Add configurable webhooks for key events (translation updated, import completed, etc.). |
-| **Branching / versioning** | Work on translations for different release branches. Lokalise and Crowdin support this. Valuable for teams with parallel releases. | HIGH | **Not built.** Complex to implement well. Strong differentiator for enterprise users. Defer to v2+. |
+| **Interactive demo / playground embed** | Shadcn's landing page IS a component demo. Drizzle has a playground link. Biome has a playground. An embedded or linked demo lets developers try before installing. Most i18n tools require signup -- a live playground is rare. | HIGH | Options: (a) public read-only demo instance, (b) embedded interactive widget on landing page showing translation workflow. Tolgee's demo requires account creation. A zero-auth playground is a genuine differentiator. Consider a seeded Docker instance or in-browser preview. |
+| **Animated terminal / code showcase** | Drizzle uses animated code toggles. Biome shows before/after code transformation. Tolgee uses animated GIFs. Animated terminal showing `docker-compose up` then the CLI pulling translations creates a "wow" moment. | MEDIUM | Use a tool like `asciinema` or a custom React terminal component. Show: (1) docker-compose up, (2) open browser, (3) create project, (4) CLI push/pull. Embed on landing page and as GIF in README. |
+| **Comparison table on landing page** | Turso and Tolgee both position against named competitors. Tolgee's GitHub README: "An open-source alternative to Crowdin, Phrase, or Lokalise." Direct comparison builds confidence. Most smaller projects are afraid to name competitors. | LOW | Table comparing Transweave vs Tolgee vs Weblate vs Crowdin on key axes: self-hosted, AI features, database flexibility, quick start time, license. Already have data from existing competitor analysis. Place on landing page and README. |
+| **Dynamic OG images per page** | Most projects have a single static OG image. Next.js 15 has built-in `ImageResponse` from `next/og` that generates OG images dynamically with JSX/CSS using Satori. Each documentation page or feature page gets a unique, branded social card. | LOW | Use `opengraph-image.tsx` file convention in Next.js. Template: brand colors + logo + page title + tagline. Cached at build time. Only flexbox CSS supported. Very lightweight (500KB vs 50MB Puppeteer). |
+| **Brand color system with design tokens** | Biome has its orange/yellow palette. Drizzle has its green. Tolgee has its magenta/pink. A distinct, consistent color palette across logo, landing page, docs, and OG images creates brand recognition. | LOW | Define 3-5 brand colors as CSS custom properties / Tailwind theme. Primary, secondary, accent, background, text. Apply consistently across all surfaces. The existing Tailwind + Radix setup makes this trivial to implement via theme configuration. |
+| **Animated hero visual** | Biome uses mouse-tracking card animations. Drizzle has 3D layered parallax graphics and even an embedded snake game. Shadcn shows a live dashboard demo. Static hero images are forgettable; motion creates engagement. | MEDIUM | Options: (a) SVG animation of "weaving" concept, (b) live-updating translation counter, (c) particle/mesh animation reflecting the interlocking motif. Keep it subtle -- Evil Martians' study notes most dev tool pages avoid flashy interactions in favor of clean design. |
+| **Starlight / Astro documentation site** | Biome, Drizzle, and hundreds of OSS projects use Astro Starlight for documentation. Built-in search (Pagefind), i18n support, dark mode, fast build, low carbon footprint. Separating docs from the app keeps architecture clean. | MEDIUM | Alternative: use the existing Next.js app for docs. Starlight advantages: purpose-built for docs, better SEO, simpler content management via MDX. But adds a second build system. Recommendation: start with docs as pages in the Next.js app; migrate to Starlight later if content grows. |
+| **"Built with" / tech stack badge** | Some projects showcase their stack (Next.js, NestJS, PostgreSQL, Docker) with logo badges. Signals to developers that this uses technologies they already know and trust. | LOW | Add a small "Built with" section on landing page with tech logos. Also works as compatibility signal -- "runs on your existing PostgreSQL." |
+| **Contributor-friendly onboarding** | Tolgee's README: "We're hiring engineers!" Projects with CONTRIBUTING.md, good first issues, and clear architecture docs attract contributors. Contributors become advocates. | LOW | Create: CONTRIBUTING.md, issue templates, PR template, `good-first-issue` labels. Link from README and landing page. Code of Conduct (standard Contributor Covenant). |
+| **Product Hunt / Hacker News launch assets** | Star-history.com's playbook: "Show HN" posts, Product Hunt launches, and milestone celebration posts drive discovery. Having assets ready (screenshots, GIF, one-liner pitch) before launch enables rapid execution. | LOW | Prepare: 5-6 product screenshots, 1-2 GIFs, 240-char pitch, 1200x630 Product Hunt gallery images. Write "Show HN" draft. Have these ready before the public launch moment. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems for a self-hosted OSS platform. Deliberately NOT building these.
+Features that seem valuable for branding but create maintenance burden, dilute focus, or actively harm the project's perception.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Real-time collaborative editing (Google Docs-style)** | "Multiple translators working on same key simultaneously" | Massive implementation complexity (CRDT/OT), edge cases with conflicts, requires WebSocket infrastructure. Weblate doesn't do it. Tolgee doesn't do it. Even Crowdin's "real-time" is per-string locking, not true co-editing. PROJECT.md explicitly marks this out of scope. | Optimistic locking with conflict detection. Last-save-wins with activity log showing who changed what. |
-| **Multi-tenant SaaS mode** | "I want to offer this to my clients as a service" | Completely different product. Tenant isolation, billing, usage metering, onboarding flows. Splits focus between self-hosted and SaaS. PROJECT.md explicitly out of scope. | Ship as self-hosted. If users want multi-org, they run separate instances. |
-| **Built-in email verification / password reset** | "Standard auth feature" | Requires SMTP configuration, email templates, delivery reliability. Adds deployment complexity for self-hosted users who just want to run a tool. | Username/password without email. Admin can reset passwords. Add email auth as optional plugin later. |
-| **Mobile native app** | "Translators want to work from their phones" | Separate codebase to maintain (iOS + Android). The responsive web UI already works on mobile browsers. PROJECT.md out of scope. | Responsive web UI with PWA capabilities if needed. |
-| **Over-the-air (OTA) translation delivery** | "Push translations to mobile apps without app store update" | Requires CDN infrastructure, SDK for every mobile platform, caching strategy, rollback mechanism. Lokalise's OTA is a major SaaS product in itself. | Export translations via API. Users can build their own CDN/caching layer. Provide documentation for common patterns. |
-| **60+ file format support** | "Support every format Crowdin supports" | Diminishing returns. 80% of users need JSON + XLIFF + Gettext + YAML. Each format adds maintenance burden and edge cases. Weblate's 50+ formats required years of development. | Support top 8-10 formats (JSON flat/nested, XLIFF, Gettext .po, YAML, Android XML, iOS Strings, CSV, Properties). Add format plugins API for community contribution. |
-| **Built-in glossary management** | "Enforce terminology consistency" | Separate data model, UI, and enforcement logic. Useful but not core for v1. Crowdin and Weblate both treat glossaries as advanced features added later. | Allow per-project notes/guidelines. Add glossary as v1.x feature after core stabilizes. |
-| **Crowdsourcing / public translation portal** | "Let the community translate our OSS project" | Different UX for anonymous/public contributors vs team members. Moderation, spam prevention, quality control. Weblate excels here but it's their primary use case. | Focus on team-based workflows. If needed, add "viewer with suggest" role later. |
+| **Custom documentation framework** | "Let's build our own docs system with MDX and custom components" | Massive yak-shave. Documentation frameworks are a solved problem. Building custom means maintaining search, navigation, versioning, mobile responsiveness. Every hour on the docs framework is an hour not spent on the product. | Use Next.js built-in pages for initial docs, or Astro Starlight when content volume grows. Both are proven and maintained by large communities. |
+| **Elaborate marketing website separate from the app** | "We need a proper marketing site with blog, pricing, changelog, and team page" | For a v1.1 open-source project, a separate marketing site is premature. Splits engineering effort, requires separate deployment, separate domain management. Even Tolgee's landing page is a single long page, not a multi-section website. | Single-page landing with hero, features, getting started, comparison. Blog can be a GitHub discussions or dev.to posts. Changelog in CHANGELOG.md + GitHub releases. |
+| **Mascot character** | "Tolgee has a parrot mascot, we should have one too" | Mascots require professional illustration, multiple poses, merch-ready variants, consistent application. Bad mascots actively hurt credibility. Only works when a project is large enough to have a visual identity team or budget for a professional illustrator. | Strong logo + color system is sufficient. Mascots are a v2+ consideration when the community is large enough to rally around one. |
+| **Video content / product tour** | "Record a professional demo video for the landing page" | Video production is expensive in time. Videos become outdated quickly as UI changes. Autoplay videos annoy users. Loading large video files hurts page performance. Evil Martians' study: most dev tool pages avoid video in favor of static screenshots and code examples. | Animated GIFs or asciinema recordings for key workflows. These are faster to create, smaller to load, and easier to update. Screenshots with annotations for feature showcase. |
+| **Multi-language landing page** | "We're an i18n tool, our landing page should be in 20 languages" | Ironic as it sounds, translating the landing page is premature. The primary audience is English-speaking developers. Translation maintenance becomes a burden. Broken translations are worse than no translations. | Ship English-only landing page. Add Chinese as a second language (given the team's background). Use the product itself to manage these translations as a dogfooding exercise. Other languages only if community contributes. |
+| **Paid sponsorship / donation infrastructure** | "Set up Open Collective / GitHub Sponsors from day one" | Premature monetization signals. With zero stars and no community, donation buttons look desperate rather than professional. Even successful projects wait until they have traction. | Add sponsor links after reaching meaningful adoption (1000+ stars, active issues). Focus on building something worth sponsoring first. |
+| **SEO-optimized blog** | "We need blog content for search ranking from day one" | Creating a blog infrastructure, writing regular content, and maintaining it is a significant ongoing commitment. For a project that hasn't launched yet, blog effort has zero ROI. | Write 1-2 launch announcement posts on dev.to, Hashnode, or Hacker News (existing platforms with built-in audiences). No custom blog until there's regular content to publish. |
 
 ## Feature Dependencies
 
 ```
-[Username/Password Auth]
-    └──requires──> [User Model + JWT] (already exists)
+[Logo (SVG source)]
+    |--derives--> [Favicon set (ICO, SVG, Apple Touch)]
+    |--derives--> [GitHub social preview image]
+    |--derives--> [OG image template]
+    |--derives--> [Landing page hero visual]
+    |--derives--> [README hero image]
+    └--derives--> [Brand color system]
 
-[Translation Progress Tracking]
-    └──requires──> [Translation Key CRUD] (already exists)
-    └──requires──> [Multi-language Support] (already exists)
+[Brand color system]
+    |--applies-to--> [Landing page design]
+    |--applies-to--> [OG image template]
+    └--applies-to--> [README badge styling]
 
-[CLI Tool]
-    └──requires──> [REST API with API Keys]
-                       └──requires──> [Auth System]
+[Landing page (hero + features + getting started)]
+    |--requires--> [Logo]
+    |--requires--> [Brand color system]
+    |--requires--> [Dark/light mode support]
+    |--requires--> [OG meta tags]
+    └--enhances--> [README] (links to landing page)
 
-[AI Translation (multi-provider)]
-    └──requires──> [Translation Key CRUD] (already exists)
-    └──enhances──> [Import Preview] (already exists)
+[README rewrite]
+    |--requires--> [Logo]
+    |--requires--> [Badge row] (shields.io)
+    |--requires--> [Screenshots / GIFs of the product]
+    └--requires--> [LICENSE file]
 
-[Translation Memory]
-    └──requires──> [Translation Key CRUD] (already exists)
-    └──enhances──> [AI Translation]
+[OG meta tags]
+    |--requires--> [OG image (static or dynamic)]
+    └--requires--> [Landing page deployed]
 
-[Webhook Support]
-    └──requires──> [REST API] (already exists)
-    └──enhances──> [CLI Tool]
+[Dynamic OG images]
+    |--requires--> [Brand color system]
+    |--requires--> [Logo (embedded in image)]
+    └--requires--> [Next.js ImageResponse setup]
 
-[Docker Deployment]
-    └──requires──> [Database Abstraction (SQLite/PostgreSQL)]
-                       └──requires──> [Remove MongoDB dependency]
+[GitHub social preview]
+    |--requires--> [Logo]
+    |--requires--> [Brand color system]
+    └--independent (manual upload to GitHub settings)
 
-[Import/Export Expanded Formats]
-    └──requires──> [Import/Export Base] (already exists)
+[Comparison table]
+    |--requires--> [Competitor research] (already done)
+    └--enhances--> [Landing page] AND [README]
 
-[Translation Comments]
-    └──requires──> [Translation Key CRUD] (already exists)
-    └──enhances──> [Activity Log] (already exists)
+[Product screenshots / GIFs]
+    |--requires--> [App running with sample data]
+    |--requires--> [App rebranded to Transweave]
+    └--enhances--> [README] AND [Landing page] AND [Launch assets]
 
-[Branching/Versioning]
-    └──requires──> [Project Organization] (already exists)
-    └──requires──> [Import/Export] (already exists)
-    └──conflicts──> [Simple data model] (adds significant schema complexity)
-
-[In-Context Editing SDK]
-    └──requires──> [REST API with API Keys]
-    └──requires──> [SDK development per framework]
-    └──conflicts──> [Fast v1 delivery] (large scope)
+[Launch assets (HN/Product Hunt)]
+    |--requires--> [All of the above completed]
+    |--requires--> [Product screenshots / GIFs]
+    └--requires--> [One-liner pitch finalized]
 ```
 
 ### Dependency Notes
 
-- **CLI Tool requires REST API with API Keys:** CLI authenticates via API keys, not username/password. Need API key management before CLI is useful.
-- **Docker Deployment requires Database Abstraction:** Cannot ship Docker images until the MongoDB-to-SQLite/PostgreSQL migration is complete. This is the critical path.
-- **Translation Memory enhances AI Translation:** TM suggestions can supplement or replace AI suggestions, reducing API costs. Build TM after AI translation is configurable.
-- **Branching conflicts with Simple data model:** Branching requires versioned copies of all translation data. Adds significant complexity to every query. Defer until core is proven.
-- **In-Context Editing SDK conflicts with Fast v1 delivery:** Requires per-framework packages (React, Vue, Angular, Svelte). Each is a separate project. Tolgee took years to build these. Not viable for v1.
+- **Logo is the critical dependency.** Nearly everything else (favicon, social preview, OG images, landing page hero, README header) derives from the logo. Logo design must happen first.
+- **Brand color system flows from logo.** Primary brand colors are often extracted from or harmonized with the logo. Define colors immediately after logo.
+- **Screenshots require the app to be rebranded.** Product screenshots showing "qlj-i18n" branding defeat the purpose. The rename must happen before (or concurrently with) screenshot capture.
+- **Landing page requires logo + colors + content.** Cannot design the page without visual identity established.
+- **README rewrite requires logo + badges + screenshots.** The README brings together all visual assets.
+- **Launch assets are the final step.** Only prepare HN/Product Hunt materials after all branding is complete and the product is live.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1 Branding)
 
-Minimum viable product -- what's needed for early adopters to evaluate and use.
+Minimum branding required for a credible open-source launch.
 
-- [x] Translation key CRUD with multi-language values -- core function (already exists)
-- [x] Project and team management with RBAC -- organizational structure (already exists)
-- [x] Activity logging -- trust and accountability (already exists)
-- [x] Module/namespace organization -- key organization (already exists)
-- [x] Import preview -- safety for imports (already exists)
-- [ ] Username/password authentication -- replace Feishu OAuth for self-hosted users
-- [ ] Docker/docker-compose deployment -- one-command startup
-- [ ] Database abstraction (SQLite + PostgreSQL) -- remove MongoDB dependency
-- [ ] Translation progress tracking -- per-language completion visibility
-- [ ] Expanded file format support (add XLIFF, Gettext) -- interoperability with translator tools
-- [ ] Full-text search with filters -- usable at 1000+ keys
-- [ ] Translation comments -- developer-translator communication
-- [ ] API keys for programmatic access -- enable automation
-- [ ] Configurable AI translation backend (optional) -- differentiator from day one
-- [ ] Remove all internal business dependencies -- clean OSS release
+- [ ] Logo design (SVG icon + wordmark, monochrome variant) -- everything derives from this
+- [ ] Favicon set (favicon.ico, favicon.svg with dark mode, apple-touch-icon.png) -- professional browser presence
+- [ ] Brand color system (primary, secondary, accent as CSS variables / Tailwind theme) -- visual consistency
+- [ ] GitHub social preview image (1280x640, logo + name + tagline) -- link sharing on social media
+- [ ] Static OG image for landing page (1200x630) -- social card when landing page URL is shared
+- [ ] Landing page with hero, features, getting started, comparison -- web presence beyond GitHub
+- [ ] README rewrite with logo, badges, screenshots/GIFs, quick start, feature highlights -- the #1 branding asset
+- [ ] LICENSE file (Apache 2.0) -- open-source credibility
+- [ ] Dark/light mode on landing page -- developer expectation for 2026
+- [ ] OG meta tags on landing page -- social sharing support
 
-### Add After Validation (v1.x)
+### Add After Launch (v1.1.x)
 
-Features to add once core is working and users are providing feedback.
+Features to add once the initial branding is live and getting feedback.
 
-- [ ] CLI tool (`qlj-i18n push/pull`) -- when users request CI/CD integration
-- [ ] Translation memory -- when users have enough translations to benefit from reuse
-- [ ] Webhook support -- when users need integration with external workflows
-- [ ] Glossary management -- when users request terminology consistency enforcement
-- [ ] Bulk operations expansion -- when users manage large projects (5000+ keys)
-- [ ] Additional file formats (Android XML, iOS Strings, Flutter ARB) -- driven by user platform requests
+- [ ] Dynamic OG images per documentation page -- when docs site grows beyond 5 pages
+- [ ] Animated terminal / asciinema recordings -- when creating "getting started" content
+- [ ] Interactive demo instance -- when wanting to reduce friction for evaluation
+- [ ] Comparison table on landing page -- when traffic warrants conversion optimization
+- [ ] CONTRIBUTING.md + issue templates + PR template -- when first external contributors appear
+- [ ] Product Hunt / HN launch preparation -- when core branding is polished and deployed
 
-### Future Consideration (v2+)
+### Future Consideration (v1.2+)
 
-Features to defer until product-market fit is established.
+Features to defer until meaningful adoption exists.
 
-- [ ] In-context editing SDK -- high complexity, requires per-framework packages; evaluate after v1 adoption
-- [ ] Branching/versioning -- enterprise-grade feature; evaluate demand after v1
-- [ ] Over-the-air translation delivery -- essentially a separate product; only if strong demand
-- [ ] Public/crowdsource translation portal -- different user persona; only if OSS community projects adopt the platform
-- [ ] Plugin/extension system -- only after core API is stable and patterns are clear
+- [ ] Astro Starlight documentation site -- when docs content exceeds what fits in the Next.js app
+- [ ] Animated hero visual (SVG weaving animation) -- when landing page needs a refresh
+- [ ] Contributor-facing architecture documentation -- when contributor volume warrants it
+- [ ] Multi-language landing page (Chinese) -- when Chinese developer community shows interest
+- [ ] Sponsor infrastructure (GitHub Sponsors / Open Collective) -- after 1000+ stars
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority | Status |
-|---------|------------|---------------------|----------|--------|
-| Username/password auth | HIGH | LOW | P1 | Planned |
-| Docker/compose deployment | HIGH | MEDIUM | P1 | Planned |
-| Database abstraction (SQLite + PG) | HIGH | HIGH | P1 | Planned |
-| Remove business dependencies | HIGH | MEDIUM | P1 | Planned |
-| Translation progress tracking | HIGH | LOW | P1 | Not started |
-| Search & filter improvements | HIGH | LOW | P1 | Partial |
-| Translation comments | MEDIUM | LOW | P1 | Not started |
-| API keys for programmatic access | MEDIUM | LOW | P1 | Not started |
-| Expanded formats (XLIFF, Gettext) | MEDIUM | MEDIUM | P1 | Not started |
-| Configurable AI translation | HIGH | MEDIUM | P1 | Partial |
-| CLI tool | HIGH | MEDIUM | P2 | Not started |
-| Translation memory | MEDIUM | MEDIUM | P2 | Not started |
-| Webhook support | MEDIUM | LOW | P2 | Not started |
-| Glossary management | MEDIUM | MEDIUM | P2 | Not started |
-| Bulk operations expansion | MEDIUM | LOW | P2 | Partial |
-| Additional formats (Android, iOS) | MEDIUM | MEDIUM | P2 | Not started |
-| In-context editing SDK | HIGH | HIGH | P3 | Not started |
-| Branching/versioning | MEDIUM | HIGH | P3 | Not started |
-| OTA delivery | MEDIUM | HIGH | P3 | Not started |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Logo design (SVG, multiple variants) | HIGH | MEDIUM | P1 |
+| Favicon set (3 files) | HIGH | LOW | P1 |
+| Brand color system | HIGH | LOW | P1 |
+| README rewrite with branding | HIGH | MEDIUM | P1 |
+| GitHub social preview image | HIGH | LOW | P1 |
+| Landing page (hero + features + start) | HIGH | HIGH | P1 |
+| OG meta tags | MEDIUM | LOW | P1 |
+| Static OG image | MEDIUM | LOW | P1 |
+| LICENSE file | HIGH | LOW | P1 |
+| Dark/light mode on landing page | MEDIUM | LOW | P1 |
+| Badge row (shields.io) | MEDIUM | LOW | P1 |
+| Product screenshots / GIFs | HIGH | MEDIUM | P1 |
+| Comparison table (landing + README) | MEDIUM | LOW | P2 |
+| Animated terminal / code showcase | MEDIUM | MEDIUM | P2 |
+| Dynamic OG images (per-page) | LOW | LOW | P2 |
+| CONTRIBUTING.md + templates | MEDIUM | LOW | P2 |
+| Interactive demo / playground | HIGH | HIGH | P2 |
+| Launch assets (HN, Product Hunt) | HIGH | MEDIUM | P2 |
+| Animated hero visual | LOW | MEDIUM | P3 |
+| Astro Starlight docs site | MEDIUM | MEDIUM | P3 |
+| Multi-language landing page | LOW | MEDIUM | P3 |
 
 **Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible (v1.x)
-- P3: Nice to have, future consideration (v2+)
+- P1: Must have for v1.1 branding launch (credible open-source presence)
+- P2: Should have, add shortly after launch (growth and conversion)
+- P3: Nice to have, future consideration (polish and scale)
 
-## Competitor Feature Analysis
+## Competitor Branding Analysis
 
-| Feature | Tolgee | Weblate | Traduora | Crowdin | Our Approach |
-|---------|--------|---------|----------|---------|--------------|
-| **Self-hosted** | Yes (Docker) | Yes (Docker, pip) | Yes (Docker) | No (SaaS only) | Yes (Docker) |
-| **License** | Apache 2.0 | GPL 3.0 | AGPL 3.0 | Proprietary | TBD (prefer permissive: MIT or Apache 2.0) |
-| **Auth** | Built-in + OAuth | Built-in + LDAP + SSO | Built-in + OAuth | SSO/OAuth | Built-in username/password (simple, no external deps) |
-| **File formats** | 20+ (JSON, XLIFF, PO, Android, iOS, Flutter) | 50+ formats | 8 formats (JSON, YAML, CSV, XLIFF, PO, Strings, Android, Properties) | 60+ formats | Start with 8-10 core formats; plugin system for more |
-| **Translation memory** | Yes | Yes | No | Yes | v1.x (after core stabilizes) |
-| **Machine translation** | DeepL, Google, AWS | Multiple MT services | No built-in | Multiple MT + AI | Configurable multi-provider including self-hosted LLMs |
-| **AI features** | Basic MT, MCP server | Basic MT | None | OpenAI, Gemini, Azure | AI translation, AI key generation, MCP server (strongest AI story) |
-| **CLI** | Yes (official) | No (uses Git integration) | Unofficial community CLI | Yes (official) | v1.x (official CLI) |
-| **In-context editing** | Yes (flagship feature) | No | No | Yes (limited) | v2+ consideration |
-| **VCS integration** | GitHub, GitLab | Deep Git/Mercurial integration | Git, SVN | GitHub, GitLab, Bitbucket | v2+ (API-first approach for v1) |
-| **Branching** | No | Branch support via Git | No | Yes | v2+ consideration |
-| **Translation comments** | Yes | Yes | No | Yes | v1 (low complexity) |
-| **Quality checks** | Basic | Extensive (customizable) | No | Extensive | v1.x (basic), v2+ (customizable) |
-| **Progress tracking** | Yes | Yes | Basic | Yes | v1 (essential) |
-| **Glossary** | Yes | Yes | No | Yes | v1.x |
-| **Webhooks** | Yes | Yes | No | Yes | v1.x |
-| **Database** | PostgreSQL only | PostgreSQL only | MySQL/PostgreSQL | N/A (SaaS) | SQLite (dev) + PostgreSQL (prod) -- lower barrier |
-| **MCP/AI assistant** | Yes | No | No | No | Yes (already built) |
-| **Import preview** | No | No | No | No | Yes (already built -- unique) |
-| **Module/namespace org** | Namespaces | Components | Projects only | Folders + branches | Modules (already built) |
-| **Activity/audit log** | Yes | Yes (via Git) | No | Yes | Yes (already built) |
+| Branding Element | Tolgee | Biome | Drizzle ORM | shadcn/ui | Transweave Plan |
+|---------|--------|-------|-------------|-----------|-----------------|
+| **Logo** | Parrot mascot + wordmark, colorful | Flame icon, orange/yellow gradient | Lightning bolt, green | Clean "shadcn" wordmark, no icon | Weaving motif icon + "Transweave" wordmark |
+| **Color palette** | Magenta/pink primary, dark theme | Orange/yellow/white | Green/dark, high contrast | Neutral grays, minimal color | TBD -- aim for a distinct color not used by competitors (blue/teal territory or warm amber) |
+| **Hero tagline** | "Developer & translator friendly web-based localization" | "One toolchain for your web project" | "ORM for you to ship" | "The Foundation for your Design System" | "Self-hosted i18n for teams that ship" or "Weave your translations across languages" |
+| **Primary CTA** | "Get Started" + "GitHub" | "Get Started" + "View on GitHub" | "Get Started" + "Documentation" | "Get Started" + "View Components" | "Get Started" (docker-compose) + "View on GitHub" |
+| **Social proof** | 8500+ users, company logos | AWS/Google/Microsoft logos | 30k+ GitHub stars, testimonial tweets | 107k GitHub stars | Start with GitHub stars badge; add user logos/quotes as adoption grows |
+| **README style** | Logo + badges + GIFs + competitive positioning | Minimal, links to docs | Playful tone, benchmark data | Ultra-minimal, links to site | Logo + badges + screenshot + quick start + feature highlights + competitor comparison |
+| **Dark mode** | Yes | Yes (default dark) | Yes | Yes (default light) | Yes (respect system preference, toggle available) |
+| **Demo/playground** | Requires account | Browser playground | Drizzle Studio link | Site IS the demo | Seeded demo instance (stretch goal) |
+| **Tech showcase** | Framework integration logos | Performance benchmarks vs Prettier | Benchmark vs Prisma, runtime logos | Live component examples | Docker quick start, AI translation demo, CLI showcase |
+| **Docs approach** | Custom docs site | Starlight-style (custom) | Custom docs with sidebar | Built into main site | Start in Next.js app, evaluate Starlight later |
 
-### Competitive Positioning Summary
+### Key Branding Lessons from Competitors
 
-**vs Tolgee:** Our AI story is stronger (multi-provider + AI key generation + MCP). Tolgee wins on in-context editing and broader format support. We win on database flexibility (SQLite quick-start) and import preview.
-
-**vs Weblate:** Weblate is mature, battle-tested, and deeply integrated with Git. We differentiate on modern tech stack (Next.js + NestJS vs Django), AI features, and simpler deployment. Weblate's strength is its ecosystem breadth; our strength is developer-focused AI workflows.
-
-**vs Traduora:** Traduora is feature-light and largely unmaintained (last major commit activity has slowed). We surpass it on nearly every dimension. Traduora's simplicity is its only advantage; we match it with SQLite quick-start.
-
-**vs Crowdin/Lokalise:** These are enterprise SaaS products. We don't compete directly. We serve teams who want self-hosted control, AI flexibility, and zero vendor lock-in.
+1. **Biome** teaches: performance claims with benchmarks create credibility. Show "5-minute setup" or "zero external dependencies" with evidence.
+2. **Drizzle** teaches: personality in copy works for dev tools. "Ship" as a verb, humorous testimonials, playful tone. Transweave can be warm without being corporate.
+3. **shadcn/ui** teaches: let the product demo itself. The landing page showcasing real components is more convincing than any marketing copy. Screenshots/GIFs of the actual Transweave UI are essential.
+4. **Tolgee** teaches: competitive positioning directly in the README works ("open-source alternative to Crowdin, Phrase, or Lokalise"). Don't be shy about naming what you replace.
+5. **Turso** teaches: segment by use case. Instead of listing all features, show "For small teams," "For enterprise," "For AI-powered workflows" -- speak to specific developer needs.
 
 ## Sources
 
-- [Tolgee GitHub - tolgee-platform](https://github.com/tolgee/tolgee-platform) - Feature list, architecture, supported formats
-- [Tolgee Documentation - Supported Formats](https://docs.tolgee.io/platform/supported_formats) - File format details
-- [Weblate Features Page](https://weblate.org/en/features/) - Comprehensive feature listing
-- [Weblate GitHub](https://github.com/WeblateOrg/weblate) - Architecture and capabilities
-- [Traduora GitHub (ever-co/ever-traduora)](https://github.com/ever-co/ever-traduora) - Features and format support
-- [Crowdin Features](https://support.crowdin.com/features/) - Enterprise feature set
-- [Crowdin Documentation](https://support.crowdin.com/translation-process-overview/) - Workflow automation, TM, glossary
-- [Lokalise Developer Tools](https://lokalise.com/product/for-developers/) - API, webhooks, branching, OTA
-- [Tolgee vs Weblate Comparison (OpenAlternative)](https://openalternative.co/compare/tolgee/vs/weblate)
-- [Crowdin vs Lokalise Comparison (Capterra)](https://www.capterra.com/compare/162858-163509/Lokalise-vs-Crowdin)
-- [Localazy CLI](https://localazy.com/features/cli) - CLI feature patterns
-- [SimpleLocalize Namespaces](https://simplelocalize.io/blog/posts/namespace/) - Namespace organization patterns
-- [POEditor Namespaces](https://poeditor.com/blog/namespaces-in-localization/) - Namespace best practices
+- [Evil Martians: "We studied 100 dev tool landing pages"](https://evilmartians.com/chronicles/we-studied-100-devtool-landing-pages-here-is-what-actually-works-in-2025) - Comprehensive landing page patterns study
+- [Biome landing page](https://biomejs.dev) - Hero patterns, performance benchmarks, social proof with company logos
+- [Drizzle ORM landing page](https://orm.drizzle.team) - Personality in copy, benchmark comparisons, testimonial carousel, 30k stars
+- [shadcn/ui landing page](https://ui.shadcn.com) - Product-as-demo pattern, minimal copy, 107k stars
+- [Turso landing page](https://turso.tech) - Use case segmentation, testimonials, open source + cloud positioning
+- [Tolgee GitHub README](https://github.com/tolgee/tolgee-platform) - Badge strategy, GIF demos, competitive positioning, hiring callout
+- [GitHub Docs: Social media preview](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/customizing-your-repositorys-social-media-preview) - 1280x640 recommended
+- [Next.js Metadata and OG images](https://nextjs.org/docs/app/getting-started/metadata-and-og-images) - Built-in ImageResponse, opengraph-image.tsx convention
+- [Evil Martians: How to Favicon in 2026](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs) - 3-file favicon strategy (ICO + SVG + Apple Touch)
+- [Shields.io](https://shields.io/) - Badge generation service, 1.6B images/month
+- [daily.dev: README Badges Best Practices](https://daily.dev/blog/readme-badges-github-best-practices) - 5-8 badges, consistent style, relevant metrics
+- [Star History: Playbook for GitHub Stars](https://www.star-history.com/blog/playbook-for-more-github-stars) - README optimization, launch strategy, community engagement
+- [Astro Starlight](https://starlight.astro.build/) - Documentation site framework with built-in search, i18n, dark mode
+- [Vercel OG Image Generation](https://vercel.com/docs/functions/og-image-generation) - ImageResponse API, Satori engine, 500KB vs 50MB Puppeteer
+- [GitHub Blog: Framework for building OG images](https://github.blog/open-source/git/framework-building-open-graph-images/) - OG image architecture patterns
 
 ---
-*Feature research for: Self-hosted open-source i18n management platform*
+*Feature research for: Open-source developer tool branding and promotion*
 *Researched: 2026-03-01*

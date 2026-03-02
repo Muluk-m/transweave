@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiKeyService } from '../service/api-key.service';
+import { requireEnv } from '../config/env';
 
 /**
  * Unified auth guard that accepts both JWT tokens and API keys.
@@ -51,7 +52,7 @@ export class AuthGuard implements CanActivate {
     // JWT authentication
     try {
       const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
+        secret: requireEnv('JWT_SECRET'),
       });
       request.user = {
         userId: payload.userId,

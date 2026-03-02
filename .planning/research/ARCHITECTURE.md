@@ -1,621 +1,553 @@
-# Architecture Research
+# Architecture: Project Rename & Branding Integration
 
-**Domain:** Open-source i18n management platform (NestJS + Next.js monorepo converting from MongoDB to SQLite/PostgreSQL)
+**Domain:** Renaming qlj-i18n to Transweave within an existing pnpm monorepo (Next.js 15 + NestJS 11 + CLI)
 **Researched:** 2026-03-01
-**Confidence:** MEDIUM
+**Confidence:** HIGH (based on direct codebase analysis -- every reference audited)
 
-## Standard Architecture
-
-### System Overview
+## Current Architecture (Before Rename)
 
 ```
-                            +--------------------------+
-                            |     Docker Compose       |
-                            +--------------------------+
-                                        |
-         +------------------------------+------------------------------+
-         |                              |                              |
-+--------v---------+       +-----------v-----------+       +----------v----------+
-|   web (Next.js)  |       |  server (NestJS)      |       |   db (PostgreSQL    |
-|   Port 3000      |------>|  Port 3001            |------>|   or SQLite file)   |
-|                  |       |                       |       |                     |
-|  Static assets   |       |  +------------------+ |       +---------------------+
-|  SSR pages       |       |  | Controller Layer | |
-|  API client      |       |  +--------+---------+ |       +---------------------+
-|                  |       |           |           |       |   uploads/          |
-+------------------+       |  +--------v---------+ |       |   (local volume)    |
-                           |  | Service Layer    | |       +---------------------+
-                           |  +--------+---------+ |
-                           |           |           |
-                           |  +--------v---------+ |
-                           |  | Repository Layer | |  <-- NEW: abstracts DB access
-                           |  +--------+---------+ |
-                           |           |           |
-                           |  +--------v---------+ |
-                           |  | Drizzle ORM      | |  <-- NEW: replaces Mongoose
-                           |  | (pg or sqlite)   | |
-                           |  +------------------+ |
-                           +-----------------------+
+qlj-fe-i18n/                              <-- repo root (directory name)
+  package.json                             name: "@qlj/i18n-manager"
+  pnpm-workspace.yaml                     packages/*
+  docker-compose.yml                      services: postgres, server, web
+  .env.example                            header: "qlj-i18n Environment Configuration"
+  README.md                               references qlj-i18n throughout
+  AGENTS.md                               no brand refs
+  packages/
+    web/                                   name: "nextjs" in package.json
+      package.json                         name: "nextjs"
+      Dockerfile                           --filter nextjs
+      next.config.mjs                      standalone output
+      app/layout.tsx                       title: "i18n Manager"
+      public/favicon.svg                   id: "qlj-logo-gradient"
+      public/logo.svg                      same gradient id
+      i18n/all.json                        header.title.en-US: "qlj-i18n"
+      lib/cookies.ts                       LANGUAGE_COOKIE_KEY: "i18n_language"
+      lib/auth/auth-context.tsx            localStorage key: "authToken"
+    server/                                name: "qlj-i18n-server" in package.json
+      package.json                         name: "qlj-i18n-server"
+      Dockerfile                           --filter qlj-i18n-server
+      src/service/api-key.service.ts       prefix: "qlji_"
+      src/jwt/guard.ts                     startsWith("qlji_")
+      src/service/mcp.service.ts           name: "qlj-i18n-mcp-server"
+      src/ai/encryption.util.ts            salt: "qlj-i18n-ai-salt"
+      src/controller/mcp.controller.ts     HTML, JSON refs to qlji_, qlj-i18n
+    cli/                                   name: "qlj-i18n" in package.json
+      package.json                         bin: { "qlj-i18n": "./bin/qlj-i18n.js" }
+      bin/qlj-i18n.js                      entry point file
+      src/index.ts                         .name("qlj-i18n")
+      src/config.ts                        CONFIG_DIR: ~/.config/qlj-i18n
+                                           PROJECT_CONFIG_FILENAME: .qlj-i18n.json
+                                           env vars: QLJ_I18N_API_KEY, QLJ_I18N_SERVER
+      src/commands/login.ts                validates qlji_ prefix
+      src/commands/init.ts                 references qlj-i18n in messages
+      src/commands/pull.ts                 references qlj-i18n in messages
+      src/commands/push.ts                 references qlj-i18n in messages
+  docs/
+    api-reference.md                       qlji_ examples, qlj-i18n CLI docs
 ```
 
-### Component Responsibilities
+## Complete Rename Inventory
 
-| Component | Responsibility | Communicates With |
-|-----------|----------------|-------------------|
-| **web** (Next.js) | UI rendering, client state, API calls | server via HTTP REST |
-| **server** (NestJS) | Business logic, auth, data access | web (responds to), db (queries) |
-| **db** (PostgreSQL/SQLite) | Data persistence | server only |
-| **uploads** (local volume) | File storage for screenshots | server (writes), web (reads via static serving) |
-| **Repository Layer** (new) | Abstracts database operations behind interfaces | Services call repositories; repositories call Drizzle |
-| **Drizzle ORM** (new) | SQL query building, schema definition, migrations | Database driver (pg or better-sqlite3) |
-| **Auth Module** (modified) | Username/password auth, JWT tokens | UserRepository, JwtService |
-| **File Storage Module** (new) | Local file upload/serving, replaces CDN | Disk filesystem, NestJS static serving |
+Every reference that must change, categorized by impact level.
 
-## Recommended Project Structure
+### Category 1: Breaking Changes (API contract changes -- affect existing users)
+
+These changes break backward compatibility. Existing API keys stop working, existing CLI configs stop working.
+
+| Reference | File | Current | New | Breaking Impact |
+|-----------|------|---------|-----|-----------------|
+| API key prefix | `packages/server/src/service/api-key.service.ts:22` | `qlji_` | `tw_` | All existing API keys invalid |
+| API key prefix length | `packages/server/src/service/api-key.service.ts:6` | `13` (qlji_ + 8 hex) | `11` (tw_ + 8 hex) | Key parsing breaks |
+| Auth guard check | `packages/server/src/jwt/guard.ts:36` | `qlji_` | `tw_` | Existing API keys rejected |
+| MCP auth check | `packages/server/src/controller/mcp.controller.ts:28` | `Bearer qlji_` | `Bearer tw_` | MCP clients break |
+| CLI login validation | `packages/cli/src/commands/login.ts:12-13` | `qlji_` | `tw_` | CLI rejects old keys |
+| CLI config directory | `packages/cli/src/config.ts:17` | `~/.config/qlj-i18n` | `~/.config/transweave` | Old config not found |
+| CLI project config file | `packages/cli/src/config.ts:19` | `.qlj-i18n.json` | `.transweave.json` | Old project configs ignored |
+| CLI env var names | `packages/cli/src/config.ts:73,86` | `QLJ_I18N_API_KEY`, `QLJ_I18N_SERVER` | `TRANSWEAVE_API_KEY`, `TRANSWEAVE_SERVER` | CI/CD env vars break |
+| Encryption salt | `packages/server/src/ai/encryption.util.ts:17` | `qlj-i18n-ai-salt` | `transweave-ai-salt` | Encrypted AI keys unreadable |
+
+### Category 2: Package Identity (build system, Docker, npm)
+
+| Reference | File | Current | New |
+|-----------|------|---------|-----|
+| Root package name | `package.json:2` | `@qlj/i18n-manager` | `@transweave/monorepo` |
+| Server package name | `packages/server/package.json:2` | `qlj-i18n-server` | `@transweave/server` |
+| Web package name | `packages/web/package.json:2` | `nextjs` | `@transweave/web` |
+| CLI package name | `packages/cli/package.json:2` | `qlj-i18n` | `transweave` |
+| CLI binary name | `packages/cli/package.json:6` | `qlj-i18n` | `transweave` |
+| CLI bin file | `packages/cli/bin/qlj-i18n.js` | filename | `packages/cli/bin/transweave.js` |
+| Server Dockerfile filter | `packages/server/Dockerfile:15` | `qlj-i18n-server` | `@transweave/server` |
+| Web Dockerfile filter | `packages/web/Dockerfile:17` | `nextjs` | `@transweave/web` |
+| Web Dockerfile CMD | `packages/web/Dockerfile:34` | `nextjs` | `@transweave/web` |
+
+### Category 3: UI/Branding (user-visible text, no API impact)
+
+| Reference | File | Current | New |
+|-----------|------|---------|-----|
+| Page title | `packages/web/app/layout.tsx:14` | `i18n Manager` | `Transweave` |
+| Header title (en) | `packages/web/i18n/all.json:48` | `qlj-i18n` | `Transweave` |
+| Header title (zh) | `packages/web/i18n/all.json:47` | `i18n Platform` | `Transweave` |
+| Welcome title (en) | `packages/web/i18n/all.json:26` | `i18n Platform` | `Transweave` |
+| MCP server name | `packages/server/src/service/mcp.service.ts:24` | `qlj-i18n-mcp-server` | `transweave-mcp-server` |
+| MCP HTML page | `packages/server/src/controller/mcp.controller.ts` (multiple) | `qlj-i18n` | `transweave` |
+| Favicon SVG gradient ID | `packages/web/public/favicon.svg:8` | `qlj-logo-gradient` | `tw-logo-gradient` |
+| Logo SVG gradient ID | `packages/web/public/logo.svg` | `qlj-logo-gradient` | `tw-logo-gradient` |
+| Cookie name | `packages/web/lib/cookies.ts:1` | `i18n_language` | `tw_language` |
+
+### Category 4: Documentation (text only, no code impact)
+
+| Reference | File | Current | New |
+|-----------|------|---------|-----|
+| README title/body | `README.md` | `qlj-i18n` throughout | `transweave` |
+| .env.example header | `.env.example:2` | `qlj-i18n` | `Transweave` |
+| API reference doc | `docs/api-reference.md` | `qlji_` examples, `qlj-i18n` CLI | `tw_` examples, `transweave` CLI |
+| CLI descriptions | `packages/cli/src/index.ts:8-9` | `qlj-i18n` | `transweave` |
+| CLI command messages | `packages/cli/src/commands/*.ts` | `qlj-i18n` in all messages | `transweave` |
+
+## Architecture Decision: Landing Page Placement
+
+### Decision: Subdirectory of packages/web (`/app/(landing)/`)
+
+**NOT a separate package. NOT a separate repo.**
+
+Rationale:
+
+1. **Same tech stack** -- The landing page uses the same Next.js 15, Tailwind, Radix stack already in `packages/web`. Zero additional dependencies.
+
+2. **Shared assets** -- Logo, favicon, OG images, color tokens are used by both the app and the landing page. Keeping them in one package avoids duplication.
+
+3. **Route group pattern** -- Next.js app router supports route groups via `(folder)` naming. The landing page lives at `/app/(landing)/page.tsx` with its own layout (no header/auth), while the existing app routes keep their layout. This is idiomatic Next.js.
+
+4. **Single Docker image** -- No additional service in docker-compose. The landing page is just another route in the same Next.js app. Self-hosters get the landing page at `/` automatically.
+
+5. **No workspace complexity** -- Adding a `packages/landing` would require its own build pipeline, Dockerfile, docker-compose service entry, and nginx routing. All unnecessary overhead.
 
 ```
-packages/
-  server/
-    src/
-      db/                           # NEW: Database abstraction
-        schema/                     # Drizzle schema definitions
-          users.ts                  # pgTable/sqliteTable definitions
-          teams.ts
-          memberships.ts
-          projects.ts
-          tokens.ts
-          activity-logs.ts
-          index.ts                  # Re-exports all schemas
-        migrations/                 # Drizzle Kit generated migrations
-        drizzle.module.ts           # NestJS module for DI
-        drizzle.provider.ts         # Creates drizzle instance based on env
-        drizzle.config.ts           # Drizzle Kit config
-      repository/                   # NEW: Repository layer
-        user.repository.ts
-        team.repository.ts
-        membership.repository.ts
-        project.repository.ts
-        token.repository.ts
-        activity-log.repository.ts
-        base.repository.ts          # Generic CRUD base class
-      service/                      # EXISTING: Business logic (modified)
-        auth.service.ts             # Remove Feishu, keep local auth
-        user.service.ts             # Delegates to UserRepository
-        team.service.ts             # Delegates to TeamRepository
-        project.service.ts          # Delegates to ProjectRepository + TokenRepository
-        membership.service.ts       # Delegates to MembershipRepository
-        activity-log.service.ts
-        ai.service.ts               # Optional AI integration
-        mcp.service.ts
-        file-storage.service.ts     # NEW: Local file upload/serving
-      controller/                   # EXISTING: HTTP endpoints (minor changes)
-        auth.controller.ts          # Remove Feishu endpoints
-        upload.controller.ts        # NEW: File upload endpoint
-        ...existing controllers...
-      jwt/                          # EXISTING: JWT auth (unchanged)
-      middleware/                   # EXISTING: Request middleware (unchanged)
-      interceptors/                 # EXISTING: Logging etc (unchanged)
-      utils/                        # EXISTING: Utilities (unchanged)
-      app.module.ts                 # Updated imports
-      main.ts                       # Updated bootstrap
-    uploads/                        # NEW: Local file storage directory
-    drizzle.config.ts               # Drizzle Kit config (root level)
-  web/
-    api/
-      upload.ts                     # Modified: points to local server, not CDN
-    ...existing structure unchanged...
-
-# Root level additions
-docker-compose.yml                  # Full stack: web + server + db
-docker-compose.dev.yml              # Dev: just db, run web+server locally
-Dockerfile.web                      # Existing, minor updates
-Dockerfile.server                   # Updated for Drizzle + migrations
-.env.example                        # Template for all config
+packages/web/app/
+  (landing)/                   <-- NEW: route group, no layout prefix
+    page.tsx                   Landing page (marketing, hero, features)
+    layout.tsx                 Minimal layout (no app header/auth)
+  (app)/                       <-- MOVED: existing app routes wrapped in group
+    layout.tsx                 App layout (header, auth provider)
+    login/page.tsx
+    signup/page.tsx
+    setup/page.tsx
+    project/...
+    team/...
+    settings/...
+    ...
+  layout.tsx                   Root layout (html, body, fonts, metadata)
+  globals.css
 ```
 
-### Structure Rationale
+**Key architectural detail:** The root `layout.tsx` stays minimal (html/body/fonts). The `(app)/layout.tsx` gets the AuthProvider, HeaderView, and app chrome. The `(landing)/layout.tsx` has marketing-style layout with no auth requirement.
 
-- **db/schema/:** Drizzle schemas are co-located because they are tightly coupled to each other via relations. One file per entity matches current Mongoose schema structure, easing the mental mapping during migration.
-- **db/migrations/:** Auto-generated by Drizzle Kit. Committed to git so deployments are reproducible.
-- **repository/:** Isolates all SQL queries from business logic. Services never import Drizzle directly -- they only call repository methods. This is the key boundary that makes the database swappable and services testable.
-- **service/:** Remains the business logic layer but no longer contains any database-specific code (no `@InjectModel`, no Mongoose `Model<T>` types). Services only depend on repository interfaces.
-- **uploads/:** Docker volume-mounted directory for persistent file storage. Replaces external CDN dependency entirely.
+### Alternatives Rejected
 
-## Architectural Patterns
+| Alternative | Why Rejected |
+|-------------|-------------|
+| Separate `packages/landing` | Unnecessary build complexity, asset duplication, extra Docker service |
+| Separate repository | Breaks monorepo benefits, separate deploy pipeline, asset sync nightmare |
+| Static site (Astro/Hugo) | Different tech stack to maintain, can't share React components or design tokens |
+| Subdomain (`www.transweave.dev`) | Requires DNS setup, separate deployment -- overkill for a self-hosted project |
 
-### Pattern 1: Repository Abstraction Layer
+## Architecture Decision: Docker Image Naming
 
-**What:** Services call repository classes instead of ORM models directly. Each repository encapsulates all queries for a single entity.
-**When to use:** Always -- this is the core architectural change enabling SQLite/PostgreSQL dual support.
-**Trade-offs:** Adds one layer of indirection; gains testability and database portability.
+### Current State (no explicit image names)
 
-**Example:**
+The `docker-compose.yml` uses `build:` directives without `image:` tags. Docker Compose auto-names them based on project directory (e.g., `qlj-fe-i18n-server`).
+
+### Recommended: Add Explicit Image Names
+
+```yaml
+services:
+  server:
+    image: transweave/server:latest
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+
+  web:
+    image: transweave/web:latest
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+```
+
+This enables:
+- Pre-built images on Docker Hub / GHCR for users who don't want to build
+- Consistent naming regardless of which directory the repo is cloned into
+- Version tagging (`transweave/server:1.1.0`)
+
+**Registry namespace:** Use `ghcr.io/[github-org]/transweave-server` and `ghcr.io/[github-org]/transweave-web` for GitHub Container Registry. Or `transweave/server` on Docker Hub if the organization claims the namespace.
+
+## Architecture Decision: API Key Prefix Migration
+
+### Decision: Hard cut to `tw_` with no backward compatibility
+
+Rationale:
+
+1. **This is a v1.1 branding release** -- it is the right moment for a clean break. There are no external users yet (the project hasn't been publicly released under the old name).
+
+2. **Dual-prefix support adds permanent complexity** -- The auth guard would need to check both `qlji_` and `tw_` forever, the API key service would need to generate the new prefix while validating both, and documentation would be confusing.
+
+3. **Existing keys are hashed** -- API keys are stored as bcrypt hashes with only the prefix visible. You cannot migrate them to a new prefix without the original key material. A migration would require invalidating all old keys regardless.
+
+4. **Prefix length change matters** -- `qlji_` is 5 chars + 8 hex = 13 char prefix. `tw_` is 3 chars + 8 hex = 11 char prefix. The `KEY_PREFIX_LENGTH` constant and prefix-based lookup logic must change.
+
+### New Constants
+
 ```typescript
-// repository/user.repository.ts
-@Injectable()
-export class UserRepository {
-  constructor(@Inject('DRIZZLE') private db: DrizzleInstance) {}
+// api-key.service.ts
+const KEY_PREFIX = 'tw_';
+const KEY_PREFIX_LENGTH = 11; // "tw_" (3) + 8 hex chars
 
-  async findById(id: string): Promise<User | null> {
-    const results = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
-    return results[0] ?? null;
-  }
+// jwt/guard.ts
+if (token.startsWith('tw_')) { ... }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const results = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-    return results[0] ?? null;
-  }
-
-  async create(data: NewUser): Promise<User> {
-    const results = await this.db
-      .insert(users)
-      .values(data)
-      .returning();
-    return results[0];
-  }
-}
-
-// service/user.service.ts -- no Mongoose, no Drizzle imports
-@Injectable()
-export class UserService {
-  constructor(private readonly userRepo: UserRepository) {}
-
-  async findUserByEmail(email: string): Promise<User | null> {
-    return this.userRepo.findByEmail(email);
-  }
-}
+// mcp.controller.ts
+if (!authHeader?.startsWith('Bearer tw_')) { ... }
 ```
 
-### Pattern 2: Conditional Database Driver via Environment Variable
+## Architecture Decision: Encryption Salt Change
 
-**What:** A single NestJS module that creates either a PostgreSQL or SQLite Drizzle instance based on `DATABASE_DRIVER` env var.
-**When to use:** At application bootstrap. The choice is made once at startup and stays for the lifetime of the process.
-**Trade-offs:** Requires maintaining two schema files (pg dialect and sqlite dialect) or using a shared schema approach. Drizzle uses different table constructors per dialect (`pgTable` vs `sqliteTable`), so true schema sharing requires an adapter or codegen.
+### Decision: Change salt, accept that stored AI provider keys become unreadable
 
-**Example:**
-```typescript
-// db/drizzle.provider.ts
-import { Provider } from '@nestjs/common';
+The `encryption.util.ts` uses `scryptSync(secret, 'qlj-i18n-ai-salt', 32)` to derive an encryption key for storing AI provider API keys. Changing the salt to `'transweave-ai-salt'` means any previously encrypted AI keys in the database cannot be decrypted.
 
-export const DRIZZLE = 'DRIZZLE';
+**This is acceptable because:**
+1. The project hasn't been publicly released yet -- no real users with stored keys
+2. The error handling already covers this case: "The encryption key may have changed. Please re-enter your API key in settings."
+3. AI provider keys are easily re-entered by users
 
-export const DrizzleProvider: Provider = {
-  provide: DRIZZLE,
-  useFactory: async () => {
-    const driver = process.env.DATABASE_DRIVER || 'sqlite';
+**If this project had existing users**, you would need a migration script that reads all AI keys with the old salt, decrypts them, and re-encrypts with the new salt. That is NOT needed here.
 
-    if (driver === 'postgresql') {
-      const { drizzle } = await import('drizzle-orm/node-postgres');
-      const { Pool } = await import('pg');
-      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      const * as pgSchema = await import('./schema/pg');
-      return drizzle(pool, { schema: pgSchema });
-    }
+## Architecture Decision: Cookie Naming
 
-    // Default: SQLite
-    const { drizzle } = await import('drizzle-orm/better-sqlite3');
-    const Database = (await import('better-sqlite3')).default;
-    const sqlite = new Database(process.env.DATABASE_PATH || './data/i18n.db');
-    sqlite.pragma('journal_mode = WAL');
-    const * as sqliteSchema = await import('./schema/sqlite');
-    return drizzle(sqlite, { schema: sqliteSchema });
-  },
-};
-```
+### Decision: Change `i18n_language` to `tw_language`
 
-**Critical note on dual-schema approach:** Drizzle ORM uses dialect-specific table constructors (`pgTable` for PostgreSQL, `sqliteTable` for SQLite). You cannot use a single schema file for both. The recommended approach is:
-1. Define a canonical schema in a shared types file (TypeScript interfaces).
-2. Create `schema/pg/` and `schema/sqlite/` directories with dialect-specific table definitions.
-3. Use a small codegen script or manual sync to keep them aligned.
-4. Both schemas export the same TypeScript types so repositories work identically against either.
+The current cookie name `i18n_language` is generic and could collide with other i18n tools running on the same domain. Changing to `tw_language` (or `transweave_language`) brands the cookie and avoids collisions.
 
-**Confidence:** MEDIUM -- Drizzle's architecture inherently requires separate schema definitions per dialect. This is a known limitation documented in the Drizzle ORM repository. The alternative (TypeORM) handles this more transparently with decorators, but TypeORM has worse performance and more complex migration stories.
+**Impact:** Users' language preference resets once. The `getUserLanguage()` function falls back to browser language detection, so the impact is invisible.
 
-### Pattern 3: Local File Storage with Static Serving
+The localStorage key `authToken` is already generic (not branded). It should be changed to `tw_auth_token` to avoid collisions if multiple apps run on the same origin. But this is lower priority since the app is typically self-hosted on its own domain.
 
-**What:** Replace CDN upload with NestJS Multer-based local file storage. Files saved to a Docker volume-mounted directory, served via NestJS static file serving or a reverse proxy.
-**When to use:** For all user-uploaded content (screenshots, avatars).
-**Trade-offs:** No CDN = no edge caching. Acceptable for self-hosted use where users and server are typically on the same network.
+## Component Boundary Changes
 
-**Example:**
-```typescript
-// service/file-storage.service.ts
-@Injectable()
-export class FileStorageService {
-  private readonly uploadDir: string;
-
-  constructor() {
-    this.uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
-    fs.mkdirSync(this.uploadDir, { recursive: true });
-  }
-
-  async saveFile(file: Express.Multer.File): Promise<string> {
-    const ext = path.extname(file.originalname);
-    const filename = `${uuidv4()}${ext}`;
-    const filepath = path.join(this.uploadDir, filename);
-    await fs.promises.writeFile(filepath, file.buffer);
-    return `/api/uploads/${filename}`;
-  }
-
-  getFilePath(filename: string): string {
-    return path.join(this.uploadDir, filename);
-  }
-}
-
-// controller/upload.controller.ts
-@Controller('api/uploads')
-export class UploadController {
-  constructor(private readonly fileStorage: FileStorageService) {}
-
-  @Post()
-  @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    const url = await this.fileStorage.saveFile(file);
-    return { url };
-  }
-
-  @Get(':filename')
-  async serveFile(@Param('filename') filename: string, @Res() res: Response) {
-    const filepath = this.fileStorage.getFilePath(filename);
-    return res.sendFile(filepath);
-  }
-}
-```
-
-### Pattern 4: Pluggable Auth with Strategy Pattern
-
-**What:** Replace hardcoded Feishu OAuth with a clean local-only auth system. Design auth as a strategy so future OAuth providers can be added without changing core logic.
-**When to use:** During auth module rewrite.
-**Trade-offs:** More code upfront than a simple login function, but prevents the exact problem the codebase currently has (Feishu-specific code entangled in core auth).
-
-**Example:**
-```typescript
-// Auth stays simple for OSS: username/password only
-// But structured so adding OAuth later is non-breaking
-
-// service/auth.service.ts (simplified)
-@Injectable()
-export class AuthService {
-  constructor(
-    private readonly userRepo: UserRepository,
-    private readonly jwtService: JwtService,
-  ) {}
-
-  async register(data: { name: string; email: string; password: string }) {
-    const existing = await this.userRepo.findByEmail(data.email);
-    if (existing) throw new BadRequestException('Email already registered');
-    const hashed = hashPassword(data.password);
-    const user = await this.userRepo.create({
-      name: data.name,
-      email: data.email,
-      password: hashed,
-      loginProvider: 'local',
-    });
-    return this.createJwtToken(user);
-  }
-
-  async login(data: { email: string; password: string }) {
-    const user = await this.userRepo.findByEmail(data.email);
-    if (!user || !verifyPassword(data.password, user.password)) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    return this.createJwtToken(user);
-  }
-
-  // No Feishu, no joinDefaultTeam, no hardcoded team IDs
-}
-```
-
-## Data Flow
-
-### Request Flow
+### Before and After
 
 ```
-[Browser]
-    |
-    v
-[Next.js SSR / Client] --HTTP--> [NestJS Controller]
-    |                                    |
-    | (Jotai atoms, AuthContext)         | @UseGuards(AuthGuard)
-    |                                    | @CurrentUser() decorator
-    v                                    v
-[API Client]                      [Service Layer]
-    |                                    |
-    | Bearer JWT in header               | Business logic, validation
-    |                                    v
-    |                             [Repository Layer]
-    |                                    |
-    |                                    | Drizzle query builder
-    |                                    v
-    |                             [Database (PG or SQLite)]
-    v
-[Response rendered in UI]
+BEFORE:                              AFTER:
+@qlj/i18n-manager (root)            @transweave/monorepo (root)
+  +-- nextjs (web)                    +-- @transweave/web
+  +-- qlj-i18n-server (server)        +-- @transweave/server
+  +-- qlj-i18n (cli)                  +-- transweave (cli, npm publishable)
 ```
 
-### Database Migration Flow (Mongoose to Drizzle)
+### New Component: Landing Page (within web)
 
 ```
-Current:
-  Service --> @InjectModel(User.name) --> Mongoose Model<UserDocument> --> MongoDB
-
-Target:
-  Service --> UserRepository (injected) --> Drizzle query builder --> PostgreSQL/SQLite
-
-Migration path per entity:
-  1. Define Drizzle schema (relational tables)
-  2. Create Repository class with same public API as current service methods
-  3. Update Service to use Repository instead of Mongoose Model
-  4. Remove Mongoose schema file
-  5. Run Drizzle migration to create tables
+@transweave/web
+  app/
+    (landing)/          <-- NEW component boundary
+      page.tsx          Hero, features showcase, CTA
+      layout.tsx        Marketing layout (no auth, custom nav)
+      components/       Landing-specific components (hero, feature cards, footer)
+    (app)/              <-- Existing app, regrouped
+      layout.tsx        App layout (auth, header, sidebar)
+      ...existing routes...
+  public/
+    logo.svg            <-- REPLACED with new Transweave logo
+    favicon.svg         <-- REPLACED with new Transweave favicon
+    og-image.png        <-- NEW: Open Graph image for social sharing
+    logo-dark.svg       <-- NEW: dark mode variant
 ```
 
-### Key Data Flows
+### No New Packages
 
-1. **Auth flow:** Browser --> POST /api/auth/login --> AuthController --> AuthService --> UserRepository --> DB lookup --> JWT creation --> Response with token. No Feishu. No default team join.
+The monorepo stays at 3 packages: web, server, cli. The landing page is NOT a new package -- it is a route group within web.
 
-2. **Token CRUD flow:** Browser --> POST /api/project/:id/token --> ProjectController --> checks MembershipRepository for permissions --> TokenRepository.create() --> DB insert + ActivityLogRepository.create() --> Response with created token.
+## Data Flow Changes
 
-3. **File upload flow:** Browser --> POST /api/uploads (multipart) --> UploadController --> FileStorageService.saveFile() --> disk write to ./uploads/ --> Response with local URL path. Frontend stores URL in token.screenshots array.
-
-4. **Import/Export flow:** Same as current, but repository methods replace Mongoose queries. Import uses transactions (Drizzle supports them for both PG and SQLite with WAL mode).
-
-## Schema Migration: Mongoose to Relational
-
-### Entity Mapping
-
-| Mongoose Schema | Relational Table(s) | Key Changes |
-|----------------|---------------------|-------------|
-| User | `users` | Remove `feishuId`, `feishuUnionId`, `loginProvider` enum drops 'feishu'. UUID primary key replaces ObjectId. |
-| Team | `teams` | Remove `memberships` array (now a join via memberships table). UUID PK. |
-| Membership | `memberships` | Already a join table conceptually. Add unique constraint on (userId, teamId). Foreign keys to users and teams. |
-| Project | `projects` | `languages` becomes a JSON column (both PG and SQLite support JSON). `languageLabels` becomes JSON. `modules` becomes JSON array. Remove `tokens` array ref (query via tokenRepository). Foreign key to teams. |
-| Token | `tokens` | `translations` becomes JSON column. `screenshots` becomes JSON array. `history` becomes separate `token_history` table (normalize the embedded array). Foreign key to projects. |
-| TokenHistory | `token_history` (new table) | Currently embedded in Token. Normalize to its own table with foreign keys to tokens and users. Enables efficient history queries. |
-| ActivityLog | `activity_logs` | `details` becomes JSON column. Foreign keys to projects and users. Indexes on (projectId, createdAt) and (userId, createdAt). |
-
-### Mongoose-Specific Patterns That Change
-
-| MongoDB Pattern | Relational Equivalent |
-|----------------|----------------------|
-| `ObjectId` references + `.populate()` | Foreign keys + JOIN queries |
-| Embedded documents (TokenHistory in Token) | Separate table with foreign key |
-| `$push` to arrays (tokens in project) | Insert row in related table |
-| `$addToSet` on arrays | Insert with unique constraint or INSERT ... ON CONFLICT |
-| `$regex` search | `LIKE` / `ILIKE` (PG) or `LIKE` (SQLite) |
-| `session.withTransaction()` | `db.transaction()` in Drizzle |
-| `Map<string, string>` type | JSON column |
-| Virtual `id` field from `_id` | UUID `id` column is the real primary key |
-
-### Data Type Mapping
-
-| Mongoose Type | PostgreSQL | SQLite |
-|--------------|------------|--------|
-| `ObjectId` | `uuid` (with `gen_random_uuid()`) | `text` (UUID stored as string) |
-| `String` | `text` / `varchar` | `text` |
-| `Number` | `integer` / `real` | `integer` / `real` |
-| `Date` | `timestamp` | `text` (ISO 8601) or `integer` (unix) |
-| `Boolean` | `boolean` | `integer` (0/1) |
-| `Mixed` (JSON blob) | `jsonb` | `text` (JSON string, parsed in app) |
-| `[String]` (array) | `text[]` or `jsonb` | `text` (JSON array string) |
-| `Map<K,V>` | `jsonb` | `text` (JSON string) |
-
-## Build Order (Dependencies Between Components)
-
-This is the critical section for roadmap phasing. Components must be built in dependency order.
-
-### Phase 1: Database Foundation (must be first)
-
-**Build:**
-1. Drizzle schema definitions (both PG and SQLite dialects)
-2. DrizzleModule + DrizzleProvider (conditional driver)
-3. Migration files via Drizzle Kit
-4. Base repository class
-
-**Why first:** Everything else depends on the data layer. Cannot modify services or controllers until repositories exist.
-
-**Depends on:** Nothing.
-
-### Phase 2: Repository Layer + Service Migration
-
-**Build:**
-1. UserRepository, TeamRepository, MembershipRepository
-2. ProjectRepository, TokenRepository, ActivityLogRepository
-3. Refactor each Service to use its Repository (remove `@InjectModel`, remove Mongoose imports)
-4. Remove MongooseService, database.module.ts, all schema files in models/
-
-**Why second:** Services are the consumers of repositories. Each service can be migrated independently (one at a time), and tested with the new database.
-
-**Depends on:** Phase 1 (schema + repositories must exist).
-
-### Phase 3: Auth System Replacement
-
-**Build:**
-1. Remove all Feishu-related code from AuthService
-2. Remove `feishuId`, `feishuUnionId` from User schema
-3. Remove `loginWithFeishu` endpoint from AuthController
-4. Remove `joinDefaultTeam` (hardcoded team ID)
-5. Clean up frontend login page (remove Feishu OAuth button/flow)
-6. Ensure register + login work with new UserRepository
-
-**Why third:** Auth depends on UserRepository (Phase 2). Auth is isolated enough to change without affecting other services.
-
-**Depends on:** Phase 2 (UserRepository).
-
-### Phase 4: File Storage Replacement
-
-**Build:**
-1. FileStorageService with Multer + local disk
-2. UploadController with POST and GET endpoints
-3. Update frontend `packages/web/api/upload.ts` to hit local server
-4. Update Token schema to store local paths instead of CDN URLs
-5. Configure NestJS to serve static files from uploads directory
-
-**Why fourth:** File storage is a leaf dependency -- nothing else needs to change for it to work. Can be done in parallel with Phase 3 in practice.
-
-**Depends on:** Phase 1 (schema, since Token has screenshots field), Phase 2 (TokenRepository).
-
-### Phase 5: Docker Deployment
-
-**Build:**
-1. Update `docker-compose.yml` with three services (web, server, db)
-2. Add `docker-compose.sqlite.yml` override for SQLite-only mode (no db service)
-3. Update `Dockerfile.server` to include Drizzle migration step
-4. Add `.env.example` with all configuration variables
-5. Add health checks and proper `depends_on` conditions
-6. Volume mount for uploads directory and SQLite file
-
-**Why last:** Docker wraps everything else. All application code must be working before containerizing.
-
-**Depends on:** Phases 1-4 (all application changes complete).
-
-### Dependency Graph
+### API Key Flow (changed)
 
 ```
-Phase 1: DB Foundation
-    |
-    v
-Phase 2: Repositories + Service Migration
-    |         |
-    v         v
-Phase 3:   Phase 4:
-Auth       File Storage
-    |         |
-    +----+----+
-         |
-         v
-Phase 5: Docker Deployment
+BEFORE:
+  Client --> Bearer qlji_xxx --> AuthGuard (check qlji_ prefix) --> ApiKeyService (prefix lookup)
+
+AFTER:
+  Client --> Bearer tw_xxx --> AuthGuard (check tw_ prefix) --> ApiKeyService (prefix lookup)
 ```
 
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-50 users (typical self-hosted) | SQLite is fine. Single Docker host. No optimization needed. |
-| 50-500 users | Switch to PostgreSQL. Add connection pooling. Still single host. |
-| 500+ users | PostgreSQL with read replicas. Separate file storage (S3-compatible like MinIO). Add Redis for session caching. This is beyond typical self-hosted scope. |
-
-### Scaling Priorities
-
-1. **First bottleneck:** Token table size. Projects with thousands of tokens and JSON translation blobs will stress SQLite. PostgreSQL with `jsonb` indexing handles this well. Mitigation: recommend PostgreSQL for production in docs.
-2. **Second bottleneck:** File storage. Screenshots accumulate. Mitigation: configurable storage backend (local by default, S3-compatible optional).
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Shared Schema File for PG and SQLite
-
-**What people do:** Try to write one schema.ts that works for both PostgreSQL and SQLite using Drizzle.
-**Why it's wrong:** Drizzle requires dialect-specific table constructors (`pgTable` vs `sqliteTable`). Attempting to abstract over this leads to type errors, lost type safety, and unmaintainable codegen hacks.
-**Do this instead:** Maintain two small schema directories (`schema/pg/` and `schema/sqlite/`). They share the same column names and TypeScript types. Use the conditional provider to load the right one.
-
-### Anti-Pattern 2: Leaking ORM into Services
-
-**What people do:** Import Drizzle's `eq()`, `and()`, `sql` operators directly in service files.
-**Why it's wrong:** Couples business logic to the ORM. When you need to change a query, you're editing business logic files. Makes unit testing services require a real database.
-**Do this instead:** All Drizzle imports stay in repository files. Services call repository methods with plain TypeScript arguments.
-
-### Anti-Pattern 3: Using Mongoose Populate-Style Eager Loading
-
-**What people do:** Replicate Mongoose's `.populate()` pattern by writing Drizzle queries that JOIN everything eagerly.
-**Why it's wrong:** SQL JOINs can be expensive. The current codebase populates membership -> user -> email on nearly every team query. In relational DBs, this produces large result sets.
-**Do this instead:** Load only what each endpoint needs. Use Drizzle's relational query API for specific includes. Consider separate queries for nested data (N+1 is sometimes faster than a massive JOIN for small datasets).
-
-### Anti-Pattern 4: Running Migrations at Application Startup
-
-**What people do:** Call `drizzle-kit migrate` inside `main.ts` or `onModuleInit`.
-**Why it's wrong:** Race conditions in multi-instance deployments. Migration failures crash the app. No rollback control.
-**Do this instead:** Run migrations as a separate Docker entrypoint step or init container. Migration runs once, then the application starts.
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| AI/Dify (optional) | HTTP client via AiService | Already abstracted behind AiService. Make fully optional: if no `AI_API_URL` env var, disable AI endpoints gracefully. |
-| MCP Server | In-process via McpService | No external dependency. Uses MCP SDK. Unaffected by DB change. |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| web <-> server | HTTP REST (JSON) | No change. API contract stays the same. Frontend is database-agnostic. |
-| server <-> db | Drizzle ORM (SQL) | Replaces Mongoose ODM (BSON/MongoDB wire protocol). |
-| Controller <-> Service | NestJS DI, method calls | No change. |
-| Service <-> Repository | NestJS DI, method calls | NEW boundary. Services never bypass repositories. |
-| Repository <-> Drizzle | Direct import of drizzle instance | Repository is the only layer that knows about Drizzle. |
-| FileStorage <-> Disk | Node.js fs module | Files stored in Docker volume at `./uploads/`. |
-| web <-> FileStorage | HTTP GET for serving files | Frontend fetches `/api/uploads/:filename` which server serves from disk. |
-
-### Docker Network Architecture
+### CLI Config Flow (changed)
 
 ```
-docker-compose.yml:
-  services:
-    web:
-      build: ./Dockerfile.web
-      ports: ["3000:3000"]
-      environment:
-        NEXT_PUBLIC_API_URL: http://server:3001  # internal docker network
-      depends_on: [server]
+BEFORE:
+  CLI reads ~/.config/qlj-i18n/config.json
+  CLI reads ./.qlj-i18n.json
+  CLI checks $QLJ_I18N_API_KEY, $QLJ_I18N_SERVER
 
-    server:
-      build: ./Dockerfile.server
-      ports: ["3001:3001"]
-      environment:
-        DATABASE_DRIVER: postgresql          # or 'sqlite'
-        DATABASE_URL: postgres://...         # for PG
-        DATABASE_PATH: /data/i18n.db         # for SQLite
-        UPLOAD_DIR: /data/uploads
-        JWT_SECRET: ${JWT_SECRET}
-      volumes:
-        - uploads_data:/data/uploads
-        - sqlite_data:/data                  # only used in SQLite mode
-      depends_on:
-        db:
-          condition: service_healthy          # only when using PG
-
-    db:                                       # only in PG mode
-      image: postgres:16-alpine
-      environment:
-        POSTGRES_DB: i18n
-        POSTGRES_USER: ${DB_USER}
-        POSTGRES_PASSWORD: ${DB_PASSWORD}
-      volumes:
-        - pg_data:/var/lib/postgresql/data
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-        interval: 5s
-        timeout: 5s
-        retries: 5
+AFTER:
+  CLI reads ~/.config/transweave/config.json
+  CLI reads ./.transweave.json
+  CLI checks $TRANSWEAVE_API_KEY, $TRANSWEAVE_SERVER
 ```
 
-For SQLite mode, provide a `docker-compose.sqlite.yml` override that removes the `db` service and changes `DATABASE_DRIVER` to `sqlite`. Users run:
-- **Quick start (SQLite):** `docker compose -f docker-compose.yml -f docker-compose.sqlite.yml up`
-- **Production (PostgreSQL):** `docker compose up`
+### Landing Page Flow (new)
+
+```
+  Browser --> GET / --> Next.js (landing)/page.tsx --> Static render (no API calls)
+  Browser --> clicks "Get Started" --> /login or /setup (enters (app) route group)
+```
+
+## Build Order: What to Change First vs Last
+
+The rename must follow a specific order to avoid broken builds at any intermediate step. Here is the dependency-aware sequence.
+
+### Phase 1: Package Identity (must be first -- everything else depends on package names)
+
+```
+Step 1.1: package.json name changes (all 3 packages + root)
+  - package.json:         "@qlj/i18n-manager" --> "@transweave/monorepo"
+  - packages/server/:     "qlj-i18n-server" --> "@transweave/server"
+  - packages/web/:        "nextjs" --> "@transweave/web"
+  - packages/cli/:        "qlj-i18n" --> "transweave"
+
+Step 1.2: Dockerfile filter references (depend on package names)
+  - packages/server/Dockerfile:  --filter qlj-i18n-server --> --filter @transweave/server
+  - packages/web/Dockerfile:     --filter nextjs --> --filter @transweave/web
+
+Step 1.3: pnpm-lock.yaml regeneration
+  - Run: pnpm install (updates lock file with new package names)
+
+Step 1.4: CLI binary rename
+  - packages/cli/package.json bin: "qlj-i18n" --> "transweave"
+  - Rename file: packages/cli/bin/qlj-i18n.js --> packages/cli/bin/transweave.js
+  - Update bin entry to point to new filename
+```
+
+**Verify:** `pnpm build:server && pnpm build:web && pnpm build:cli` all pass.
+
+### Phase 2: Server-Side Code Changes (API contract changes)
+
+```
+Step 2.1: API key prefix
+  - packages/server/src/service/api-key.service.ts
+    - KEY_PREFIX_LENGTH: 13 --> 11
+    - fullKey template: `qlji_${randomPart}` --> `tw_${randomPart}`
+
+Step 2.2: Auth guard
+  - packages/server/src/jwt/guard.ts
+    - token.startsWith('qlji_') --> token.startsWith('tw_')
+
+Step 2.3: MCP controller
+  - packages/server/src/controller/mcp.controller.ts
+    - All qlji_ references --> tw_
+    - All qlj-i18n references --> transweave
+
+Step 2.4: MCP service
+  - packages/server/src/service/mcp.service.ts
+    - name: 'qlj-i18n-mcp-server' --> 'transweave-mcp-server'
+
+Step 2.5: Encryption salt
+  - packages/server/src/ai/encryption.util.ts
+    - salt: 'qlj-i18n-ai-salt' --> 'transweave-ai-salt'
+```
+
+**Verify:** `pnpm build:server && pnpm --filter @transweave/server test` passes.
+
+### Phase 3: CLI Code Changes (depends on server API contract)
+
+```
+Step 3.1: Config paths and env vars
+  - packages/cli/src/config.ts
+    - CONFIG_DIR: ~/.config/qlj-i18n --> ~/.config/transweave
+    - PROJECT_CONFIG_FILENAME: .qlj-i18n.json --> .transweave.json
+    - QLJ_I18N_API_KEY --> TRANSWEAVE_API_KEY
+    - QLJ_I18N_SERVER --> TRANSWEAVE_SERVER
+
+Step 3.2: CLI program identity
+  - packages/cli/src/index.ts
+    - .name('qlj-i18n') --> .name('transweave')
+    - .description update
+
+Step 3.3: Command messages
+  - packages/cli/src/commands/login.ts
+    - qlji_ prefix check --> tw_
+    - Error messages update
+  - packages/cli/src/commands/init.ts
+    - All qlj-i18n references --> transweave
+  - packages/cli/src/commands/pull.ts
+    - All qlj-i18n references --> transweave
+  - packages/cli/src/commands/push.ts
+    - All qlj-i18n references --> transweave
+```
+
+**Verify:** `pnpm build:cli` passes.
+
+### Phase 4: Web UI Branding (independent of API changes)
+
+```
+Step 4.1: Metadata and titles
+  - packages/web/app/layout.tsx
+    - title: "i18n Manager" --> "Transweave"
+    - description update
+
+Step 4.2: i18n strings
+  - packages/web/i18n/all.json
+    - header.title: "qlj-i18n" / "i18n Platform" --> "Transweave"
+    - welcome.title update
+
+Step 4.3: Cookie name
+  - packages/web/lib/cookies.ts
+    - LANGUAGE_COOKIE_KEY: 'i18n_language' --> 'tw_language'
+
+Step 4.4: localStorage key (optional, lower priority)
+  - packages/web/lib/auth/auth-context.tsx
+  - packages/web/lib/api.ts
+  - packages/web/lib/auth/axios-interceptor.ts
+  - packages/web/api/upload.ts
+  - packages/web/app/setup/page.tsx
+    - 'authToken' --> 'tw_auth_token' (all 9 references)
+```
+
+**Verify:** `pnpm build:web` passes.
+
+### Phase 5: Static Assets (new branding materials)
+
+```
+Step 5.1: Replace existing assets
+  - packages/web/public/favicon.svg     <-- New Transweave design
+  - packages/web/public/logo.svg        <-- New Transweave design
+  - Remove: packages/web/public/fanyi.webp (old internal asset)
+  - Remove: packages/web/public/tutu.jpg (old internal asset)
+  - Remove: packages/web/public/next.svg (Next.js default, unused)
+  - Remove: packages/web/public/vercel.svg (Vercel default, unused)
+
+Step 5.2: Add new assets
+  - packages/web/public/og-image.png    <-- For social sharing / link previews
+  - packages/web/public/logo-dark.svg   <-- Dark mode variant (optional)
+
+Step 5.3: Add OG meta tags
+  - packages/web/app/layout.tsx metadata:
+    openGraph: { images: ['/og-image.png'], ... }
+```
+
+### Phase 6: Docker Compose & Infrastructure
+
+```
+Step 6.1: Docker Compose image names
+  - docker-compose.yml: Add image: tags
+    server: transweave/server:latest
+    web: transweave/web:latest
+
+Step 6.2: Database defaults (cosmetic)
+  - docker-compose.yml:
+    POSTGRES_DB: ${POSTGRES_DB:-transweave}
+    POSTGRES_USER: ${POSTGRES_USER:-transweave}
+  - .env.example: update defaults to match
+
+Step 6.3: GitHub Actions (if adding CI)
+  - .github/workflows/ updates for new image names
+```
+
+**Verify:** `docker compose build && docker compose up -d` works.
+
+### Phase 7: Documentation (must be last -- references everything above)
+
+```
+Step 7.1: README.md complete rewrite
+Step 7.2: .env.example header and comments
+Step 7.3: docs/api-reference.md updates
+Step 7.4: .gitignore additions (.transweave.json should be in user projects, not this repo)
+```
+
+### Phase 8: Landing Page (can happen in parallel with Phase 5-7)
+
+```
+Step 8.1: Route group restructure
+  - Move existing app routes into (app)/ route group
+  - Create (landing)/ route group
+Step 8.2: Landing page components
+Step 8.3: Landing layout (no auth)
+```
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Partial Rename
+**What:** Changing some references but not others (e.g., package names but not Dockerfile filters).
+**Why bad:** Build breaks silently. Docker builds fail with "no matching package" errors that are confusing to debug.
+**Instead:** Use the complete inventory above as a checklist. Grep for `qlj` and `qlji` after completion to verify zero remaining references.
+
+### Anti-Pattern 2: Backward-Compatible API Key Prefix
+**What:** Supporting both `qlji_` and `tw_` prefixes simultaneously.
+**Why bad:** Permanent code complexity for a pre-release project with zero external users.
+**Instead:** Hard cut. If backward compatibility were ever needed (post-release), add a config option (`LEGACY_API_KEY_PREFIX=qlji_`) rather than hardcoding both.
+
+### Anti-Pattern 3: Landing Page as Separate Package
+**What:** Creating `packages/landing` with its own build pipeline.
+**Why bad:** Doubles the frontend build infrastructure, requires a new Docker service or nginx routing, duplicates shared assets.
+**Instead:** Route group in `packages/web/app/(landing)/`.
+
+### Anti-Pattern 4: Renaming the Git Repository Directory
+**What:** Renaming the local directory from `qlj-fe-i18n` to `transweave`.
+**Why bad:** Breaks all absolute paths in shells, IDE configs, git worktrees. The directory name is irrelevant to the product -- only package.json names and Docker image names matter.
+**Instead:** Leave the directory name as-is or rename it independently of the code changes. The GitHub repo can be named `transweave` regardless of local directory name.
+
+### Anti-Pattern 5: Changing Everything in One Commit
+**What:** A single massive commit with all rename changes.
+**Why bad:** Impossible to bisect if something breaks. Hard to review.
+**Instead:** Follow the phased approach above. Each phase is a logical commit that leaves the project buildable.
+
+## Scalability Considerations
+
+| Concern | Now (v1.1) | Future (v2+) |
+|---------|------------|--------------|
+| npm publishing | CLI only (`transweave` on npm) | Consider `@transweave/cli` scoped name if adding SDK packages later |
+| Docker registry | Local builds only | Push to `ghcr.io/[org]/transweave-server` and `ghcr.io/[org]/transweave-web` |
+| Multiple frontends | Single Next.js app with route groups | If landing page grows significantly, consider splitting to separate deployment |
+| API versioning | No version prefix needed yet | Add `/api/v1/` prefix before v2 API changes |
+| CLI backward compat | Not needed (pre-release) | Support `--legacy-config` flag if users have `.qlj-i18n.json` files |
+
+## Post-Rename Verification Checklist
+
+After all changes are complete, verify zero remaining references:
+
+```bash
+# Must return zero results (excluding pnpm-lock.yaml, node_modules, .git)
+grep -r "qlj" --include="*.ts" --include="*.tsx" --include="*.json" --include="*.js" \
+  --include="*.yml" --include="*.yaml" --include="*.md" --include="*.svg" \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude=pnpm-lock.yaml .
+
+# Specific patterns to verify are gone:
+grep -r "qlji_" --exclude-dir=node_modules --exclude-dir=.git .
+grep -r "qlj-i18n" --exclude-dir=node_modules --exclude-dir=.git .
+grep -r "@qlj/" --exclude-dir=node_modules --exclude-dir=.git .
+grep -r "QLJ_I18N" --exclude-dir=node_modules --exclude-dir=.git .
+```
+
+## Integration Points Summary
+
+| Integration Point | Change Type | Affected Components |
+|-------------------|-------------|---------------------|
+| API key prefix (`qlji_` -> `tw_`) | Breaking | server auth guard, API key service, MCP controller, CLI login, docs |
+| Package names | Build system | All 3 packages, both Dockerfiles, docker-compose |
+| CLI binary name | User-facing | CLI package.json bin, bin file rename |
+| CLI config paths | User-facing | CLI config.ts (global + project config paths) |
+| CLI env vars | CI/CD | CLI config.ts (TRANSWEAVE_API_KEY, TRANSWEAVE_SERVER) |
+| Cookie names | User-facing (minor) | Web cookies.ts |
+| Encryption salt | Data migration | Server encryption.util.ts |
+| MCP server name | MCP clients | Server mcp.service.ts |
+| Page metadata | SEO | Web layout.tsx |
+| i18n strings | UI text | Web i18n/all.json |
+| Docker image names | Deployment | docker-compose.yml |
+| Static assets | Visual branding | Web public/ directory |
+| Landing page | New feature | Web app/(landing)/ route group |
 
 ## Sources
 
-- [NestJS Database Documentation](https://docs.nestjs.com/techniques/database) -- Official NestJS database integration docs (HIGH confidence)
-- [NestJS & DrizzleORM: A Great Match - Trilon Consulting](https://trilon.io/blog/nestjs-drizzleorm-a-great-match) -- Official NestJS consulting partner's Drizzle integration guide (HIGH confidence)
-- [Repository Pattern in NestJS with Drizzle ORM](https://medium.com/@vimulatus/repository-pattern-in-nest-js-with-drizzle-orm-e848aa75ecae) -- Repository pattern implementation (MEDIUM confidence)
-- [nestjs-drizzle GitHub](https://github.com/knaadh/nestjs-drizzle) -- Community NestJS module for Drizzle with PG, SQLite, MySQL drivers (MEDIUM confidence)
-- [Drizzle ORM SQLite Getting Started](https://orm.drizzle.team/docs/get-started-sqlite) -- Official Drizzle SQLite docs (HIGH confidence)
-- [Drizzle ORM PostgreSQL Getting Started](https://orm.drizzle.team/docs/get-started/postgresql-new) -- Official Drizzle PostgreSQL docs (HIGH confidence)
-- [Drizzle ORM Config Reference](https://orm.drizzle.team/kit-docs/config-reference) -- Drizzle Kit configuration (HIGH confidence)
-- [TypeORM Migrations with SQLite in NestJS](https://dawid.dev/dev/backend/typeorm-migrations-nestjs-sqlite-a-complete-guide) -- SQLite migration patterns (MEDIUM confidence)
-- [NestJS File Uploads with Multer](https://www.freecodecamp.org/news/how-to-handle-file-uploads-in-nestjs-with-multer/) -- Multer integration patterns (HIGH confidence)
-- [Docker NestJS + Next.js Monorepo Best Practices](https://forums.docker.com/t/best-practices-for-using-docker-in-development-vs-production-nestjs-nextjs-monorepo/149461) -- Docker deployment patterns (MEDIUM confidence)
-- [Best ORM for NestJS in 2025: Drizzle vs TypeORM vs Prisma](https://dev.to/sasithwarnakafonseka/best-orm-for-nestjs-in-2025-drizzle-orm-vs-typeorm-vs-prisma-229c) -- ORM comparison (MEDIUM confidence)
-
----
-*Architecture research for: Open-source i18n platform (MongoDB to SQLite/PostgreSQL conversion)*
-*Researched: 2026-03-01*
+- Direct codebase analysis of all files in the repository (HIGH confidence)
+- Next.js App Router route groups documentation (HIGH confidence -- well-established pattern)
+- pnpm workspace filter documentation for scoped package names (HIGH confidence)

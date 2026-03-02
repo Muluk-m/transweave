@@ -1,357 +1,534 @@
-# Pitfalls Research
+# Domain Pitfalls: Renaming & Branding an Open-Source Project
 
-**Domain:** Internal-to-open-source i18n platform conversion (MongoDB to SQLite/PostgreSQL, Docker deployment)
+**Domain:** Open-source developer tool rebranding (qlj-i18n to Transweave)
 **Researched:** 2026-03-01
-**Confidence:** HIGH (based on codebase inspection + verified community patterns)
+**Confidence:** HIGH (based on direct codebase audit of all naming touchpoints + community patterns)
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Leaked Secrets and Internal References in Git History
-
-**What goes wrong:**
-The `opensource` branch will be created from `master`, inheriting its full git history. The codebase currently contains: a hardcoded MongoDB ObjectId for a default team (`680f557b932fa3656cbae929` in `auth.service.ts:154`), a hardcoded super-admin email (`maqiqian@qiliangjia.com` in `superAdmin.ts`), internal CDN URLs (`https://qlj-devhub-homepage.qiliangjia.one/api/uploads` in `upload.ts`), Feishu OAuth endpoint references, a fallback JWT secret (`'your-secret-key'` in `jwt/strategy.ts`), and a `packages/server/.env` file that is NOT gitignored (`.gitignore` only excludes `.env*.local`). Even if these are removed from source files, they remain in git history.
-
-**Why it happens:**
-Developers focus on cleaning current files but forget that `git log -p` exposes every secret ever committed. The `.gitignore` pattern `.env*.local` does not cover `.env` files. Internal MongoDB ObjectIds and email addresses appear harmless but leak organizational structure and identity.
-
-**How to avoid:**
-1. Before creating the `opensource` branch, audit the full repo with `gitleaks detect --source .` or `trufflehog git file://.`
-2. Add `.env` (not just `.env*.local`) to `.gitignore` immediately
-3. Create the opensource branch as an orphan branch (`git checkout --orphan opensource`) with a clean first commit, rather than branching from master. This eliminates all prior history.
-4. Build a checklist of every string containing `qiliangjia`, `feishu`, `bondma`, `qlj`, and specific emails/IDs. Grep found these across 38 files currently.
-5. After cleanup, run the secret scanner again on the new branch to verify
-
-**Warning signs:**
-- `grep -r "qiliangjia\|feishu\|bondma\|qlj" --include="*.ts" --include="*.tsx" --include="*.json"` returning any results on the opensource branch
-- `.env` file accessible in repository
-- Any hardcoded email addresses, MongoDB ObjectIds, or API endpoints in source code
-
-**Phase to address:**
-Phase 1 (Repository Setup / Branch Creation) -- must be the very first task before any other work begins on the opensource branch.
+Mistakes that cause broken deployments, broken user workflows, or require emergency patches.
 
 ---
 
-### Pitfall 2: MongoDB `Schema.Types.Mixed` and `Map` Types Have No Direct Relational Equivalent
+### Pitfall 1: API Key Prefix Change Silently Invalidates All Existing Keys
 
 **What goes wrong:**
-The codebase stores critical data in schemaless MongoDB fields that cannot be directly mapped to relational columns:
-- `Token.translations`: `Schema.Types.Mixed` storing `Record<string, any>` -- dynamic keys per language (e.g., `{"en": "Hello", "zh-CN": "..."}`)
-- `TokenHistory.translations`: Same pattern for historical snapshots
-- `ActivityLog.details`: `Schema.Types.Mixed` storing `ActivityDetails` with nested `changes[]` arrays and arbitrary `metadata`
-- `Project.languageLabels`: `Map<string, string>` type
+The API key system uses `qlji_` as a hard-coded prefix in 6 files across 12 code locations. The prefix is not cosmetic -- it is used as the **routing signal** for authentication. In `packages/server/src/jwt/guard.ts:36`, the auth guard checks `if (token.startsWith('qlji_'))` to decide whether a Bearer token is a JWT or an API key. In `packages/server/src/service/api-key.service.ts:22`, new keys are generated with `qlji_${randomPart}`. In `packages/cli/src/commands/login.ts:12`, the CLI rejects keys that do not start with `qlji_`.
 
-Teams typically either (a) try to normalize these into relational tables (creating an explosion of rows and complex JOINs) or (b) dump everything into a single `TEXT` column as JSON (losing queryability). Both approaches fail at different scales.
+If the prefix is renamed to `tw_` or `transweave_` during the rebrand, every API key ever issued becomes permanently invalid. Users who have configured CI/CD pipelines, MCP server connections, or CLI configs with existing `qlji_` keys will experience silent authentication failures.
 
 **Why it happens:**
-MongoDB's flexible schema encourages storing heterogeneous data in single documents. When migrating to relational databases, developers underestimate how deeply `Mixed` types are embedded in application logic. The 50+ occurrences of `Record<string, ...>` in the service layer show this is not a peripheral pattern -- it is the core data model.
+The prefix looks like "just branding" but it is load-bearing infrastructure. Developers rename it to match the new brand without realizing it is a functional part of the authentication pipeline, not a display string.
 
-**How to avoid:**
-1. Use PostgreSQL's `JSONB` columns for `translations`, `details`, and `languageLabels` -- this preserves queryability (GIN indexes, `->` operator) while accepting dynamic keys
-2. For SQLite, use `TEXT` columns with `JSON()` functions (SQLite 3.38+ supports `json_extract`, `json_each`)
-3. Create a dedicated `translation` table with `(token_id, language_code, value)` as the normalized form, but also keep a JSONB snapshot column for fast reads. The read path uses JSONB; the write path updates both.
-4. Do NOT attempt to create one column per language -- the set of languages is dynamic per project
-5. For `TokenHistory`, use a separate `token_history` table with a JSONB `translations_snapshot` column rather than embedding history arrays inside the token record
+**Consequences:**
+- All existing API keys fail authentication with no error message explaining why
+- CI/CD pipelines using `qlji_` keys break silently
+- MCP server connections from AI coding assistants stop working
+- Users must regenerate all keys and reconfigure all integrations
 
-**Warning signs:**
-- ORM schema definitions that use `string` type for what should be JSONB
-- Import/export utilities silently dropping data because JSON nested structures are flattened
-- Queries that work on PostgreSQL but fail on SQLite due to missing JSON function support
-- N+1 query patterns emerging when normalized translation rows replace embedded documents
+**Prevention:**
+1. **Do NOT rename the API key prefix.** Keep `qlji_` forever as a backward-compatible prefix. This is a protocol-level identifier, not a brand element. Stripe still uses `sk_` and `pk_` regardless of any branding changes.
+2. If you absolutely must use a new prefix, implement dual-prefix support: accept both `qlji_` and `tw_` in the auth guard. New keys get the new prefix; old keys continue working.
+3. Add a comment in `api-key.service.ts` explaining that the prefix is a stable API contract, not subject to rebranding.
 
-**Phase to address:**
-Phase 2 (Database Abstraction Layer) -- the schema design must be settled before any service layer migration begins. This is the highest-risk design decision in the entire conversion.
+**Detection:**
+```bash
+# Verify the prefix is NOT changed in these critical files:
+grep -n "qlji_" packages/server/src/jwt/guard.ts
+grep -n "qlji_" packages/server/src/service/api-key.service.ts
+grep -n "qlji_" packages/cli/src/commands/login.ts
+```
+
+**Phase to address:** Rename phase -- by explicitly deciding to KEEP the prefix, not by oversight.
 
 ---
 
-### Pitfall 3: MongoDB `.populate()` Chains and Transactions Cannot Be Mechanically Translated to SQL JOINs
+### Pitfall 2: Encryption Salt Change Breaks All Stored AI Provider API Keys
 
 **What goes wrong:**
-The codebase uses 30+ `.populate()` calls (with nested population like `{ path: 'tokens', populate: { path: 'history.user' } }`) and 10+ explicit `session.withTransaction()` blocks that require a MongoDB replica set. These patterns do not map one-to-one to SQL:
-- `.populate()` becomes `JOIN` but the deeply nested population (`project -> tokens -> history -> user`) requires multi-table JOINs or separate queries
-- MongoDB sessions require `replicaSet=rs0` (visible in `database.module.ts` connection string) -- this is a MongoDB-specific concept with no relational equivalent
-- The `withTransaction()` utility in `utils/transaction.ts` wraps Mongoose sessions -- the entire abstraction must be replaced
+In `packages/server/src/ai/encryption.util.ts:17`, the encryption key derivation uses a hardcoded salt string: `scryptSync(secret, 'qlj-i18n-ai-salt', 32)`. This salt is not branding -- it is a cryptographic parameter. If someone renames it to `'transweave-ai-salt'` during the rebrand, all previously encrypted AI provider API keys (stored in the database) become permanently undecryptable. The `decryptApiKey()` function will throw "AI provider API key could not be decrypted" for every user.
 
 **Why it happens:**
-Mongoose `.populate()` is syntactic sugar for what relational databases do natively with JOINs, but the translation is not mechanical. Nested populate chains generate multiple sequential queries in Mongoose; a naive conversion to multiple JOINs can produce cartesian explosions. Meanwhile, developers familiar with MongoDB transactions may not realize that SQLite has fundamentally different transaction semantics (single-writer, WAL mode journal).
+The string `qlj-i18n-ai-salt` looks like a branding artifact. A developer doing a global find-and-replace of `qlj-i18n` will change this salt without understanding its cryptographic significance.
 
-**How to avoid:**
-1. Map every `.populate()` call to its equivalent SQL query strategy BEFORE starting migration. Some will become JOINs, others should become separate queries with `IN()` clauses.
-2. Replace the `withTransaction()` utility with an ORM-native transaction API (e.g., Drizzle's `db.transaction()` or TypeORM's `QueryRunner`)
-3. For SQLite, use `IMMEDIATE` transactions instead of `DEFERRED` (default) to avoid `SQLITE_BUSY` errors under concurrent writes
-4. Design the repository layer with an interface that abstracts both `populate` (document) and `JOIN` (relational) patterns behind a single method signature
-5. Do not attempt to convert `.aggregate()` pipelines (found in `activity-log.service.ts`) to SQL in one step -- rewrite them as native SQL queries
+**Consequences:**
+- Every user's stored AI provider API key (OpenAI, Claude, DeepL, Google) becomes inaccessible
+- Users must re-enter all API keys in settings
+- No recovery possible without the original salt value
+- Data corruption is silent until the user tries to use AI translation
 
-**Warning signs:**
-- Service methods that call `.populate()` more than 2 levels deep
-- Test queries returning correct data on PostgreSQL but timing out on SQLite
-- `SQLITE_BUSY` errors under normal API usage (indicates transaction contention)
-- Aggregate pipeline results differing between MongoDB and the SQL rewrite
+**Prevention:**
+1. **Do NOT change the salt string.** Add a comment above it:
+   ```typescript
+   // IMPORTANT: This salt is a cryptographic parameter, NOT a brand name.
+   // Changing it will permanently break decryption of all stored AI API keys.
+   // DO NOT rename during rebranding.
+   ```
+2. Add `encryption.util.ts` to an explicit "do not rebrand" exclusion list in the rename checklist.
+3. If the salt must change for other reasons, write a data migration that decrypts with the old salt and re-encrypts with the new one.
 
-**Phase to address:**
-Phase 2 (Database Abstraction Layer) and Phase 3 (Service Layer Migration). The abstraction design happens in Phase 2; the actual rewrite of each service method happens in Phase 3.
+**Detection:**
+```bash
+# This must still contain 'qlj-i18n-ai-salt' after the rename:
+grep "ai-salt" packages/server/src/ai/encryption.util.ts
+```
+
+**Phase to address:** Rename phase -- as an explicit exclusion in the find-and-replace process.
 
 ---
 
-### Pitfall 4: Hardcoded Internal Team ID Breaks All New Deployments
+### Pitfall 3: Incomplete Rename Leaves Ghost References in 20+ Locations
 
 **What goes wrong:**
-`auth.service.ts:154` hardcodes `const defaultTeam = '680f557b932fa3656cbae929'` -- a MongoDB ObjectId pointing to a specific team in the internal deployment. Every new Feishu login auto-joins this team. When the database is replaced with SQLite/PostgreSQL using auto-increment or UUID primary keys, this reference becomes meaningless. Any new open-source deployment will crash or silently fail on user registration if this code path executes.
+The old name `qlj-i18n` appears in 20+ files across 7 distinct naming patterns. A partial rename -- catching some but not all -- creates a jarring user experience where the old name leaks through in CLI output, error messages, log lines, config file paths, and documentation.
+
+**Current naming inventory (audited):**
+
+| Pattern | Files affected | Locations |
+|---------|---------------|-----------|
+| `@qlj/i18n-manager` | `package.json` (root) | 1 |
+| `qlj-i18n-server` | `packages/server/package.json`, `packages/server/Dockerfile:15` | 2 |
+| `qlj-i18n` (CLI package name) | `packages/cli/package.json` (name + bin + description) | 3 |
+| `qlj-i18n` (CLI binary) | `packages/cli/bin/qlj-i18n.js`, `packages/cli/package.json:bin` | 2 |
+| `qlj-i18n` (user-facing CLI text) | `packages/cli/src/index.ts`, all 4 command files | 8+ |
+| `.qlj-i18n.json` (project config) | `packages/cli/src/config.ts` (4 references) | 4 |
+| `~/.config/qlj-i18n/` (global config dir) | `packages/cli/src/config.ts:17` | 1 |
+| `QLJ_I18N_API_KEY` (env var) | `packages/cli/src/config.ts:73` | 1 |
+| `QLJ_I18N_SERVER` (env var) | `packages/cli/src/config.ts:86` | 1 |
+| `qlj-i18n-mcp-server` | `packages/server/src/service/mcp.service.ts:24` | 1 |
+| `QLJ i18n MCP Server` | `packages/server/src/controller/mcp.controller.ts` (HTML title, heading) | 3 |
+| `Qlj i18n` (logo text) | `packages/web/components/Logo.tsx:61` | 1 |
+| `qlj-logo-gradient` (SVG ID) | `packages/web/components/Logo.tsx:18,48` | 2 |
+| `qlj-i18n` (i18n translation value) | `packages/web/i18n/all.json:48` | 1 |
+| `i18n Manager` (page title) | `packages/web/app/layout.tsx:14` | 1 |
+| `qlj-i18n` (README, docs) | `README.md`, `docs/api-reference.md` | 30+ |
+| `qlj-i18n` (env example comment) | `.env.example:2` | 1 |
+| `nextjs` (web package name) | `packages/web/package.json:2`, `packages/web/Dockerfile:17,34` | 3 |
+| `qlj-i18n-ai-salt` | `packages/server/src/ai/encryption.util.ts:17` | 1 (DO NOT CHANGE) |
+| `qlji_` (API key prefix) | 6 files, 12 locations | 12 (DO NOT CHANGE) |
 
 **Why it happens:**
-Internal tools frequently hardcode database IDs that "always exist" in their deployment environment. These become invisible landmines when the database is recreated from scratch.
+Names spread like weeds through a codebase. They appear in package.json names (used by pnpm filter), Dockerfile filter commands, CLI binary names, config directory paths, environment variable names, SVG element IDs, translation files, error messages, HTML meta tags, and documentation. No single grep pattern catches all variants (`qlj`, `qlj-i18n`, `@qlj`, `QLJ`, `Qlj`, `qlji_`).
 
-**How to avoid:**
-1. Replace the hardcoded ObjectId with a configurable environment variable (`DEFAULT_TEAM_ID`) or a database seed mechanism
-2. The `joinDefaultTeam()` method itself may not be needed in the open-source version (since Feishu auth is being removed), but the pattern should be audited: grep for any other hardcoded ObjectId strings in the codebase
-3. Create a "first run" setup flow that creates an initial admin user and team, rather than assuming pre-existing data
+**Prevention:**
+Run a multi-pattern verification script after the rename:
+```bash
+# MUST return zero results (excluding node_modules, .git, pnpm-lock.yaml)
+# Except for qlji_ prefix and qlj-i18n-ai-salt which should be kept
+grep -rn --include="*.ts" --include="*.tsx" --include="*.json" --include="*.md" \
+  --include="*.yml" --include="*.yaml" --include="*.env*" --include="Dockerfile*" \
+  -E "(qlj-i18n|@qlj|QLJ_I18N|Qlj i18n|qlj-logo|i18n.Manager)" \
+  --exclude-dir=node_modules --exclude-dir=.git \
+  --exclude=pnpm-lock.yaml \
+  .
+```
 
-**Warning signs:**
-- Any 24-character hex string in source code (MongoDB ObjectId format: `/[0-9a-f]{24}/`)
-- Service methods that reference specific database records by ID without configuration
-- Fresh deployments failing with "Team not found" or similar errors
-
-**Phase to address:**
-Phase 1 (Cleanup) for removing the hardcoded ID, and Phase 3 (Auth System Replacement) for implementing the first-run setup flow.
+**Phase to address:** Rename phase -- run verification as the final step, gate the PR on zero unexpected matches.
 
 ---
 
-### Pitfall 5: Docker Build Context Copies Entire Monorepo
+### Pitfall 4: Docker Volume Name Change Causes Data Loss on Upgrade
 
 **What goes wrong:**
-The existing `Dockerfile.server` and `Dockerfile.web` use the monorepo root as build context (`COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./`). This means every `docker build` sends the entire monorepo to the Docker daemon, including `node_modules`, `.next` build artifacts, `.git` history, and potentially `.env` files. Build times are slow, layer caching is invalidated by unrelated changes, and secrets can leak into Docker images.
+The current `docker-compose.yml` defines named volumes `pgdata` and `uploads`. If the docker-compose file is renamed or reorganized during the rebrand (e.g., changing the project directory name, adding a `name:` field to volumes, or changing volume names to `transweave_pgdata`), existing Docker deployments will create NEW empty volumes on `docker compose up`. The old volumes still exist on disk but are orphaned. Users lose their database and all uploaded files.
 
-Specific issues found:
-- `Dockerfile.server:13` has a typo: `--frozen-lockfil` (missing `e`)
-- No `.dockerignore` file exists in the repository
-- Both Dockerfiles install dependencies in the runner stage AND copy `node_modules` from builder (`COPY --from=builder /app/packages/server/node_modules`), resulting in duplicate/conflicting dependencies
-- `pnpm@latest` is used instead of a pinned version, meaning builds are not reproducible
+Docker Compose derives volume names from the project name (directory name by default): `<project>_<volume>`. If the repo directory changes from `qlj-fe-i18n` to `transweave`, Docker Compose will look for `transweave_pgdata` instead of `qlj-fe-i18n_pgdata`.
 
 **Why it happens:**
-Monorepo Docker builds are genuinely complex. The build context must include workspace-level configuration files while excluding other packages' source code. Without a `.dockerignore`, everything gets sent.
+Docker does not support `docker volume rename` (this is a known limitation, tracked in moby/moby#31154 since 2017). The volume naming is implicit and based on the project directory name. Developers rename the repo and don't realize Docker Compose has lost track of the old volumes.
 
-**How to avoid:**
-1. Create a `.dockerignore` file excluding `node_modules`, `.git`, `.next`, `dist`, `.env*`, `*.md`, and test files
-2. Pin the pnpm version in Dockerfiles to match `package.json`'s `packageManager` field (`pnpm@10.8.0`)
-3. Fix the `--frozen-lockfil` typo to `--frozen-lockfile`
-4. In the runner stage, either install production dependencies fresh OR copy from builder, not both
-5. For the open-source docker-compose, include health checks and proper dependency ordering between services
-6. Consider using Docker build arguments for `NEXT_PUBLIC_API_URL` since Next.js bakes environment variables at build time
+**Consequences:**
+- Database completely empty after upgrade -- all translations, users, teams gone
+- Uploaded files (screenshots) lost
+- No error message -- the app starts normally with a fresh setup wizard
+- Recovery requires manually copying data between Docker volumes
 
-**Warning signs:**
-- Docker build taking more than 2 minutes for a code-only change
-- Docker images larger than 500MB for a Node.js application
-- `docker build` output showing "Sending build context to Docker daemon" with a size > 100MB
-- Environment variables not taking effect after changing `.env` (because Next.js baked them at build time)
+**Prevention:**
+1. **Add an explicit `name:` to each volume in docker-compose.yml** to decouple volume naming from the project directory:
+   ```yaml
+   volumes:
+     pgdata:
+       name: transweave_pgdata
+     uploads:
+       name: transweave_uploads
+   ```
+2. Document the upgrade path clearly in README: "If upgrading from qlj-i18n, rename your existing volumes..."
+3. For users upgrading from the old name, provide a migration command:
+   ```bash
+   # Copy data from old volume to new volume
+   docker run --rm -v qlj-fe-i18n_pgdata:/from -v transweave_pgdata:/to alpine sh -c "cp -a /from/. /to/"
+   ```
+4. Since this is a v1.0-to-v1.1 rename (few external users yet), the risk is low. But document it now for future renames.
 
-**Phase to address:**
-Phase 4 (Docker Deployment) -- but the `.dockerignore` should be created in Phase 1 alongside the branch setup.
+**Detection:**
+- Check that `docker-compose.yml` has explicit `name:` fields on all volumes
+- After rename, verify `docker volume ls | grep pgdata` shows the expected volume name
+
+**Phase to address:** Docker/deployment phase of the branding milestone.
 
 ---
 
-### Pitfall 6: SQLite and PostgreSQL Behave Differently on Common Operations
+## Moderate Pitfalls
 
-**What goes wrong:**
-The dual-database strategy (SQLite for quick-start, PostgreSQL for production) creates a surface area where identical application code produces different behavior:
-- **Type coercion:** SQLite uses dynamic typing; inserting `"42"` into an INTEGER column stores `"42"` as text, not `42`. PostgreSQL rejects type mismatches.
-- **Concurrency:** SQLite allows only one writer at a time (file-level lock, even with WAL mode). The current codebase has 10+ transaction blocks -- concurrent API requests will cause `SQLITE_BUSY` errors that never happen on PostgreSQL.
-- **LIKE operator:** PostgreSQL `LIKE` is case-sensitive by default; SQLite `LIKE` is case-insensitive for ASCII. If any search functionality is added, behavior will differ.
-- **Boolean type:** SQLite has no native BOOLEAN; stores as 0/1. PostgreSQL has true/false. ORM layers usually handle this, but raw queries will differ.
-- **JSON functions:** PostgreSQL JSONB has rich operators (`->>`, `@>`, `#>`). SQLite's `json_extract()` is more limited. Queries that work on PostgreSQL may not work on SQLite and vice versa.
-- **Date handling:** SQLite stores dates as TEXT, REAL, or INTEGER with no native DATE type. PostgreSQL has timestamp, date, interval types with timezone support.
-
-**Why it happens:**
-Developers test against one database (usually SQLite in dev) and deploy to another (PostgreSQL in production). The ORM abstracts most differences but cannot abstract all of them, especially for queries involving JSON, dates, or type edge cases.
-
-**How to avoid:**
-1. Choose an ORM that abstracts SQL dialect differences well. Drizzle ORM supports both SQLite and PostgreSQL with the same schema definition language but generates dialect-specific SQL.
-2. Run the full test suite against BOTH databases in CI -- never assume SQLite behavior matches PostgreSQL
-3. Avoid raw SQL queries entirely; use the ORM's query builder for all operations
-4. For JSON columns, define a minimal set of operations that both databases support and restrict queries to that set
-5. Configure SQLite with `PRAGMA journal_mode=WAL` and `PRAGMA busy_timeout=5000` to mitigate concurrent write failures
-6. Use the ORM's migration system to generate dialect-specific DDL, never hand-write CREATE TABLE statements
-
-**Warning signs:**
-- Tests passing on SQLite but failing on PostgreSQL (or vice versa)
-- `SQLITE_BUSY` errors during concurrent API testing
-- Import operations that succeed on PostgreSQL but silently corrupt data on SQLite due to type coercion
-- Date comparisons returning wrong results on one database
-
-**Phase to address:**
-Phase 2 (Database Abstraction Layer) for schema design, and every subsequent phase must include cross-database testing.
+Mistakes that cause confusion, wasted time, or unprofessional appearance.
 
 ---
 
-### Pitfall 7: Removing Feishu Auth Without a Complete Replacement Leaves Auth Broken
+### Pitfall 5: Landing Page Over-Engineering (Animations Over Content)
 
 **What goes wrong:**
-The current auth system has two code paths: `login()` for local users and `loginWithFeishu()` for OAuth users. The `User` schema has Feishu-specific fields (`feishuId`, `feishuUnionId`, `loginProvider` enum). Simply deleting the Feishu code path without updating the schema, the frontend login flow, and the user creation logic will leave orphaned fields, broken enum constraints, and no way for existing Feishu users to access their accounts in a migrated deployment.
-
-Additionally, the frontend login page (`packages/web/app/login/page.tsx`) likely has Feishu redirect logic, and the middleware (`packages/web/middleware.ts`) may have Feishu-specific routing.
+Developers spend 2-3 weeks building a landing page with scroll-triggered animations, parallax effects, interactive demos, and custom illustration systems. Meanwhile, the page lacks the three things visitors actually need: (1) a clear one-sentence description of what the product does, (2) a screenshot of the actual product, (3) a way to try it. Based on research of 100+ dev tool landing pages (Evil Martians, 2025), the most effective layouts use a centered hero with a bold headline, a product screenshot, and a call-to-action button.
 
 **Why it happens:**
-Auth systems are deeply integrated -- they touch the user model, the JWT payload, the frontend routing, and API middleware. Removing one auth provider is not a matter of deleting one method; it requires tracing every code path that checks `loginProvider` or references Feishu-specific fields.
+Landing page work feels creative and fun compared to the tedium of rename verification. The `motion` library is already in the web dependencies (`motion@^12.18.1`), making it tempting to add complex animations. Developers optimize for impressiveness rather than conversion.
 
-**How to avoid:**
-1. Map the complete auth flow: login page -> API call -> auth service -> JWT creation -> middleware validation -> protected routes
-2. Remove Feishu fields from the user schema (`feishuId`, `feishuUnionId`) and change `loginProvider` to always be `'local'` or remove it entirely
-3. Add username/password registration with proper validation (the `register()` method already exists but may need enhancement)
-4. Implement a first-run admin setup (no users exist in a fresh deployment, so someone needs to be able to create the first account)
-5. Ensure the JWT payload and token refresh logic work without any Feishu-specific data
+**Prevention:**
+1. Time-box the landing page to 3-5 days maximum.
+2. Use a simple structure: Hero (headline + screenshot + CTA) -> Features (3-4 cards with icons) -> Quick Start (code block) -> Footer.
+3. Content first, animation last. Write all copy before touching any CSS or motion code.
+4. A static screenshot of the actual product UI is more convincing than any animation.
+5. Do NOT build a custom design system for the landing page. Use the existing Tailwind + Radix setup.
+6. Skip: custom illustrations, animated backgrounds, interactive demos, pricing tables (it's free), testimonials (too early).
 
-**Warning signs:**
-- Frontend login page still showing "Login with Feishu" button or redirect
-- User schema migration failing because `feishuId` unique constraint conflicts with null values
-- API returning 401 on all requests because middleware expects a token format that changed
-- No way to create the first user account in a fresh deployment
+**Detection:**
+- Landing page PR has more animation/motion code than content text
+- No actual product screenshot on the page
+- "What does this do?" not answered above the fold
 
-**Phase to address:**
-Phase 3 (Auth System Replacement) -- this must be a complete, tested replacement, not an incremental removal.
+**Phase to address:** Landing page phase -- set scope constraints before starting.
 
 ---
 
-### Pitfall 8: File Upload CDN Replacement Breaks Existing Screenshot References
+### Pitfall 6: README Anti-Patterns That Kill GitHub Discoverability
 
 **What goes wrong:**
-Tokens store CDN URLs in their `screenshots` field (e.g., `"screenshots": ["https://some-r2-bucket.example.com/abc.png"]`). When the QiLiangJia CDN is replaced with local file storage, all existing screenshot URLs become dead links. The `getImageUrl()` function in `upload.ts` has backward-compatibility logic but it assumes the API server can serve old URLs, which it cannot if the CDN is gone.
+The current README has several patterns that hurt discoverability:
+
+1. **Title is `# qlj-i18n`** -- not keyword-rich, not descriptive. GitHub and Google heavily weight the first H1.
+2. **No badges** -- stars, license, build status badges are missing. These create social proof and are indexed by search.
+3. **No Open Graph image** -- when shared on social media or in Slack/Discord, there's no visual preview.
+4. **"your-org" placeholder URLs** -- `https://github.com/your-org/qlj-i18n.git` in clone commands looks unfinished.
+5. **No "About" section topics** -- the GitHub repo About section and topics are strong ranking signals.
+6. **Generic description in metadata** -- `"description": ""` in root `package.json` misses npm search.
+
+GitHub's search algorithm prioritizes: repo name > About description > README H1 > README content. Google indexes GitHub README content and weights headings, keyword density, and freshness.
 
 **Why it happens:**
-File storage migrations are often treated as "just change the upload endpoint" but forget that existing data contains absolute URLs pointing to the old storage. This is a data migration problem, not just a code change.
+README optimization is treated as documentation work rather than marketing. Developers write READMEs for people who already found the project, not for people who might find it.
 
-**How to avoid:**
-1. Implement a local file storage endpoint on the NestJS server (e.g., `POST /api/uploads` that saves to a configurable local directory or Docker volume)
-2. Update `getImageUrl()` to proxy or redirect old CDN URLs through the server (if the old CDN is still accessible) or to serve local files
-3. For new open-source deployments, this is a non-issue (no existing data). But document that migrating from the internal version requires a screenshot URL migration.
-4. Store relative paths (e.g., `/uploads/abc.png`) instead of absolute URLs in the database so the storage backend can change without data migration
+**Prevention:**
+1. **Title:** `# Transweave` followed immediately by a one-liner: "Self-hosted i18n management platform for development teams."
+2. **Badges:** Add license badge, build status, npm package version for CLI.
+3. **Keywords in README:** Include "internationalization", "i18n", "translation management", "localization", "self-hosted" naturally in the first paragraph.
+4. **GitHub About section:** Set to under 120 characters. Example: "Self-hosted i18n translation management platform. Next.js + NestJS."
+5. **GitHub Topics:** Add at least 6: `i18n`, `internationalization`, `translation`, `localization`, `self-hosted`, `nextjs`, `nestjs`, `developer-tools`.
+6. **Open Graph image:** Create a simple 1280x640 image with the logo and tagline for social sharing. Set via GitHub's Social Preview in repo settings.
+7. **Fix placeholder URLs** to actual GitHub URLs before publishing.
+8. **Fill `package.json` description** fields in all packages.
 
-**Warning signs:**
-- Broken image icons in the translation token UI
-- `upload.ts` still referencing `qiliangjia.one` domain
-- New uploads working but old screenshots showing 404
+**Detection:**
+```bash
+# Check for placeholder URLs
+grep -rn "your-org" README.md docs/
+# Check for empty descriptions
+grep '"description": ""' package.json packages/*/package.json
+```
 
-**Phase to address:**
-Phase 3 (Service Replacement) for the upload endpoint, and Phase 2 (Database Design) for the URL storage strategy.
+**Phase to address:** README rewrite phase -- treat it as a marketing deliverable, not a chore.
 
 ---
 
-## Technical Debt Patterns
+### Pitfall 7: Logo/Branding Inconsistency Across Touchpoints
 
-Shortcuts that seem reasonable but create long-term problems.
+**What goes wrong:**
+The project has at least 7 places where visual branding appears, and they easily drift out of sync:
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Using `any` for translation objects throughout the service layer (50+ occurrences of `Record<string, any>`) | Faster initial development | Type errors at runtime, impossible to validate data integrity during migration | Never in the open-source version -- define proper types for `TranslationMap` |
-| Skipping input validation (no ValidationPipe, no DTOs with decorators) | Less boilerplate code | Malformed data enters the database, especially dangerous when switching databases | Only in internal prototype; must add validation before open-source release |
-| Embedding `TokenHistory[]` as a sub-array inside Token documents | Simpler queries in MongoDB | History grows unbounded inside the token document; in relational DB, this becomes a serialized JSON blob that cannot be queried efficiently | Never in relational DB -- must be a separate table |
-| `pnpm@latest` in Dockerfiles instead of pinned version | Always gets latest features | Non-reproducible builds; a pnpm update can break builds months later | Never in production Dockerfiles |
-| Hardcoding fallback values in source code (JWT secret fallback, database URL fallback) | Works without `.env` in development | Insecure defaults deployed to production accidentally | Only if clearly marked as development-only with runtime warnings |
+1. **Logo component** (`packages/web/components/Logo.tsx`) -- inline SVG with "Qlj i18n" text
+2. **Favicon** (`packages/web/public/favicon.svg`) -- separate SVG file
+3. **App icon** (`packages/web/app/icon.svg`) -- Next.js app icon
+4. **Public logo** (`packages/web/public/logo.svg`) -- yet another SVG file
+5. **Page title** (`packages/web/app/layout.tsx:14`) -- "i18n Manager" string
+6. **MCP server HTML page** (`packages/server/src/controller/mcp.controller.ts:130,564`) -- "QLJ i18n MCP Server" in HTML
+7. **Open Graph / social preview** -- not yet created
+8. **README** -- header and any embedded images
+9. **Landing page** -- if created separately
+10. **CLI output** -- `packages/cli/src/index.ts` program name and description
 
-## Integration Gotchas
+After a rebrand, it is common for 2-3 of these to still show the old name or use a different color/shape version of the new logo.
 
-Common mistakes when connecting to external services.
+**Why it happens:**
+Each touchpoint was created independently. There is no single source of truth for the brand assets. The SVG gradient IDs reference `qlj-logo-gradient`, the text says "Qlj i18n", the title says "i18n Manager" -- three different names in one component.
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| Dify AI translation API | Making it a hard dependency -- app crashes if Dify is unreachable | Wrap all AI calls in try/catch with graceful degradation. Return "translation unavailable" rather than 500 errors. Make the entire AI module conditionally loaded based on `DIFY_API_KEY` being set. |
-| Local file storage (replacing CDN) | Storing files inside the container filesystem | Use Docker volumes mapped to host directories. Files inside containers are lost on restart. Add file size limits and type validation that the CDN previously handled. |
-| PostgreSQL connection | Using the same connection string format as MongoDB | PostgreSQL connection strings use `postgresql://` prefix, different auth mechanisms, and different parameter names. The database module needs a complete rewrite, not a find-and-replace. |
-| SQLite in Docker | Mounting SQLite database file from host | SQLite files must be on a volume with proper filesystem support. NFS-mounted SQLite databases can corrupt. Always use a local Docker volume, never a bind mount over network storage. |
+**Prevention:**
+1. Create a `brand/` or `assets/` directory at the repo root containing canonical brand files:
+   - `logo.svg` (full logo)
+   - `icon.svg` (icon only, for favicons)
+   - `og-image.png` (social preview, 1280x640)
+   - `brand.md` (color hex codes, font name, usage guidelines)
+2. Generate all derived assets (favicon.ico, apple-touch-icon, etc.) from the canonical SVGs.
+3. The `Logo.tsx` component should import or reference the canonical SVG, not contain its own inline copy.
+4. After the rebrand, run a verification:
+   ```bash
+   # Check all brand touchpoints
+   grep -rn "Qlj\|QLJ\|i18n Manager" \
+     packages/web/components/Logo.tsx \
+     packages/web/app/layout.tsx \
+     packages/server/src/controller/mcp.controller.ts \
+     packages/cli/src/index.ts \
+     README.md
+   ```
+5. Standardize on one exact spelling: "Transweave" (capital T, no space, no hyphen).
 
-## Performance Traps
+**Detection:**
+- Search for any of these strings after rebrand: "Qlj", "QLJ", "qlj", "i18n Manager"
+- Compare favicons/icons visually across web app, MCP server page, and README
 
-Patterns that work at small scale but fail as usage grows.
+**Phase to address:** Logo/visual identity phase -- create canonical assets first, then update all touchpoints from that single source.
 
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| All `.populate()` calls loading full related documents | Slow API responses, high memory usage | Select only needed fields in populate (already done in some places: `'name email id avatar'`), add `lean()` for read-only queries | 50+ projects with 1000+ tokens each |
-| No pagination on project listing (`findAllProjects` returns everything) | API timeout, browser tab crash | Add cursor-based or offset pagination to all list endpoints before open-source release | 100+ projects |
-| Synchronous import processing on the request thread | HTTP request timeout during large imports | Move to background job processing; return job ID immediately | Import files > 5MB or 1000+ tokens |
-| SQLite single-writer bottleneck | `SQLITE_BUSY` errors during concurrent requests | Configure `busy_timeout`, use WAL mode, batch writes, or recommend PostgreSQL for team deployments | 3+ concurrent users |
-| Activity log unbounded growth | Database queries slow down, disk usage grows | Add TTL-based cleanup or archival. Consider separate table/database for logs. | 10,000+ activity log entries |
+---
 
-## Security Mistakes
+### Pitfall 8: CLI Breaking Changes (Binary Name, Config Paths, Env Vars)
 
-Domain-specific security issues beyond general web security.
+**What goes wrong:**
+The CLI tool has 5 user-facing identifiers that form an implicit API contract:
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| JWT secret fallback to `'your-secret-key'` when env var is not set | Anyone can forge JWT tokens if deployer forgets to set `JWT_SECRET` | Refuse to start the server if `JWT_SECRET` is not set in production (`NODE_ENV=production`). Log a clear error message. |
-| Super-admin check by email string comparison (`SUPER_ADMINS` array) | Hardcoded email grants admin privileges; if the email pattern leaks, attackers know the admin account | Replace with a database-level `isAdmin` flag set during first-run setup. Never check admin status by matching email strings. |
-| No file type/size validation on uploads | Malicious file upload, storage exhaustion | Add MIME type whitelist (images only for screenshots), file size limit (5MB), and filename sanitization before saving to local storage |
-| Token stored in `localStorage` (frontend) | XSS attack can steal auth tokens | For the open-source version, consider `httpOnly` cookies. At minimum, document the risk and set short token expiration. Current 15-day expiration is excessive for a self-hosted tool. |
+1. **Binary name:** `qlj-i18n` (in `packages/cli/package.json:bin`)
+2. **Config directory:** `~/.config/qlj-i18n/` (in `packages/cli/src/config.ts:17`)
+3. **Project config file:** `.qlj-i18n.json` (in `packages/cli/src/config.ts:19`)
+4. **Environment variables:** `QLJ_I18N_API_KEY`, `QLJ_I18N_SERVER` (in `packages/cli/src/config.ts`)
+5. **npm package name:** `qlj-i18n` (in `packages/cli/package.json:2`)
 
-## UX Pitfalls
+Renaming all of these to `transweave` breaks every existing user's setup: their global config disappears (wrong directory), their project configs are not found (wrong filename), their environment variables stop working, and `qlj-i18n pull` no longer exists as a command.
 
-Common user experience mistakes in this domain.
+**Why it happens:**
+The CLI has the largest user-facing surface area of any component. Unlike the web UI (where renaming a page title is harmless), the CLI has filesystem paths and environment variable names that users have baked into scripts, CI/CD pipelines, and documentation.
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| No first-run setup wizard | User clones repo, runs `docker-compose up`, and has no way to create an account or team | Add a `/setup` page that appears when no users exist in the database. Creates admin account and first team. |
-| Error messages in Chinese comments leaked to open-source users | Non-Chinese-speaking users see untranslated error messages or comments | Audit all user-facing strings. The codebase has Chinese comments throughout (e.g., `// 如果用户存在，则直接登录`). Backend error messages should be in English. |
-| Docker-compose requiring manual MongoDB replica set initialization | The current `docker-compose.yml` uses `--replSet rs0` and requires `init-replica.js` -- complex for users | The new docker-compose must "just work" with SQLite (no extra services) or PostgreSQL (single service, no replica set). |
-| Environment variable confusion between build-time and runtime | Next.js `NEXT_PUBLIC_*` vars are baked at build time; changing them after build has no effect | Document clearly which env vars are build-time vs runtime. For Docker, use build args for `NEXT_PUBLIC_*` vars. |
+**Prevention:**
+Since this is v1.1 and the CLI likely has very few external users yet, a clean break is acceptable:
+1. Rename the binary to `transweave` and the npm package to `transweave`.
+2. Rename the config directory to `~/.config/transweave/` and the project config to `.transweave.json`.
+3. Rename env vars to `TRANSWEAVE_API_KEY` and `TRANSWEAVE_SERVER`.
+4. **But:** add a one-time migration check. On first run, if `~/.config/qlj-i18n/` exists but `~/.config/transweave/` does not, print a message:
+   ```
+   Found legacy config at ~/.config/qlj-i18n/. Migrating to ~/.config/transweave/...
+   ```
+   Copy the config and continue.
+5. Similarly, if `.qlj-i18n.json` exists but `.transweave.json` does not, auto-migrate.
+6. Accept both old and new env var names for one major version, with a deprecation warning for the old names.
+
+**Detection:**
+```bash
+# After rename, verify old names are gone from source (except migration code):
+grep -rn "qlj-i18n\|QLJ_I18N" packages/cli/src/ --include="*.ts" | grep -v "migration\|legacy\|compat"
+```
+
+**Phase to address:** CLI rename sub-phase -- must include migration logic, not just find-and-replace.
+
+---
+
+### Pitfall 9: Dockerfile Filter Names Break Silently
+
+**What goes wrong:**
+Both Dockerfiles use pnpm `--filter` with the **package.json name** to target builds:
+- `packages/server/Dockerfile:15` -- `pnpm --filter qlj-i18n-server build`
+- `packages/web/Dockerfile:17` -- `pnpm --filter nextjs build`
+- `packages/web/Dockerfile:34` -- `pnpm --filter nextjs start`
+
+If `packages/server/package.json` name is changed to `@transweave/server` but the Dockerfile still says `--filter qlj-i18n-server`, the Docker build fails with a cryptic "No projects matched the filters" error. The same applies to the web package if `nextjs` is renamed but the Dockerfile is not updated.
+
+**Why it happens:**
+Dockerfiles are not part of the typical "rename in IDE" workflow. They use string references to package names, not imports that an IDE can track. The `pnpm --filter` command matches against the `name` field in `package.json`, creating an invisible coupling.
+
+**Prevention:**
+1. After renaming package.json names, immediately update all Dockerfiles:
+   ```bash
+   grep -rn "qlj-i18n-server\|nextjs" packages/*/Dockerfile
+   ```
+2. Run `docker compose build` as part of the rename verification. If it passes, the filter names are correct.
+3. Consider using directory-based filters instead of name-based filters in Dockerfiles: `pnpm --filter ./packages/server build` instead of `pnpm --filter qlj-i18n-server build`. Directory filters are rename-proof.
+
+**Detection:**
+```bash
+# Docker build will fail if filters don't match
+docker compose build --no-cache 2>&1 | grep -i "no projects matched"
+```
+
+**Phase to address:** Rename phase -- verify immediately after package.json name changes.
+
+---
+
+### Pitfall 10: pnpm-lock.yaml Contains Old Package Names
+
+**What goes wrong:**
+The `pnpm-lock.yaml` file (462KB) contains internal references to package names. After renaming packages in `package.json` files, the lockfile may still reference old names. This causes `pnpm install --frozen-lockfile` to fail in Docker builds (where `--frozen-lockfile` is used), and `pnpm install` without the flag may produce unexpected dependency resolution changes.
+
+**Why it happens:**
+Developers rename `package.json` but forget to regenerate the lockfile. In CI/CD and Docker builds, `--frozen-lockfile` is standard practice, making the stale lockfile a hard failure.
+
+**Prevention:**
+1. After renaming all package.json names, run `pnpm install` to regenerate `pnpm-lock.yaml`.
+2. Commit the updated lockfile in the same PR as the name changes.
+3. Verify with:
+   ```bash
+   grep "qlj-i18n" pnpm-lock.yaml
+   # Should only match the integrity hashes of external packages, not internal workspace references
+   ```
+
+**Phase to address:** Rename phase -- must be the last step after all package.json changes.
+
+---
+
+## Minor Pitfalls
+
+Issues that cause minor annoyance or missed opportunities.
+
+---
+
+### Pitfall 11: GitHub Workflow Still References Old Branch Names
+
+**What goes wrong:**
+`.github/workflows/check-lock-file.yml` triggers on PRs to `main`, `develop`, `test`, `main-1`, and `master`. If the default branch is renamed during the rebrand or if the workflow doesn't cover the new branch structure, CI checks stop running.
+
+**Prevention:**
+1. Review all workflow files after branch structure changes.
+2. Update branch triggers to match the new structure.
+3. Also update the workflow's Chinese-language log messages to English for the open-source version.
+
+---
+
+### Pitfall 12: Over-Scoping the Branding Work
+
+**What goes wrong:**
+The branding milestone expands from "rename + logo + README" into a full marketing site with blog, changelog system, documentation portal, contributor guides, a custom domain, analytics, and SEO optimization. Each addition seems small but collectively turns a 1-2 week milestone into a 2-month project.
+
+**Why it happens:**
+Branding work has no natural stopping point. Every improvement suggests another. "We need a landing page" becomes "we need a blog" becomes "we need a documentation site" becomes "we need Algolia search" becomes "we need i18n on the docs site" (ironic for an i18n tool).
+
+**Prevention:**
+1. Define the scope explicitly and refuse expansion:
+   - IN: Rename in code, logo SVG, favicon, OG image, README rewrite, single-page landing (can be the README itself)
+   - OUT: Blog, docs site, custom domain setup, analytics, contributor guide, changelog automation, social media accounts
+2. The README IS the landing page for 95% of developer tools at this stage. Do not build a separate site until GitHub stars exceed 100.
+3. Landing page content can live at the repo root as `index.html` or be hosted via GitHub Pages with zero custom infrastructure.
+
+**Detection:**
+- PR for branding milestone has files in more than 5 directories
+- Any new npm dependencies added for the landing page (static site generators, MDX, etc.)
+- Work continuing past the 2-week timebox
+
+**Phase to address:** Milestone planning -- set explicit scope boundaries before starting any work.
+
+---
+
+### Pitfall 13: Forgetting the MCP Server HTML Page
+
+**What goes wrong:**
+The MCP controller at `packages/server/src/controller/mcp.controller.ts` contains an embedded HTML page (lines 130-710+) with the title "QLJ i18n MCP Server", branding text, and example configuration showing `qlj-i18n` as the MCP server name. This is a full HTML page served at the MCP endpoint, and it is easy to miss because it is embedded inside a TypeScript file as a template string rather than being a separate HTML file.
+
+**Prevention:**
+1. Search specifically for HTML content in TypeScript files:
+   ```bash
+   grep -n "<title>" packages/server/src/controller/mcp.controller.ts
+   grep -n "<h1>" packages/server/src/controller/mcp.controller.ts
+   grep -n "qlj-i18n" packages/server/src/controller/mcp.controller.ts
+   ```
+2. Consider extracting the HTML into a separate template file during the rebrand. This makes future updates easier.
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Code rename (find-replace) | Changing `qlji_` prefix or `qlj-i18n-ai-salt` | Create explicit exclusion list; review every change in the diff |
+| Package.json renames | Dockerfile `--filter` commands break | Test `docker compose build` immediately after renaming |
+| CLI rename | Users lose config files | Add legacy config migration on first run |
+| Logo creation | Inconsistent across touchpoints | Create canonical source, derive all others from it |
+| Landing page | Scope creep into full marketing site | Timebox to 3-5 days; content before animation |
+| README rewrite | Generic description, no keywords | Treat as marketing; include "i18n", "self-hosted", "translation management" in H1 and first paragraph |
+| Docker compose | Volume names change implicitly | Add explicit `name:` to volume definitions |
+| OG/social images | Forgotten entirely | Create 1280x640 PNG; set in GitHub repo settings |
+| Env var rename (CLI) | Existing scripts break | Accept both old and new names with deprecation warning |
+| pnpm-lock.yaml | Stale after package renames | Run `pnpm install` and commit updated lockfile |
+
+## Rename Verification Checklist
+
+Run after all rename work is complete. Every check must pass before merging.
+
+```bash
+# 1. Find ALL remaining old-name references (SHOULD return zero results)
+#    Excludes: qlji_ prefix, ai-salt, node_modules, .git, lockfile
+grep -rn --include="*.ts" --include="*.tsx" --include="*.json" \
+  --include="*.md" --include="*.yml" --include="*.yaml" \
+  --include="*.env*" --include="Dockerfile*" --include="*.html" \
+  --exclude-dir=node_modules --exclude-dir=.git \
+  --exclude=pnpm-lock.yaml \
+  -E "qlj-i18n|@qlj/|QLJ_I18N|Qlj i18n|qlj-logo|i18n.Manager|qlj-i18n-server" .
+
+# 2. Verify protected strings are STILL present (SHOULD return matches)
+grep "qlji_" packages/server/src/service/api-key.service.ts
+grep "qlj-i18n-ai-salt" packages/server/src/ai/encryption.util.ts
+
+# 3. Verify Dockerfile filter names match package.json names
+SRVNAME=$(node -p "require('./packages/server/package.json').name")
+WEBNAME=$(node -p "require('./packages/web/package.json').name")
+grep "$SRVNAME" packages/server/Dockerfile
+grep "$WEBNAME" packages/web/Dockerfile
+
+# 4. Verify Docker build works
+docker compose build --no-cache
+
+# 5. Verify pnpm workspace integrity
+pnpm install --frozen-lockfile
+
+# 6. Verify no old-name config paths in CLI
+grep -n "qlj-i18n" packages/cli/src/config.ts | grep -v "legacy\|compat\|migration"
+
+# 7. Check brand consistency
+grep -rn "Transweave\|transweave" packages/web/components/Logo.tsx packages/web/app/layout.tsx README.md
+```
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Auth system replacement:** Often missing first-run setup flow -- verify a fresh database with zero users can bootstrap an admin account
-- [ ] **Database migration:** Often missing index creation -- verify that composite indexes (e.g., `projectId + createdAt` on ActivityLog) are recreated in the relational schema
-- [ ] **Docker deployment:** Often missing health checks -- verify `docker-compose` has `healthcheck` on the database service so the app doesn't start before the DB is ready
-- [ ] **File upload replacement:** Often missing existing data migration path -- verify documentation explains how to migrate screenshot URLs if coming from the internal version
-- [ ] **Multi-database support:** Often missing cross-database CI -- verify the test suite runs on both SQLite and PostgreSQL, not just the developer's local database
-- [ ] **Feishu removal:** Often missing frontend cleanup -- verify no Feishu logos, redirect URLs, or OAuth flow remnants exist in the web package
-- [ ] **AI feature optionality:** Often missing graceful UI state -- verify the frontend hides AI translation buttons when `DIFY_API_KEY` is not configured, rather than showing buttons that error
-- [ ] **Branding cleanup:** Often missing in i18n message files -- verify `zh-CN.json`, `en-US.json`, and SVG logo files do not contain company name or branding
-- [ ] **Transaction handling:** Often missing SQLite compatibility -- verify transaction code does not assume multi-collection/multi-table atomic operations that SQLite handles differently
+- [ ] **API key prefix:** Verified `qlji_` is intentionally kept, not accidentally left behind
+- [ ] **Encryption salt:** Verified `qlj-i18n-ai-salt` is intentionally kept with explanatory comment added
+- [ ] **MCP server HTML:** All `<title>`, `<h1>`, example configs updated inside the TypeScript template string
+- [ ] **CLI binary file:** `packages/cli/bin/qlj-i18n.js` renamed AND package.json `bin` field updated
+- [ ] **CLI error messages:** All user-facing `console.error` and `console.log` messages reference new name
+- [ ] **Docker volumes:** Explicit `name:` field added to prevent implicit renaming
+- [ ] **pnpm-lock.yaml:** Regenerated after all package.json name changes
+- [ ] **GitHub repo About:** Description filled in, topics added, social preview image uploaded
+- [ ] **OG image:** Created and referenced in HTML meta tags
+- [ ] **Chinese strings in workflow:** `check-lock-file.yml` echo messages translated to English
+- [ ] **i18n translation file:** `packages/web/i18n/all.json` entry at line 48 updated from `qlj-i18n`
+- [ ] **Favicon files:** All three (`favicon.svg`, `logo.svg`, `icon.svg`) updated to new design
+- [ ] **Page metadata:** `layout.tsx` title and description updated to "Transweave" with keyword-rich description
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Secrets leaked in git history | MEDIUM | Use BFG Repo Cleaner or `git filter-repo` to remove sensitive strings. Force-push the cleaned branch. Rotate any leaked API keys. Notify users who may have cloned. |
-| MongoDB Mixed type data loss during migration | HIGH | Write a data export script from MongoDB that preserves the full JSON structure. Re-import to the relational database using JSONB columns. Cannot be fixed retroactively if data was already truncated to fit wrong column types. |
-| Docker images containing secrets | MEDIUM | Rebuild images from clean source. Add `.dockerignore`. Scan images with `docker history` and `dive` tool. Delete and re-tag affected images on any registry. |
-| SQLite busy errors in production | LOW | Switch to PostgreSQL. Migration path should be documented: export data as JSON, import to PostgreSQL. ORM abstraction layer makes this a configuration change if designed correctly. |
-| Broken auth after Feishu removal | MEDIUM | Ensure local login always works. Add a "reset admin password" CLI command that can be run from inside the Docker container as an escape hatch. |
-| Dead screenshot URLs after CDN removal | LOW | Write a one-time migration script that downloads images from old CDN URLs and re-uploads to local storage, updating database references. Document this as an optional migration step. |
-
-## Pitfall-to-Phase Mapping
-
-How roadmap phases should address these pitfalls.
-
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| Leaked secrets in git history | Phase 1: Branch Setup | Run `gitleaks detect` on the opensource branch; zero findings |
-| Hardcoded internal references (team ID, emails, URLs) | Phase 1: Cleanup | `grep -r "qiliangjia\|feishu\|bondma\|680f557b" --include="*.ts"` returns zero results |
-| MongoDB Mixed/Map type migration | Phase 2: Database Design | Schema review confirms JSONB columns for translations, details, languageLabels |
-| `.populate()` chain translation to JOINs | Phase 2-3: Abstraction + Service Migration | Each service method has a passing test on both SQLite and PostgreSQL |
-| SQLite vs PostgreSQL behavior differences | Phase 2: Database Abstraction | CI runs test suite against both databases on every PR |
-| Feishu auth removal incomplete | Phase 3: Auth Replacement | Fresh deployment can register, login, create team, and manage projects without any Feishu configuration |
-| Docker build context and caching issues | Phase 4: Docker Deployment | `docker-compose up` from a clean clone works in under 5 minutes; image size < 300MB each |
-| CDN replacement and file storage | Phase 3: Service Replacement | Screenshot upload and display works with local storage; no external CDN references remain |
-| First-run experience missing | Phase 4: Docker + UX Polish | `docker-compose up` followed by opening `localhost:3000` shows a setup wizard (not a blank login page) |
-| AI features hard-crash when unconfigured | Phase 3: Service Replacement | Application starts and all core features work with `DIFY_API_KEY` unset; AI buttons are hidden in UI |
+| API key prefix changed | HIGH | Revert the prefix immediately. If already deployed, users must regenerate all API keys. No way to recover old keys. |
+| Encryption salt changed | HIGH | If old salt is known, write a one-time migration script to decrypt-with-old/re-encrypt-with-new. If old salt is lost, all stored AI keys are unrecoverable. |
+| Docker volumes lost | MEDIUM | If old volumes still exist on disk (`docker volume ls`), copy data to new volumes. If `docker volume prune` was run, data is gone; restore from backup. |
+| Partial rename (ghost references) | LOW | Run the verification checklist, fix remaining references, re-deploy. Cosmetic issue only. |
+| CLI config path changed without migration | LOW | Manually copy `~/.config/qlj-i18n/config.json` to `~/.config/transweave/config.json`. Or add the migration code to the next CLI release. |
+| Landing page over-scoped | LOW | Cut scope immediately. Ship what exists. A minimal README is better than an unfinished marketing site. |
 
 ## Sources
 
-- Codebase inspection: `packages/server/src/service/auth.service.ts`, `packages/server/src/utils/superAdmin.ts`, `packages/web/api/upload.ts`, all schema files in `packages/server/src/models/schemas/`
-- [GitGuardian: Remediate Sensitive Data Leaks](https://www.gitguardian.com/glossary/remediate-sensitive-data-leaks-api-keys-hardcoded-source-code)
-- [InfoQ: Thousands of Leaked Secrets in GitHub "Oops Commits"](https://www.infoq.com/news/2025/09/github-leaked-secrets/)
-- [Jit: Developer's Guide to Gitleaks](https://www.jit.io/resources/appsec-tools/the-developers-guide-to-using-gitleaks-to-detect-hardcoded-secrets)
-- [Medium: MongoDB to PostgreSQL Migration -- 3 Months, 2 Mental Breakdowns](https://medium.com/lets-code-future/mongodb-to-postgresql-migration-3-months-2-mental-breakdowns-1-lesson-2980110461a5)
-- [TechBuddies: Top 7 PostgreSQL Migration Mistakes](https://www.techbuddies.io/2025/12/14/top-7-postgresql-migration-mistakes-developers-regret-later/)
-- [Infisical: The Great Migration from MongoDB to PostgreSQL](https://infisical.com/blog/postgresql-migration-technical)
-- [Coefficient: Migrating Data from MongoDB to PostgreSQL](https://coefficient.io/postgresql/migrate-mongodb-to-postgresql)
-- [Docker Forums: Best Practices for NestJS + NextJS Monorepo](https://forums.docker.com/t/best-practices-for-using-docker-in-development-vs-production-nestjs-nextjs-monorepo/149461)
-- [Twilio: SQLite or PostgreSQL? It's Complicated!](https://www.twilio.com/en-us/blog/sqlite-postgresql-complicated)
-- [DataCamp: SQLite vs PostgreSQL Detailed Comparison](https://www.datacamp.com/blog/sqlite-vs-postgresql-detailed-comparison)
-- [SitePoint: Post-PostgreSQL -- Is SQLite on the Edge Production Ready?](https://www.sitepoint.com/sqlite-edge-production-readiness-2026/)
-- [DEV Community: Best ORM for NestJS in 2025](https://dev.to/sasithwarnakafonseka/best-orm-for-nestjs-in-2025-drizzle-orm-vs-typeorm-vs-prisma-229c)
-- [Trilon: NestJS & DrizzleORM](https://trilon.io/blog/nestjs-drizzleorm-a-great-match)
-- [BairesJDev: Pros and Cons of Open-Sourcing Your Project](https://www.bairesdev.com/blog/pros-and-cons-of-open-sourcing-your-project/)
+- Direct codebase audit of `/Users/qian/Projects/Qlj/qlj-fe-i18n` (all grep results verified against live source)
+- [Docker/moby#31154: Docker volume rename not supported](https://github.com/moby/moby/issues/31154) -- Docker volumes cannot be renamed; workaround is copy
+- [CodeStudy: Docker Volume Rename Workarounds](https://www.codestudy.net/blog/docker-volume-rename-or-copy-operation/) -- volume migration strategy
+- [Nakora: GitHub SEO -- Rank Your Repo](https://nakora.ai/blog/github-seo) -- repo name, about section, topics as ranking signals (MEDIUM confidence)
+- [Evil Martians: 100 Dev Tool Landing Pages Study (2025)](https://evilmartians.com/chronicles/we-studied-100-devtool-landing-pages-here-is-what-actually-works-in-2025) -- hero + screenshot + CTA pattern (MEDIUM confidence)
+- [DEV Community: GitHub SEO for 2025](https://dev.to/infrasity-learning/the-ultimate-guide-to-github-seo-for-2025-38kl) -- keyword placement in README headings
+- [Codemotion: GitHub Project Visibility and SEO](https://www.codemotion.com/magazine/dev-life/github-project/) -- GitHub topics and About section optimization
+- [npm Docs: Renaming an Organization](https://docs.npmjs.com/renaming-an-organization/) -- manual migration required for npm org rename
+- [Medium: Lerna -- A Tale of Renaming NPM Packages](https://medium.com/@dlacustodio/lerna-a-tale-of-renaming-npm-packages-4d3c534bc31) -- monorepo package rename challenges
 
 ---
-*Pitfalls research for: qlj-i18n internal-to-open-source conversion*
+*Pitfalls research for: Transweave v1.1 branding & rename milestone*
 *Researched: 2026-03-01*

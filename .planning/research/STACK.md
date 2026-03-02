@@ -1,324 +1,261 @@
-# Stack Research
+# Technology Stack: v1.1 Branding & Promotion
 
-**Domain:** i18n management platform (open-source conversion from MongoDB to relational DB)
+**Project:** Transweave v1.1 Branding & Promotion Milestone
 **Researched:** 2026-03-01
-**Confidence:** HIGH
+**Overall Confidence:** HIGH
 
 ## Executive Decision
 
-**Use PGlite (dev) + PostgreSQL (prod) with Drizzle ORM, not SQLite + PostgreSQL.**
+**Zero new runtime dependencies.** The existing Next.js 15 stack has built-in support for everything this milestone needs: OG image generation (`next/og`), favicon file conventions, route groups for landing page isolation, and the `motion` library (already installed) for scroll animations. Add only `sharp` (dev dependency, recommended by Next.js for production image optimization) and optionally `sharp-ico` for one-time ICO file generation.
 
-The original plan called for SQLite (dev) + PostgreSQL (prod). Research reveals a critical problem: Drizzle ORM uses **dialect-specific schema definitions** -- `pgTable` vs `sqliteTable` -- meaning you cannot share a single schema across both databases. This would require maintaining two parallel schemas, doubling migration effort and introducing drift risk.
-
-**PGlite** (embedded WASM PostgreSQL, 3mb) solves this entirely: same `pgTable` schema, same Drizzle config, same migration files, zero Docker dependency for quick-start. Drizzle has first-class PGlite support. This is the correct architecture for a "zero-config dev, PostgreSQL prod" open-source project.
+This milestone is a restructuring and content task, not a technology task. The stack additions are minimal by design.
 
 ---
 
-## Recommended Stack
+## Recommended Stack Additions
 
-### Core Technologies (Keep from existing)
+### 1. OG Image Generation -- Zero New Dependencies
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| Next.js | 15.x (current: 15.2.6) | Frontend framework | Already in use, no reason to change. Keep current major. | HIGH |
-| NestJS | 11.x (current: 11.0.1) | Backend API framework | Already in use, mature, excellent DI and modular architecture. | HIGH |
-| React | 19.x (current: 19.0.1) | UI library | Already in use, keep aligned with Next.js 15. | HIGH |
-| TypeScript | 5.x (current in project) | Language | Already in use across entire monorepo. | HIGH |
-| pnpm | 10.x (current: 10.8.0) | Package manager | Already in use as workspace manager. Keep. | HIGH |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `next/og` (built-in) | Bundled with Next.js 15.2.6 | Open Graph and Twitter card image generation | Built into Next.js since v13.3.0. Uses `ImageResponse` API backed by Satori + resvg internally. Renders JSX to PNG with flexbox layout support. No additional packages needed. |
 
-### Database Layer (New)
+**How it integrates:**
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| Drizzle ORM | 0.45.x (latest: 0.45.1) | Database ORM | Best NestJS ORM in 2025: fastest performance, smallest bundle (7kb), TypeScript-first, supports both PGlite and PostgreSQL with identical `pgTable` schema. No binary dependencies. SQL-transparent queries. | HIGH |
-| drizzle-kit | 0.31.x (latest: 0.31.9) | Migrations & schema tooling | Companion tool for Drizzle. Handles schema push, migration generation, and Drizzle Studio (DB browser). | HIGH |
-| @electric-sql/pglite | 0.3.x (latest: 0.3.15) | Embedded PostgreSQL (dev/quick-start) | WASM PostgreSQL in 3mb. Same `pgTable` schema as production PostgreSQL. Zero Docker, zero install. Perfect for `docker-compose up` quick-start and development. File-based persistence or in-memory. | HIGH |
-| PostgreSQL | 17.x (Docker: postgres:17-alpine) | Production database | Industry standard relational DB. Pin to major version 17 in Docker for stability. Alpine variant for smaller image. | HIGH |
-| postgres (postgres.js) | 3.4.x (latest: 3.4.8) | PostgreSQL driver | Fastest PostgreSQL driver for Node.js. Native ESM. Used by Drizzle for production PostgreSQL connections. Preferred over `pg` for new projects. | MEDIUM |
+Create `app/opengraph-image.tsx` (or `app/(marketing)/opengraph-image.tsx`) that exports a default function returning `new ImageResponse(...)`. Next.js automatically discovers the file and generates `<meta property="og:image">` tags in the HTML `<head>`. Images are statically optimized at build time by default -- no runtime cost.
 
-### File Storage (New -- replacing QiLiangJia CDN)
+```typescript
+// app/(marketing)/opengraph-image.tsx
+import { ImageResponse } from 'next/og'
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| @nestjs/platform-express | 11.x (latest: 11.1.14) | Multer file upload | Built into NestJS Express platform. Provides `FileInterceptor`, `diskStorage` for local file uploads. Already a transitive dependency. | HIGH |
-| @nestjs/serve-static | 5.x (latest: 5.0.4) | Serve uploaded files | Official NestJS module. Serves local `./uploads` directory as static files. Replaces CDN URL serving. | HIGH |
+export const alt = 'Transweave - Self-hosted i18n management'
+export const size = { width: 1200, height: 630 }
+export const contentType = 'image/png'
 
-### Authentication (Simplified -- replacing Feishu OAuth)
+export default async function Image() {
+  return new ImageResponse(
+    <div style={{ /* branded layout with logo, tagline, gradient background */ }}>
+      Transweave
+    </div>,
+    { ...size }
+  )
+}
+```
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| @nestjs/jwt | 11.x (current: 11.0.0) | JWT token management | Already in use. Keep for access/refresh token flow. | HIGH |
-| bcrypt | 6.x (latest: 6.0.0) | Password hashing | Already used via `packages/server/src/utils/crypto.ts`. Upgrade to latest. | HIGH |
-| passport-local | 1.x | Local auth strategy | Simple username/password strategy for Passport. Replaces Feishu OAuth strategy. | HIGH |
+**Key constraints of `next/og` ImageResponse:**
+- Only flexbox layout (no CSS Grid)
+- Subset of CSS properties (no `box-shadow`, limited `background`)
+- Custom fonts must be loaded as ArrayBuffer/Uint8Array (not CSS `@font-face`)
+- SVG can be embedded as `<img src>` with base64 data URI
 
-### Infrastructure (New)
+**Confidence:** HIGH -- verified against [Next.js Official Docs v16.1.6](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image), updated 2026-02-27. Stable API since v13.3.0.
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| Docker | 27.x+ | Containerization | Industry standard. Multi-stage builds for optimized images. | HIGH |
-| Docker Compose | 2.x (compose v2) | Orchestration | Single `docker-compose up` to start entire stack (frontend + backend + PostgreSQL). Standard for self-hosted OSS tools. | HIGH |
-| @nestjs/config | 4.x (latest: 4.0.3) | Environment config | Official NestJS config module. Validates env vars at startup. Already partially used. | HIGH |
+---
 
-### Supporting Libraries (Keep from existing)
+### 2. Favicon Handling -- Zero New Dependencies
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| Radix UI | current | Accessible UI primitives | All UI components -- already integrated |
-| Tailwind CSS | 3.4.x | Styling | All styling -- already integrated |
-| Jotai | 2.9.x | State management | Client-side state -- already integrated |
-| React Hook Form | 7.54.x | Form handling | All forms -- already integrated |
-| zod | 3.25.x | Validation | Schema validation (both client and server) -- already integrated |
-| next-intl | 3.26.x | Frontend i18n | UI multilingual support -- already integrated |
-| @modelcontextprotocol/sdk | 1.25.x | MCP server | Claude AI integration -- already integrated |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Next.js metadata file conventions (built-in) | Bundled with Next.js 15.2.6 | Favicon, icon, apple-icon auto-discovery | Place correctly-named files in `app/` directory. Next.js auto-generates `<link>` tags with correct `rel`, `type`, `sizes` attributes. No configuration needed. |
 
-### Development Tools
+**The 3-file favicon strategy (2026 best practice):**
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| drizzle-kit studio | Database browser | Built-in DB GUI. Run `npx drizzle-kit studio` to browse data. Replaces need for MongoDB Compass. |
-| Docker Compose (dev) | Local dev environment | `docker-compose.dev.yml` with hot-reload volumes for both web and server. |
-| ESLint 9.x | Linting | Already configured. Keep. |
-| Prettier 3.x | Formatting | Already configured. Keep. |
+| File | Placement | Purpose | Generated HTML |
+|------|-----------|---------|---------------|
+| `app/favicon.ico` | Root `app/` only | Legacy browsers (32x32 multi-size) | `<link rel="icon" href="/favicon.ico" sizes="any">` |
+| `app/icon.svg` | `app/` or any segment | Modern browsers (scalable vector) | `<link rel="icon" href="/icon?..." type="image/svg+xml">` |
+| `app/apple-icon.png` | `app/` or any segment | Apple devices (180x180) | `<link rel="apple-touch-icon" href="/apple-icon?..." sizes="180x180">` |
+
+**SVG favicon dark mode support:** The `icon.svg` can contain CSS `@media (prefers-color-scheme: dark)` queries to automatically switch colors between light and dark system themes. Supported by 95%+ of browsers in 2026.
+
+**Current state:** The project already has `public/favicon.svg` and `public/logo.svg` but these use the old `qlj-logo-gradient` ID and are served from `/public` (not using the Next.js file convention). Move the new Transweave logo SVG to `app/icon.svg` to use the auto-discovery mechanism.
+
+**Confidence:** HIGH -- verified against [Next.js favicon/icon/apple-icon docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons) (v16.1.6, updated 2026-02-27) and [Evil Martians favicon guide](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs).
+
+---
+
+### 3. Landing Page -- Zero New Dependencies
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Next.js Route Groups (built-in) | Bundled with Next.js 15.2.6 | Separate marketing layout from app layout | `(marketing)` route group gets a clean public layout (no AuthProvider, no HeaderManager). `(app)` route group keeps current authenticated layout. Both share same deployment. |
+| `motion` (already installed) | ^12.18.1 | Scroll animations, hero transitions, staggered reveals | Already in `packages/web/package.json`. Provides `motion.div`, `useScroll`, `useInView`, viewport-triggered animations. The library was renamed from framer-motion. |
+| Tailwind CSS (already installed) | ^3.4.1 | Landing page styling, responsive design | Already configured with custom animations (`fade-in-up`, `shimmer`, `pulse-soft`), gradient backgrounds (`gradient-radial`, `gradient-conic`), and glow shadows. |
+| `lucide-react` (already installed) | ^0.428.0 | Feature card icons | Already installed. Consistent icon set for feature sections. |
+| `next/font` (built-in) | Bundled with Next.js 15.2.6 | Font loading for display headings | Already using `Inter` via `next/font/google`. Can add a display font (e.g., `Inter` at heavier weights or a serif for contrast) without new packages. |
+
+**Route Group Architecture:**
+
+```
+app/
+  layout.tsx                    # Minimal shared root (html, body, font, Toaster)
+  (marketing)/
+    layout.tsx                  # Marketing layout (no auth, marketing nav/footer)
+    page.tsx                    # Landing page at "/"
+    opengraph-image.tsx         # OG image for social sharing
+  (app)/
+    layout.tsx                  # App layout (AuthProvider, HeaderManager, I18nClientProvider, NuqsAdapter)
+    login/page.tsx
+    signup/page.tsx
+    teams/page.tsx
+    team/[teamId]/page.tsx
+    project/[projectId]/page.tsx
+    ... (all other app routes)
+  favicon.ico
+  icon.svg
+  apple-icon.png
+```
+
+**Critical integration detail:** The current `app/layout.tsx` wraps everything in `AuthProvider`, `HeaderManager`, `I18nClientProvider`, and `NuqsAdapter`. The landing page must NOT be wrapped in these -- it is a public marketing page. Splitting into route groups isolates the auth/app chrome from the public page.
+
+**Navigation between groups:** Moving between `(marketing)` and `(app)` route groups with different root layouts triggers a full page reload. This is acceptable because the transition point is "Get Started" -> `/login`, which is a natural context switch.
+
+**Current `app/page.tsx` behavior:** Currently redirects authenticated users to `/teams` and unauthenticated users to `/login`. In the new structure, `(marketing)/page.tsx` becomes the public landing page at `/`. The redirect logic is no longer needed at root.
+
+**Confidence:** HIGH -- Route Groups are a stable Next.js feature since v13.0. Verified against [Next.js Route Groups docs](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups) and [Public Static Pages guide](https://nextjs.org/docs/app/guides/public-static-pages).
+
+---
+
+### 4. Production Image Optimization -- One New Dev Dependency
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `sharp` | ^0.33 | Production image optimization for `next/image` | Next.js strongly recommends sharp for production deployments. Needed for optimizing landing page images (screenshots, feature demos) served via `<Image>`. Already required by Next.js standalone output mode. |
+
+**Note:** `sharp` is NOT needed for OG image generation (`next/og` uses satori+resvg internally). It IS needed for the `next/image` component optimization pipeline in production.
+
+**Confidence:** HIGH -- per [Next.js official recommendation](https://nextjs.org/docs/messages/install-sharp): "For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended."
+
+---
+
+### 5. Favicon Asset Generation -- One-Time Dev Script
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `sharp` (same as above) | ^0.33 | Convert SVG logo to apple-icon.png (180x180) | Reuse sharp (already needed for Next.js image optimization) to generate the PNG apple-touch-icon from the SVG source. One-time script, not a runtime dependency. |
+| `sharp-ico` (optional) | ^0.1 | Encode PNG to ICO format | Small addon that adds `.ico` output to sharp. Only needed if generating `favicon.ico` programmatically via script. |
+
+**Why not the `favicons` npm package:** The `favicons` package (v7.2.0, last published 2+ years ago) generates 30+ files for every platform. We need exactly 3 files. Sharp is already needed for Next.js, so reuse it.
+
+**Alternative approach (equally valid):** Use any online favicon generator (realfavicongenerator.net) once, download the 3 files, commit them. No build script needed. The manual approach is simpler if you only generate favicons once.
+
+**Confidence:** MEDIUM -- Both approaches work. The script approach is reproducible; the manual approach is simpler.
+
+---
+
+## Project Renaming -- Zero New Dependencies
+
+The rename from `qlj-i18n` to `transweave` is a search-and-replace operation across the monorepo. No tooling needed beyond a text editor.
+
+### Package Name Changes
+
+| File | Current `name` | New `name` |
+|------|---------------|------------|
+| `package.json` (root) | `@qlj/i18n-manager` | `@transweave/monorepo` |
+| `packages/web/package.json` | `nextjs` | `@transweave/web` |
+| `packages/server/package.json` | `qlj-i18n-server` | `@transweave/server` |
+| `packages/cli/package.json` | `qlj-i18n` | `transweave` |
+
+### Build/Deploy Reference Changes
+
+| File | What Changes |
+|------|-------------|
+| `packages/cli/package.json` `bin` field | `"qlj-i18n": "./bin/qlj-i18n.js"` -> `"transweave": "./bin/transweave.js"` |
+| `packages/cli/bin/qlj-i18n.js` | Rename file to `transweave.js` |
+| `packages/server/Dockerfile` | `pnpm --filter qlj-i18n-server` -> `pnpm --filter @transweave/server` |
+| `packages/web/Dockerfile` | `pnpm --filter nextjs` -> `pnpm --filter @transweave/web` |
+| `docker-compose.yml` | Service/image names can optionally update |
+| `packages/web/app/layout.tsx` | `title: "i18n Manager"` -> `title: "Transweave"` |
+
+### Code Reference Changes (16 files)
+
+Files containing `qlj-i18n`, `qlj_i18n`, or `@qlj/` (excluding `node_modules`):
+
+| Category | Files |
+|----------|-------|
+| CLI source | `packages/cli/src/index.ts`, `src/commands/push.ts`, `src/commands/pull.ts`, `src/commands/init.ts`, `src/config.ts` |
+| MCP | `packages/server/src/service/mcp.service.ts`, `packages/server/src/controller/mcp.controller.ts` |
+| Server | `packages/server/src/ai/encryption.util.ts` |
+| Config | `.env.example` |
+| Docs | `README.md`, `docs/api-reference.md` |
+| i18n strings | `packages/web/i18n/all.json` |
+
+**Confidence:** HIGH -- based on exhaustive grep of the codebase.
+
+---
+
+## What NOT to Add
+
+| Do NOT Add | Why | What to Do Instead |
+|------------|-----|-------------------|
+| Separate static site (Astro, Docusaurus, VitePress) | Creates a second deployment, second build pipeline, second hosting concern. Massive overhead for a single landing page. | Use Next.js route groups. One deployment, one build. |
+| `@vercel/og` npm package | Already bundled inside `next/og`. Installing it separately creates a duplicate. | `import { ImageResponse } from 'next/og'` |
+| SVG generation/manipulation libraries (svg.js, d3, Inkscape bindings) | Logo design is a creative/design task, not a code generation task. The existing SVG files are hand-authored. | Design the logo SVG manually (or with a design tool like Figma), save as `.svg` file. |
+| Headless CMS (Contentful, Sanity, Strapi) | Landing page content is static marketing copy that changes rarely. CMS adds deployment complexity and a runtime dependency. | Hardcode content in JSX. Update by editing the component. |
+| Image CDN (Cloudinary, imgix) | OG images are statically generated at build time. Landing page images use `next/image` with local optimization. No external image service needed. | Serve images from the same Next.js origin. |
+| `canvas` or `node-canvas` | Heavy native dependency (Cairo, Pango). Requires system-level C libraries. | `next/og` uses satori+resvg which are lighter and WASM-based. |
+| `favicons` npm package | Generates 30+ favicon files for every platform. Overkill when only 3 files are needed. Last published 2+ years ago. | `sharp` + `sharp-ico` for programmatic generation, or use an online tool once. |
+| CSS-in-JS (styled-components, emotion) | Tailwind CSS is the established styling solution. Adding CSS-in-JS fragments the styling approach. | Tailwind CSS for all styling including the landing page. |
+| Additional font packages (Fontsource, Google Fonts CDN) | `next/font` already handles font loading with automatic optimization and self-hosting. Inter is configured. | Use `next/font/google` or `next/font/local` for any additional brand fonts. |
+| PWA manifest generator | Out of scope for branding milestone. | Add `manifest.json` manually later if PWA support is desired. |
+| Sentry/analytics for landing page | Out of scope. Landing page is static content. | Can be added in a future milestone if needed. |
+
+---
+
+## Existing Assets to Clean Up
+
+| Current File | Action | Reason |
+|-------------|--------|--------|
+| `public/favicon.svg` | Replace with new Transweave logo | Contains `qlj-logo-gradient` ID. Also move to `app/icon.svg` for Next.js convention. |
+| `public/logo.svg` | Replace with new Transweave logo | Same old gradient ID. Keep in `public/` for use in components via `<Image>`. |
+| `public/next.svg` | Delete | Next.js boilerplate file, not used. |
+| `public/vercel.svg` | Delete | Vercel boilerplate file, not used. |
+| `public/fanyi.webp` | Delete or replace | Chinese translation-related image from internal version. |
+| `public/tutu.jpg` | Delete | Appears to be internal/personal image. |
 
 ---
 
 ## Installation
 
 ```bash
-# Database layer (server package)
-pnpm --filter server add drizzle-orm @electric-sql/pglite postgres
+# Dev dependencies only -- add to packages/web
+pnpm --filter @transweave/web add -D sharp
 
-# Database dev tooling (server package)
-pnpm --filter server add -D drizzle-kit
-
-# File storage (server package)
-pnpm --filter server add @nestjs/serve-static
-
-# Auth (server package -- passport-local if not present)
-pnpm --filter server add passport-local
-pnpm --filter server add -D @types/passport-local
-
-# Config (server package)
-pnpm --filter server add @nestjs/config
-
-# Remove MongoDB dependencies (server package)
-pnpm --filter server remove mongoose @nestjs/mongoose @prisma/client
+# Optional: for programmatic ICO generation (one-time script)
+pnpm --filter @transweave/web add -D sharp-ico
 ```
 
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not Alternative |
-|----------|-------------|-------------|---------------------|
-| ORM | **Drizzle ORM** | Prisma 7 | Prisma requires code generation step, has larger bundle (~90% bigger), and while v7 removed the Rust engine, Drizzle's SQL-first approach maps better to the relational migration from MongoDB. Prisma is already in the codebase as unused dependency -- remove it. |
-| ORM | **Drizzle ORM** | TypeORM | TypeORM is legacy. Decorator-heavy, weaker TypeScript inference, known performance issues, and slower development pace. Not recommended for new projects in 2025. |
-| ORM | **Drizzle ORM** | MikroORM | Excellent ORM but heavier abstraction than needed. Unit of Work pattern adds complexity for a straightforward CRUD i18n app. Better for large enterprise monoliths. |
-| Dev DB | **PGlite** | SQLite (better-sqlite3) | SQLite requires separate `sqliteTable` schema definitions in Drizzle, creating dual-schema maintenance burden. PGlite uses same `pgTable` schema as production PostgreSQL -- one schema, two environments. |
-| Dev DB | **PGlite** | Docker PostgreSQL for dev | PGlite enables true "zero dependency" quick-start: `pnpm dev` works without Docker installed. Docker PostgreSQL is still available as an alternative for developers who prefer it. |
-| PG Driver | **postgres.js** | pg (node-postgres) | postgres.js is faster, native ESM, simpler API. `pg` is the legacy driver. Both work with Drizzle, but postgres.js is the modern choice. |
-| File Storage | **Local disk + serve-static** | MinIO (S3-compatible) | MinIO adds Docker container complexity. Local disk storage with serve-static is simplest for self-hosted. Can always add MinIO/S3 adapter later as optional enhancement. |
-| File Storage | **Local disk + serve-static** | Cloudflare R2 | R2 is a cloud dependency. Open-source self-hosted tools must work offline with local storage. |
+**Total new dependencies: 1-2 dev-only packages. Zero new runtime dependencies.**
 
 ---
 
-## What NOT to Use
+## Version Compatibility
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **Mongoose** | MongoDB-specific ODM. Entire database layer is being replaced. | Drizzle ORM with PostgreSQL schema |
-| **@nestjs/mongoose** | NestJS MongoDB integration module. Remove entirely. | Drizzle ORM module (custom or `@knaadh/nestjs-drizzle-pg`) |
-| **@prisma/client** | Currently in `package.json` but unused. Dead dependency adding bloat. | Remove. Use Drizzle ORM. |
-| **SQLite for dev** | Creates dual-schema problem with Drizzle (`sqliteTable` vs `pgTable`). | PGlite -- same PostgreSQL schema everywhere |
-| **TypeORM** | Legacy ORM with weaker TypeScript support and performance issues. | Drizzle ORM |
-| **`pg` driver** | Older PostgreSQL driver, callback-based API. | `postgres` (postgres.js) -- modern, faster, ESM |
-| **Feishu SDK/OAuth** | Proprietary third-party dependency. Being removed for OSS. | Built-in username/password with passport-local |
-| **External CDN upload** | Cloud dependency (QiLiangJia CDN / Cloudflare R2). | Local `./uploads` directory with `@nestjs/serve-static` |
-
----
-
-## Stack Patterns by Variant
-
-**Quick-start mode (default for new users):**
-- PGlite embedded database (file: `./data/pglite/`)
-- Local file storage (`./uploads/`)
-- No Docker required
-- Single command: `pnpm dev` starts everything
-
-**Production mode (Docker Compose):**
-- PostgreSQL 17 in Docker container
-- Local file storage with Docker volume mount
-- `docker-compose up` starts web + server + postgres
-- Environment variables via `.env` file
-
-**Production mode (external PostgreSQL):**
-- Connect to existing PostgreSQL instance via `DATABASE_URL`
-- Same server binary, different config
-- For teams with existing database infrastructure
-
----
-
-## Architecture: Database Abstraction Pattern
-
-Since PGlite and PostgreSQL both use the `pg` dialect in Drizzle, the abstraction is at the **connection layer**, not the schema layer:
-
-```typescript
-// packages/server/src/database/schema.ts -- ONE schema, used everywhere
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  username: text('username').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
-  displayName: text('display_name'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-// packages/server/src/database/connection.ts -- switch by env
-import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js';
-import { drizzle as drizzlePglite } from 'drizzle-orm/pglite';
-import postgres from 'postgres';
-import { PGlite } from '@electric-sql/pglite';
-
-export function createDatabase() {
-  const url = process.env.DATABASE_URL;
-
-  if (url?.startsWith('postgresql://') || url?.startsWith('postgres://')) {
-    // Production: real PostgreSQL
-    const client = postgres(url);
-    return drizzlePg(client);
-  }
-
-  // Development: embedded PGlite
-  const client = new PGlite(process.env.PGLITE_DATA_DIR || './data/pglite');
-  return drizzlePglite(client);
-}
-```
-
-This pattern means:
-- **One schema file** defines all tables
-- **One migration set** works for both environments
-- **Connection switching** is the only difference
-- `drizzle-kit push` works against both PGlite and PostgreSQL
-
----
-
-## Docker Compose Structure
-
-```yaml
-# docker-compose.yml (production)
-services:
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: i18n
-      POSTGRES_USER: i18n
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U i18n"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  server:
-    build:
-      context: .
-      dockerfile: packages/server/Dockerfile
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://i18n:${POSTGRES_PASSWORD}@postgres:5432/i18n
-      JWT_SECRET: ${JWT_SECRET}
-    volumes:
-      - uploads:/app/uploads
-
-  web:
-    build:
-      context: .
-      dockerfile: packages/web/Dockerfile
-    depends_on:
-      - server
-    environment:
-      NEXT_PUBLIC_API_URL: http://server:3001
-    ports:
-      - "3000:3000"
-
-volumes:
-  pgdata:
-  uploads:
-```
-
-Multi-stage Dockerfiles should use:
-1. **Base stage:** `node:22-alpine` with corepack enable and pnpm
-2. **Dependencies stage:** `pnpm fetch` + `pnpm install --frozen-lockfile`
-3. **Build stage:** `pnpm build` with `--filter` for monorepo
-4. **Production stage:** Copy only built artifacts + production node_modules
-
----
-
-## Version Compatibility Matrix
-
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| drizzle-orm@0.45.x | drizzle-kit@0.31.x | Must keep ORM and Kit versions in sync. Both from same release. |
-| drizzle-orm@0.45.x | @electric-sql/pglite@0.3.x | First-class support via `drizzle-orm/pglite` driver. |
-| drizzle-orm@0.45.x | postgres@3.4.x | First-class support via `drizzle-orm/postgres-js` driver. |
-| NestJS@11.x | @nestjs/serve-static@5.x | Version 5.x targets NestJS 11. |
-| NestJS@11.x | @nestjs/config@4.x | Version 4.x targets NestJS 11. |
-| NestJS@11.x | @nestjs/jwt@11.x | Same major version alignment. |
-| Next.js@15.x | React@19.x | Next.js 15 requires React 19. |
-| Node.js 22.x LTS | All packages above | Use Node 22 LTS in Docker (current LTS). Node 24 is current but not LTS yet. |
-
----
-
-## Open-Source Project Tooling
-
-| Concern | Recommendation | Rationale |
-|---------|----------------|-----------|
-| License | MIT | Most popular OSS license (1.53M pageviews in 2025). Maximum permissiveness for self-hosted tool. Both NestJS and Next.js use MIT. |
-| Commit convention | Conventional Commits | Standard format enables automated changelogs. Already widely adopted. |
-| Changelog | `changesets` or manual CHANGELOG.md | For a self-hosted tool (not an npm package), manual CHANGELOG.md per release is sufficient. |
-| CI | GitHub Actions | Repository is already on GitHub. Free for public repos. |
-| Docker registry | GitHub Container Registry (ghcr.io) | Free for public repos, integrated with GitHub Actions. Publish pre-built images. |
-
----
-
-## Migration Strategy: MongoDB to PostgreSQL
-
-The existing MongoDB schemas (6 collections) map cleanly to PostgreSQL tables:
-
-| MongoDB Collection | PostgreSQL Table | Key Changes |
-|-------------------|-----------------|-------------|
-| User | users | `_id` (ObjectId) -> `id` (UUID). Remove `feishuOpenId`, `feishuUnionId` fields. |
-| Team | teams | `_id` -> `id` (UUID). |
-| Membership | memberships | `_id` -> `id` (UUID). Foreign keys to users and teams. |
-| Project | projects | `_id` -> `id` (UUID). Foreign key to teams. |
-| Token | tokens | `_id` -> `id` (UUID). `values` (embedded object) -> JSONB column or separate `token_values` table. |
-| TokenHistory | token_history | `_id` -> `id` (UUID). Foreign key to tokens. `changes` -> JSONB column. |
-| ActivityLog | activity_logs | `_id` -> `id` (UUID). `metadata` -> JSONB column. |
-
-**Key decision:** Use PostgreSQL `jsonb` columns for semi-structured data (token values, history changes, activity metadata) rather than fully normalizing. This preserves the flexibility of the MongoDB document model where it makes sense, while gaining relational integrity for entity relationships.
+| Package | Version | Compatible With | Source |
+|---------|---------|-----------------|--------|
+| `next/og` | Bundled with 15.2.6 | React 19, Node 22 | [Next.js docs](https://nextjs.org/docs/app/api-reference/functions/image-response) |
+| `sharp` | ^0.33 | Node 18+, linux/darwin/win | [sharp.pixelplumbing.com](https://sharp.pixelplumbing.com/) |
+| `sharp-ico` | ^0.1 | `sharp` ^0.33 | [npm](https://www.npmjs.com/package/sharp-ico) |
+| `motion` | ^12.18.1 (installed) | React 19 | [motion.dev](https://motion.dev/) |
+| Next.js file conventions | Since v13.3.0 | All Next.js 13+ | [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons) |
+| Next.js Route Groups | Since v13.0 | All Next.js 13+ | [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups) |
 
 ---
 
 ## Sources
 
-- [Drizzle ORM Official Docs](https://orm.drizzle.team/) -- schema declaration, PGlite integration, multi-database config (HIGH confidence)
-- [Drizzle ORM GitHub Discussion #3396](https://github.com/drizzle-team/drizzle-orm/discussions/3396) -- PGlite as SQLite alternative for same-schema pattern (HIGH confidence)
-- [PGlite Official Site](https://pglite.dev/) -- embedded PostgreSQL capabilities, benchmarks (HIGH confidence)
-- [NestJS Official Docs - File Upload](https://docs.nestjs.com/techniques/file-upload) -- Multer integration (HIGH confidence)
-- [NestJS Official Docs - Serve Static](https://docs.nestjs.com/recipes/serve-static) -- static file serving (HIGH confidence)
-- [Best ORM for NestJS 2025 (DEV Community)](https://dev.to/sasithwarnakafonseka/best-orm-for-nestjs-in-2025-drizzle-orm-vs-typeorm-vs-prisma-229c) -- ORM comparison (MEDIUM confidence)
-- [Drizzle vs Prisma 2026 (Bytebase)](https://www.bytebase.com/blog/drizzle-vs-prisma/) -- ORM comparison (MEDIUM confidence)
-- [Trilon - NestJS & DrizzleORM](https://trilon.io/blog/nestjs-drizzleorm-a-great-match) -- NestJS integration patterns (MEDIUM confidence)
-- [Docker Community Forums - NestJS + NextJS monorepo](https://forums.docker.com/t/best-practices-for-using-docker-in-development-vs-production-nestjs-nextjs-monorepo/149461) -- Docker best practices (MEDIUM confidence)
-- [pnpm Docker docs](https://pnpm.io/docker) -- Multi-stage build patterns for pnpm monorepos (HIGH confidence)
-- [Open Source Initiative - Top Licenses 2025](https://opensource.org/blog/top-open-source-licenses-in-2025) -- License selection (HIGH confidence)
-- npm registry (direct version queries) -- All version numbers verified 2026-03-01 (HIGH confidence)
+- [Next.js: opengraph-image and twitter-image file conventions](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image) -- Official docs v16.1.6, updated 2026-02-27
+- [Next.js: ImageResponse API](https://nextjs.org/docs/app/api-reference/functions/image-response) -- Official docs
+- [Next.js: favicon, icon, and apple-icon file conventions](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons) -- Official docs v16.1.6, updated 2026-02-27
+- [Next.js: Route Groups](https://nextjs.org/docs/app/api-reference/file-conventions/route-groups) -- Official docs
+- [Next.js: Building Public/Static Pages](https://nextjs.org/docs/app/guides/public-static-pages) -- Official guide v16.1.6
+- [Next.js: Install Sharp recommendation](https://nextjs.org/docs/messages/install-sharp) -- Official docs
+- [How to Favicon in 2026: Three Files](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs) -- Evil Martians (updated for 2026)
+- [Favicon Formats and Best Practices 2026](https://favicon.im/blog/favicon-formats-sizes-best-practices) -- Favicon.im
+- [Motion (formerly Framer Motion)](https://motion.dev/) -- Official site
+- [sharp](https://sharp.pixelplumbing.com/) -- Official documentation
+- [sharp-ico](https://www.npmjs.com/package/sharp-ico) -- npm package
 
 ---
-*Stack research for: qlj-i18n open-source conversion*
+*Stack research for: Transweave v1.1 Branding & Promotion milestone*
 *Researched: 2026-03-01*
