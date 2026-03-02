@@ -33,7 +33,7 @@ This milestone establishes Transweave as a recognizable open-source brand. The w
   4. A 1280x640px social preview image with the logo and tagline is uploaded to the GitHub repository settings
 **Plans**: 4 plans
 Plans:
-- [ ] 10-01-PLAN.md -- SVG logo files: icon-only, wordmark, favicon SVG with dark mode
+- [x] 10-01-PLAN.md -- SVG logo files: icon-only, wordmark, favicon SVG with dark mode
 - [ ] 10-02-PLAN.md -- Brand color tokens: Tailwind extension and CSS custom properties
 - [ ] 10-03-PLAN.md -- Favicon set deployment, Logo.tsx update, layout.tsx metadata, legacy asset cleanup
 - [ ] 10-04-PLAN.md -- Social preview images (1280x640 GitHub + 1200x630 OG) and GitHub upload checkpoint
@@ -80,7 +80,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 10. Visual Identity | v1.1 | 0/4 | Not started | - |
+| 10. Visual Identity | v1.1 | 1/4 | In progress | - |
 | 11. Project Rename | v1.1 | 0/TBD | Not started | - |
 | 12. Landing Page | v1.1 | 0/TBD | Not started | - |
 | 13. README & Community | v1.1 | 0/TBD | Not started | - |

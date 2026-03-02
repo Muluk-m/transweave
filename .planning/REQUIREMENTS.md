@@ -111,8 +111,8 @@ Requirements for branding and promotion. Each maps to roadmap phases 10-13.
 
 ### Visual Identity
 
-- [ ] **VIS-01**: Project has an SVG logo with icon + wordmark variant
-- [ ] **VIS-02**: Project has an icon-only logo variant (for favicon and small contexts)
+- [x] **VIS-01**: Project has an SVG logo with icon + wordmark variant
+- [x] **VIS-02**: Project has an icon-only logo variant (for favicon and small contexts)
 - [ ] **VIS-03**: Favicon set generated from logo (favicon.ico, favicon.svg with dark mode, apple-touch-icon.png)
 - [ ] **VIS-04**: Brand color system defined as Tailwind theme extension and CSS custom properties
 - [ ] **VIS-05**: GitHub social preview image uploaded (1280x640px with logo and tagline)
@@ -274,8 +274,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VIS-01 | Phase 10 | Pending |
-| VIS-02 | Phase 10 | Pending |
+| VIS-01 | Phase 10 (10-01) | Complete |
+| VIS-02 | Phase 10 (10-01) | Complete |
 | VIS-03 | Phase 10 | Pending |
 | VIS-04 | Phase 10 | Pending |
 | VIS-05 | Phase 10 | Pending |
@@ -302,4 +302,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-02 after v1.1 roadmap creation (traceability updated)*
+*Last updated: 2026-03-02 after 10-01 execution (VIS-01, VIS-02 marked complete)*
