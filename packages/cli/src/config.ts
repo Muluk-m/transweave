@@ -14,12 +14,12 @@ export interface ProjectConfig {
   languages?: string[];
 }
 
-const CONFIG_DIR = path.join(os.homedir(), '.config', 'qlj-i18n');
+const CONFIG_DIR = path.join(os.homedir(), '.config', 'transweave');
 const GLOBAL_CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
-const PROJECT_CONFIG_FILENAME = '.qlj-i18n.json';
+const PROJECT_CONFIG_FILENAME = '.transweave.json';
 
 /**
- * Load global config from ~/.config/qlj-i18n/config.json
+ * Load global config from ~/.config/transweave/config.json
  */
 export async function loadGlobalConfig(): Promise<GlobalConfig> {
   try {
@@ -34,7 +34,7 @@ export async function loadGlobalConfig(): Promise<GlobalConfig> {
 }
 
 /**
- * Save global config to ~/.config/qlj-i18n/config.json
+ * Save global config to ~/.config/transweave/config.json
  */
 export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
   await fs.mkdir(CONFIG_DIR, { recursive: true });
@@ -42,7 +42,7 @@ export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
 }
 
 /**
- * Load project config from .qlj-i18n.json in the current directory
+ * Load project config from .transweave.json in the current directory
  */
 export async function loadProjectConfig(): Promise<ProjectConfig> {
   const configPath = path.join(process.cwd(), PROJECT_CONFIG_FILENAME);
@@ -58,7 +58,7 @@ export async function loadProjectConfig(): Promise<ProjectConfig> {
 }
 
 /**
- * Save project config to .qlj-i18n.json in the current directory
+ * Save project config to .transweave.json in the current directory
  */
 export async function saveProjectConfig(config: ProjectConfig): Promise<void> {
   const configPath = path.join(process.cwd(), PROJECT_CONFIG_FILENAME);
@@ -67,10 +67,10 @@ export async function saveProjectConfig(config: ProjectConfig): Promise<void> {
 
 /**
  * Get API key from environment variable or global config.
- * Priority: QLJ_I18N_API_KEY env var > global config apiKey field
+ * Priority: TRANSWEAVE_API_KEY env var > global config apiKey field
  */
 export async function getApiKey(): Promise<string | undefined> {
-  const envKey = process.env.QLJ_I18N_API_KEY;
+  const envKey = process.env.TRANSWEAVE_API_KEY;
   if (envKey) {
     return envKey;
   }
@@ -80,10 +80,10 @@ export async function getApiKey(): Promise<string | undefined> {
 
 /**
  * Get server URL from environment variable or global config.
- * Priority: QLJ_I18N_SERVER env var > global config server field > default
+ * Priority: TRANSWEAVE_SERVER env var > global config server field > default
  */
 export async function getServer(): Promise<string> {
-  const envServer = process.env.QLJ_I18N_SERVER;
+  const envServer = process.env.TRANSWEAVE_SERVER;
   if (envServer) {
     return envServer;
   }
