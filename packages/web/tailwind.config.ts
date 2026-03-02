@@ -70,6 +70,14 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        brand: {
+          teal: '#14b8a6',           // teal-500 — primary brand color
+          'teal-light': '#f0fdfa',   // teal-50 — for backgrounds, badges, hover tints
+          'teal-dark': '#0d9488',    // teal-600 — for favicon background, dark contexts
+          'teal-900': '#134e4a',     // teal-900 — for dark mode icon backgrounds
+          indigo: '#6366f1',         // indigo-500 — secondary brand color
+          'indigo-dark': '#4338ca',  // indigo-700 — for hover states
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
