@@ -21,7 +21,7 @@ export class McpService {
     private readonly tokenService: TokenService,
   ) {
     this.server = new McpServer({
-      name: 'qlj-i18n-mcp-server',
+      name: 'transweave-mcp-server',
       version: '1.0.0',
     });
 
