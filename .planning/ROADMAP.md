@@ -31,7 +31,12 @@ This milestone establishes Transweave as a recognizable open-source brand. The w
   2. Favicon set is deployed (favicon.ico, favicon.svg with dark mode support, apple-touch-icon.png) and browsers display the correct icon
   3. Brand colors are defined as both Tailwind theme extension and CSS custom properties, usable throughout the app
   4. A 1280x640px social preview image with the logo and tagline is uploaded to the GitHub repository settings
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 10-01-PLAN.md -- SVG logo files: icon-only, wordmark, favicon SVG with dark mode
+- [ ] 10-02-PLAN.md -- Brand color tokens: Tailwind extension and CSS custom properties
+- [ ] 10-03-PLAN.md -- Favicon set deployment, Logo.tsx update, layout.tsx metadata, legacy asset cleanup
+- [ ] 10-04-PLAN.md -- Social preview images (1280x640 GitHub + 1200x630 OG) and GitHub upload checkpoint
 
 ### Phase 11: Project Rename
 **Goal**: Every user-visible and developer-facing reference says "Transweave" instead of "qlj-i18n", while preserving load-bearing infrastructure identifiers
@@ -75,7 +80,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 10. Visual Identity | v1.1 | 0/TBD | Not started | - |
+| 10. Visual Identity | v1.1 | 0/4 | Not started | - |
 | 11. Project Rename | v1.1 | 0/TBD | Not started | - |
 | 12. Landing Page | v1.1 | 0/TBD | Not started | - |
 | 13. README & Community | v1.1 | 0/TBD | Not started | - |
