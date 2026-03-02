@@ -65,11 +65,8 @@ export class ProjectController {
     if (!project) {
       throw new NotFoundException('Can not find the project');
     }
-    const projectObject = project.toObject()
-    const memberships = await this.teamService.getTeamMembers(projectObject.teamId);
-    projectObject.memberships = memberships
-    
-    return projectObject;
+    const memberships = await this.teamService.getTeamMembers(project.teamId);
+    return { ...project, memberships };
   }
 
   @Put('update/:id')

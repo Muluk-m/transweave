@@ -2,6 +2,20 @@ import { index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-o
 import { projects } from './projects';
 import { users } from './users';
 
+export enum ActivityType {
+  PROJECT_CREATE = 'PROJECT_CREATE',
+  PROJECT_UPDATE = 'PROJECT_UPDATE',
+  PROJECT_DELETE = 'PROJECT_DELETE',
+  PROJECT_LANGUAGE_ADD = 'PROJECT_LANGUAGE_ADD',
+  PROJECT_LANGUAGE_REMOVE = 'PROJECT_LANGUAGE_REMOVE',
+  TOKEN_CREATE = 'TOKEN_CREATE',
+  TOKEN_UPDATE = 'TOKEN_UPDATE',
+  TOKEN_DELETE = 'TOKEN_DELETE',
+  TOKEN_BATCH_UPDATE = 'TOKEN_BATCH_UPDATE',
+  PROJECT_EXPORT = 'PROJECT_EXPORT',
+  PROJECT_IMPORT = 'PROJECT_IMPORT',
+}
+
 export interface ActivityDetails {
   entityId?: string;
   entityType?: 'project' | 'token';

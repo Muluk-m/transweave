@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest --config ./test/jest-e2e.json --runInBand",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
@@ -27,7 +27,6 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
-    "@nestjs/mongoose": "^11.0.3",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/serve-static": "^5.0.4",
@@ -38,7 +37,6 @@
     "drizzle-orm": "^0.45.1",
     "gettext-parser": "^4.2.0",
     "jszip": "^3.10.1",
-    "mongoose": "^8.14.0",
     "openai": "^6.25.0",
     "p-queue": "^9.1.0",
     "passport": "^0.7.0",

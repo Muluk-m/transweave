@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ActivityLogRepository } from '../repository/activity-log.repository';
 import {
-  ActivityLog,
-  ActivityLogDocument,
+  type ActivityLog,
+  type NewActivityLog,
   ActivityType,
-  ActivityDetails,
-} from '../models';
+  type ActivityDetails,
+} from '../db/schema';
+
+export { ActivityType, type ActivityDetails };
 
 export interface CreateActivityLogDto {
   type: ActivityType;
@@ -29,91 +30,48 @@ export interface QueryActivityLogDto {
 
 @Injectable()
 export class ActivityLogService {
-  constructor(
-    @InjectModel(ActivityLog.name)
-    private activityLogModel: Model<ActivityLogDocument>,
-  ) {}
+  constructor(private readonly activityLogRepository: ActivityLogRepository) {}
 
-  /**
-   * 创建操作日志
-   */
-  async create(data: CreateActivityLogDto): Promise<ActivityLogDocument> {
-    const activityLog = new this.activityLogModel({
-      ...data,
-      projectId: new Types.ObjectId(data.projectId),
-      userId: new Types.ObjectId(data.userId),
-    });
-
-    return activityLog.save();
+  async create(data: CreateActivityLogDto): Promise<ActivityLog> {
+    const record: NewActivityLog = {
+      type: data.type,
+      projectId: data.projectId,
+      userId: data.userId,
+      details: data.details,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    };
+    return this.activityLogRepository.create(record);
   }
 
-  /**
-   * 批量创建操作日志
-   */
-  async createMany(data: CreateActivityLogDto[]) {
-    const logs = data.map(log => ({
-      ...log,
-      projectId: new Types.ObjectId(log.projectId),
-      userId: new Types.ObjectId(log.userId),
-    }));
-
-    return this.activityLogModel.insertMany(logs);
+  async createMany(data: CreateActivityLogDto[]): Promise<ActivityLog[]> {
+    const results: ActivityLog[] = [];
+    for (const item of data) {
+      results.push(await this.create(item));
+    }
+    return results;
   }
 
-  /**
-   * 查询操作日志
-   */
   async query(params: QueryActivityLogDto) {
-    const {
-      projectId,
-      userId,
-      type,
-      startDate,
-      endDate,
-      page = 1,
-      limit = 20,
-    } = params;
+    const { projectId, type, page = 1, limit = 20 } = params;
+    const offset = (page - 1) * limit;
 
-    // 构建查询条件
-    const query: any = {};
-
+    let logs: ActivityLog[] = [];
     if (projectId) {
-      query.projectId = new Types.ObjectId(projectId);
-    }
-
-    if (userId) {
-      query.userId = new Types.ObjectId(userId);
-    }
-
-    if (type) {
-      query.type = type;
-    }
-
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) {
-        query.createdAt.$gte = startDate;
+      logs = await this.activityLogRepository.findByProjectId(projectId, {
+        limit,
+        offset,
+        type: type as string | undefined,
+      });
+    } else {
+      logs = await this.activityLogRepository.findAll();
+      if (type) {
+        logs = logs.filter((l) => l.type === type);
       }
-      if (endDate) {
-        query.createdAt.$lte = endDate;
-      }
+      logs = logs.slice(offset, offset + limit);
     }
 
-    // 计算分页
-    const skip = (page - 1) * limit;
-
-    // 执行查询
-    const [logs, total] = await Promise.all([
-      this.activityLogModel
-        .find(query)
-        .populate('userId', 'name email id avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.activityLogModel.countDocuments(query).exec(),
-    ]);
-
+    const total = logs.length;
     return {
       data: logs,
       pagination: {
@@ -125,115 +83,52 @@ export class ActivityLogService {
     };
   }
 
-  /**
-   * 获取项目的最近活动
-   */
   async getRecentActivities(projectId: string, limit = 10) {
-    return this.activityLogModel
-      .find({ projectId: new Types.ObjectId(projectId) })
-      .populate('userId', 'name email id avatar')
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .exec();
+    return this.activityLogRepository.findByProjectIdWithUser(projectId, { limit });
   }
 
-  /**
-   * 获取用户的活动统计
-   */
   async getUserActivityStats(userId: string, projectId?: string) {
-    const match: any = { userId: new Types.ObjectId(userId) };
-    if (projectId) {
-      match.projectId = new Types.ObjectId(projectId);
-    }
-
-    const stats = await this.activityLogModel.aggregate([
-      { $match: match },
-      {
-        $group: {
-          _id: '$type',
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          type: '$_id',
-          count: 1,
-          _id: 0,
-        },
-      },
-    ]);
-
-    return stats;
+    return this.activityLogRepository.getUserActivityStats(userId, projectId);
   }
 
-  /**
-   * 获取项目活动时间线
-   */
   async getProjectTimeline(projectId: string, days = 30) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const timeline = await this.activityLogModel.aggregate([
-      {
-        $match: {
-          projectId: new Types.ObjectId(projectId),
-          createdAt: { $gte: startDate },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            type: '$type',
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: '$_id.date',
-          activities: {
-            $push: {
-              type: '$_id.type',
-              count: '$count',
-            },
-          },
-          total: { $sum: '$count' },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
-
-    return timeline;
+    const rows = await this.activityLogRepository.getProjectTimeline(projectId, days);
+    // Group by date to match original shape
+    const byDate = new Map<string, { type: string; count: number }[]>();
+    for (const row of rows) {
+      const date = row.date.slice(0, 10);
+      if (!byDate.has(date)) byDate.set(date, []);
+      byDate.get(date)!.push({ type: row.type, count: row.count });
+    }
+    return Array.from(byDate.entries())
+      .map(([date, activities]) => ({
+        _id: date,
+        activities,
+        total: activities.reduce((s, a) => s + a.count, 0),
+      }))
+      .sort((a, b) => a._id.localeCompare(b._id));
   }
 
-  /**
-   * 清理旧日志（可选功能）
-   */
   async cleanOldLogs(days = 90) {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    const result = await this.activityLogModel.deleteMany({
-      createdAt: { $lt: cutoffDate },
-    });
-
+    // Simple approach: fetch all then delete old ones
+    // For production use a raw SQL delete instead
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const all = await this.activityLogRepository.findAll();
+    let deleted = 0;
+    for (const log of all) {
+      if (log.createdAt < cutoff) {
+        await this.activityLogRepository.delete(log.id);
+        deleted++;
+      }
+    }
     return {
-      deleted: result.deletedCount,
-      message: `删除了 ${result.deletedCount} 条超过 ${days} 天的日志`,
+      deleted,
+      message: `删除了 ${deleted} 条超过 ${days} 天的日志`,
     };
   }
 
-  /**
-   * 获取项目的操作日志详情
-   */
   async getActivityDetails(activityId: string) {
-    return this.activityLogModel
-      .findById(activityId)
-      .populate('userId', 'name email id avatar')
-      .populate('projectId', 'name')
-      .exec();
+    return this.activityLogRepository.findById(activityId);
   }
-} 
+}

@@ -2,32 +2,29 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  Project,
-  ProjectDocument,
-  ProjectModule,
-  Token,
-  TokenDocument,
-  ActivityType,
-} from '../models';
+import { ProjectRepository } from '../repository/project.repository';
+import { TokenRepository } from '../repository/token.repository';
 import { MembershipService } from './membership.service';
+import { ActivityLogService } from './activity-log.service';
+import { ActivityType } from '../db/schema/activity-logs';
+import { type Project, type NewProject, type ProjectModule } from '../db/schema/projects';
+import { type Token } from '../db/schema/tokens';
+import { DRIZZLE } from '../db/drizzle.provider';
+import type { DrizzleDB } from '../db/drizzle.types';
 import { createZipWithLanguageFiles } from 'src/utils/exportTo';
 import { parseImportData } from 'src/utils/importFrom';
 import type { SupportedImportFormat, SupportedExportFormat } from 'src/utils/formats/types';
-import { MongooseService } from './mongoose.service';
-import { ActivityLogService } from './activity-log.service';
 
 @Injectable()
 export class ProjectService {
   constructor(
-    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
-    @InjectModel(Token.name) private tokenModel: Model<TokenDocument>,
-    private membershipService: MembershipService,
-    private mongooseService: MongooseService,
-    private activityLogService: ActivityLogService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
+    private readonly projectRepository: ProjectRepository,
+    private readonly tokenRepository: TokenRepository,
+    private readonly membershipService: MembershipService,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   async createProject(data: {
@@ -36,88 +33,49 @@ export class ProjectService {
     url: string;
     description?: string;
     languages?: string[];
-    userId: string; // 添加userId用于记录操作者
-    ipAddress?: string; // 可选的IP地址
-    userAgent?: string; // 可选的User Agent
-  }) {
-    const session = await this.mongooseService.getConnection().startSession();
-    try {
-      let result: ProjectDocument | null = null;
-      await session.withTransaction(async () => {
-        
-        const project = new this.projectModel({
-          ...data,
-          languages: data.languages || [],
-        });
-        await project.save({ session });
-        result = project;
+    userId: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<Project> {
+    const project = await this.projectRepository.create({
+      name: data.name,
+      teamId: data.teamId,
+      url: data.url,
+      description: data.description,
+      languages: data.languages || [],
+    });
 
-        // 记录操作日志
-        await this.activityLogService.create({
-          type: ActivityType.PROJECT_CREATE,
-          projectId: String(project._id),
-          userId: data.userId,
-          details: {
-            entityId: String(project._id),
-            entityType: 'project',
-            entityName: project.name,
-            metadata: {
-              languages: project.languages,
-              description: project.description,
-              url: project.url,
-            },
-          },
-          ipAddress: data.ipAddress,
-          userAgent: data.userAgent,
-        });
-      });
-      return result;
-    } finally {
-      session.endSession();
-    }
-  }
-
-  async findAllProjects() {
-    return this.projectModel.find().exec();
-  }
-
-  async findProjectById(id: string) {
-    const project = await this.projectModel
-      .findById(id)
-      .populate({
-        path: 'tokens',
-        populate: {
-          path: 'history.user',
-          select: 'name email id avatar',
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_CREATE,
+      projectId: project.id,
+      userId: data.userId,
+      details: {
+        entityId: project.id,
+        entityType: 'project',
+        entityName: project.name,
+        metadata: {
+          languages: project.languages,
+          description: project.description,
+          url: project.url,
         },
-      })
-      .exec();
-    
-    // 自动迁移：如果检测到旧格式模块数据，自动清空
-    if (project && project.modules && project.modules.length > 0) {
-      const hasOldFormat = (project.modules as any).some((m: any) => typeof m === 'string');
-      if (hasOldFormat) {
-        console.log(`项目 ${project.name} 检测到旧格式模块数据，自动清理...`);
-        await this.projectModel.findByIdAndUpdate(id, { $set: { modules: [] } }).exec();
-        // 重新获取更新后的数据
-        return this.projectModel
-          .findById(id)
-          .populate({
-            path: 'tokens',
-            populate: {
-              path: 'history.user',
-              select: 'name email id avatar',
-            },
-          })
-          .exec();
-      }
-    }
-    
+      },
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    });
+
     return project;
   }
 
-  async findProjectsByTeamId(teamId: string) {
-    return this.projectModel.find({ teamId }).exec();
+  async findAllProjects(): Promise<Project[]> {
+    return this.projectRepository.findAll();
+  }
+
+  async findProjectById(id: string): Promise<Project | null> {
+    return this.projectRepository.findById(id);
+  }
+
+  async findProjectsByTeamId(teamId: string): Promise<Project[]> {
+    return this.projectRepository.findByTeamId(teamId);
   }
 
   async updateProject(
@@ -126,92 +84,59 @@ export class ProjectService {
       name?: string;
       description?: string;
       languages?: string[];
-      languageLabels?: Record<string, string>; // 自定义语言的中文备注
+      languageLabels?: Record<string, string>;
       modules?: ProjectModule[];
       url?: string;
-      userId: string; // 添加userId用于记录操作者
-      ipAddress?: string; // 可选的IP地址
-      userAgent?: string; // 可选的User Agent
+      userId: string;
+      ipAddress?: string;
+      userAgent?: string;
     },
-  ) {
-    // 先获取原始数据用于比较变更
-    const oldProject = await this.projectModel.findById(id).exec();
+  ): Promise<Project | null> {
+    const oldProject = await this.projectRepository.findById(id);
     if (!oldProject) {
       throw new NotFoundException('项目不存在');
     }
 
-    // 准备更新数据，排除操作记录相关字段
     const { userId, ipAddress, userAgent, ...updateData } = data;
 
-    // 规范化 modules：兼容旧格式（string[]）和新格式（ProjectModule[]）
+    // 规范化 modules
     if (updateData.modules) {
-      // 把 string 转成 { name, code }，并根据 code 去重
-      const normalizedModulesMap = new Map<string, ProjectModule>();
+      const normalizedMap = new Map<string, ProjectModule>();
       (updateData.modules as any[]).forEach((m: any) => {
         if (typeof m === 'string') {
-          const code = m;
-          if (!normalizedModulesMap.has(code)) {
-            normalizedModulesMap.set(code, { name: code, code });
-          }
+          if (!normalizedMap.has(m)) normalizedMap.set(m, { name: m, code: m });
         } else if (m && typeof m.code === 'string') {
-          const code = m.code;
-          if (!normalizedModulesMap.has(code)) {
-            normalizedModulesMap.set(code, {
-              name: m.name || code,
-              code,
-            });
+          if (!normalizedMap.has(m.code)) {
+            normalizedMap.set(m.code, { name: m.name || m.code, code: m.code });
           }
         }
       });
-      updateData.modules = Array.from(normalizedModulesMap.values());
+      updateData.modules = Array.from(normalizedMap.values());
     }
 
-    const updatedProject = await this.projectModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .populate('tokens')
-      .exec();
+    const updatedProject = await this.projectRepository.update(id, updateData);
 
-    // 记录变更
-    const changes: Array<{field: string; oldValue: any; newValue: any}> = [];
-    for (const field of ['name', 'description', 'url']) {
+    // Record changes
+    const changes: Array<{ field: string; oldValue: any; newValue: any }> = [];
+    for (const field of ['name', 'description', 'url'] as const) {
       if (updateData[field] !== undefined && oldProject[field] !== updateData[field]) {
-        changes.push({
-          field,
-          oldValue: oldProject[field],
-          newValue: updateData[field],
-        });
+        changes.push({ field, oldValue: oldProject[field], newValue: updateData[field] });
       }
     }
-
-    // 特殊处理 languageLabels（Map 类型）
     if (updateData.languageLabels !== undefined) {
-      const oldLabels = oldProject.languageLabels 
-        ? Object.fromEntries(oldProject.languageLabels) 
-        : {};
-      const newLabels = updateData.languageLabels;
-      if (JSON.stringify(oldLabels) !== JSON.stringify(newLabels)) {
-        changes.push({
-          field: 'languageLabels',
-          oldValue: oldLabels,
-          newValue: newLabels,
-        });
+      const oldLabels = oldProject.languageLabels || {};
+      if (JSON.stringify(oldLabels) !== JSON.stringify(updateData.languageLabels)) {
+        changes.push({ field: 'languageLabels', oldValue: oldLabels, newValue: updateData.languageLabels });
       }
     }
-
-    // 特殊处理languages数组
     if (updateData.languages !== undefined) {
       const oldLangs = JSON.stringify(oldProject.languages || []);
       const newLangs = JSON.stringify(updateData.languages);
       if (oldLangs !== newLangs) {
-        changes.push({
-          field: 'languages',
-          oldValue: oldProject.languages,
-          newValue: updateData.languages,
-        });
+        changes.push({ field: 'languages', oldValue: oldProject.languages, newValue: updateData.languages });
       }
     }
 
-    // 如果有变更，记录操作日志
     if (changes.length > 0 && updatedProject) {
       await this.activityLogService.create({
         type: ActivityType.PROJECT_UPDATE,
@@ -236,48 +161,39 @@ export class ProjectService {
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-  ) {
-    const session = await this.mongooseService.getConnection().startSession();
-    try {
-      // 先获取项目信息用于日志记录
-      const project = await this.projectModel.findById(id).exec();
-      if (!project) {
-        throw new NotFoundException('项目不存在');
-      }
-
-      await session.withTransaction(async () => {
-        // 先删除关联的所有tokens
-        const deletedTokens = await this.tokenModel
-          .deleteMany({ projectId: id })
-          .session(session)
-          .exec();
-
-        // 再删除项目
-        await this.projectModel.findByIdAndDelete(id).session(session).exec();
-
-        // 记录操作日志
-        await this.activityLogService.create({
-          type: ActivityType.PROJECT_DELETE,
-          projectId: id,
-          userId,
-          details: {
-            entityId: id,
-            entityType: 'project',
-            entityName: project.name,
-            metadata: {
-              deletedTokensCount: deletedTokens.deletedCount,
-              languages: project.languages,
-              description: project.description,
-            },
-          },
-          ipAddress,
-          userAgent,
-        });
-      });
-      return { success: true };
-    } finally {
-      session.endSession();
+  ): Promise<{ success: boolean }> {
+    const project = await this.projectRepository.findById(id);
+    if (!project) {
+      throw new NotFoundException('项目不存在');
     }
+
+    const tokenCount = await this.tokenRepository.countByProjectId(id);
+
+    // Log before deletion so the FK reference is still valid
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_DELETE,
+      projectId: id,
+      userId,
+      details: {
+        entityId: id,
+        entityType: 'project',
+        entityName: project.name,
+        metadata: {
+          deletedTokensCount: tokenCount,
+          languages: project.languages,
+          description: project.description,
+        },
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    // activity_logs.project_id has onDelete: 'cascade', so deleting the project
+    // cascades and removes the log — that's expected for hard deletes.
+    await this.tokenRepository.deleteByProjectId(id);
+    await this.projectRepository.delete(id);
+
+    return { success: true };
   }
 
   async addLanguage(
@@ -286,43 +202,32 @@ export class ProjectService {
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-  ) {
-    const project = await this.projectModel.findById(id).exec();
+  ): Promise<Project | null> {
+    const project = await this.projectRepository.findById(id);
+    if (!project) throw new NotFoundException('项目不存在');
 
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
-
-    // 确保language数组存在且避免重复添加
     const languages = project.languages || [];
-    if (!languages.includes(language)) {
-      project.languages = [...languages, language];
-      const updatedProject = await project.save();
+    if (languages.includes(language)) return project;
 
-      // 记录操作日志
-      await this.activityLogService.create({
-        type: ActivityType.PROJECT_LANGUAGE_ADD,
-        projectId: id,
-        userId,
-        details: {
-          entityId: id,
-          entityType: 'project',
-          entityName: project.name,
-          language,
-          changes: [{
-            field: 'languages',
-            oldValue: languages,
-            newValue: project.languages,
-          }],
-        },
-        ipAddress,
-        userAgent,
-      });
+    const newLanguages = [...languages, language];
+    const updated = await this.projectRepository.update(id, { languages: newLanguages });
 
-      return updatedProject;
-    }
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_LANGUAGE_ADD,
+      projectId: id,
+      userId,
+      details: {
+        entityId: id,
+        entityType: 'project',
+        entityName: project.name,
+        language,
+        changes: [{ field: 'languages', oldValue: languages, newValue: newLanguages }],
+      },
+      ipAddress,
+      userAgent,
+    });
 
-    return project;
+    return updated;
   }
 
   async removeLanguage(
@@ -331,80 +236,59 @@ export class ProjectService {
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-  ) {
-    const project = await this.projectModel.findById(id).exec();
-
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+  ): Promise<Project | null> {
+    const project = await this.projectRepository.findById(id);
+    if (!project) throw new NotFoundException('项目不存在');
 
     const oldLanguages = project.languages || [];
-    const newLanguages = oldLanguages.filter((lang) => lang !== language);
-    
-    // 只有在实际删除了语言时才更新和记录日志
-    if (oldLanguages.length !== newLanguages.length) {
-      project.languages = newLanguages;
-      const updatedProject = await project.save();
+    const newLanguages = oldLanguages.filter((l) => l !== language);
+    if (oldLanguages.length === newLanguages.length) return project;
 
-      // 记录操作日志
-      await this.activityLogService.create({
-        type: ActivityType.PROJECT_LANGUAGE_REMOVE,
-        projectId: id,
-        userId,
-        details: {
-          entityId: id,
-          entityType: 'project',
-          entityName: project.name,
-          language,
-          changes: [{
-            field: 'languages',
-            oldValue: oldLanguages,
-            newValue: newLanguages,
-          }],
-        },
-        ipAddress,
-        userAgent,
-      });
+    const updated = await this.projectRepository.update(id, { languages: newLanguages });
 
-      return updatedProject;
-    }
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_LANGUAGE_REMOVE,
+      projectId: id,
+      userId,
+      details: {
+        entityId: id,
+        entityType: 'project',
+        entityName: project.name,
+        language,
+        changes: [{ field: 'languages', oldValue: oldLanguages, newValue: newLanguages }],
+      },
+      ipAddress,
+      userAgent,
+    });
 
-    return project;
+    return updated;
   }
 
-  // Module management
   async addModule(
     id: string,
     module: ProjectModule,
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-  ) {
-    const project = await this.projectModel.findById(id).exec();
-
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+  ): Promise<Project | null> {
+    const project = await this.projectRepository.findById(id);
+    if (!project) throw new NotFoundException('项目不存在');
 
     if (!module.name || !module.code) {
       throw new BadRequestException('模块名称和代码必须齐全');
     }
-
-    // 验证模块代码格式
     if (!/^[a-z][a-z0-9]*$/i.test(module.code)) {
       throw new BadRequestException('模块名只能包含字母、数字和下划线，且必须以字母开头');
     }
 
-    // 确保modules数组存在且避免重复添加
     const modules = project.modules || [];
     if (modules.some((m) => m.code === module.code)) {
       throw new BadRequestException('该模块代码已存在');
     }
 
-    project.modules = [...modules, module];
-    const updatedProject = await project.save();
+    const newModules = [...modules, module];
+    const updated = await this.projectRepository.update(id, { modules: newModules });
 
-    // 记录操作日志（可选）
     await this.activityLogService.create({
       type: ActivityType.PROJECT_UPDATE,
       projectId: id,
@@ -413,23 +297,14 @@ export class ProjectService {
         entityId: id,
         entityType: 'project',
         entityName: project.name,
-        changes: [
-          {
-            field: 'modules',
-            oldValue: modules,
-            newValue: project.modules,
-          },
-        ],
-        metadata: {
-          action: 'add_module',
-          module,
-        },
+        changes: [{ field: 'modules', oldValue: modules, newValue: newModules }],
+        metadata: { action: 'add_module', module },
       },
       ipAddress,
       userAgent,
     });
 
-    return updatedProject;
+    return updated;
   }
 
   async removeModule(
@@ -438,70 +313,40 @@ export class ProjectService {
     userId: string,
     ipAddress?: string,
     userAgent?: string,
-  ) {
-    const project = await this.projectModel.findById(id).exec();
-
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+  ): Promise<Project | null> {
+    const project = await this.projectRepository.findById(id);
+    if (!project) throw new NotFoundException('项目不存在');
 
     const oldModules = project.modules || [];
     const newModules = oldModules.filter((m) => m.code !== moduleCode);
+    if (oldModules.length === newModules.length) return project;
 
-    // 只有在实际删除了模块时才更新和记录日志
-    if (oldModules.length !== newModules.length) {
-      project.modules = newModules;
-      const updatedProject = await project.save();
+    const updated = await this.projectRepository.update(id, { modules: newModules });
 
-      // 记录操作日志（可选）
-      await this.activityLogService.create({
-        type: ActivityType.PROJECT_UPDATE,
-        projectId: id,
-        userId,
-        details: {
-          entityId: id,
-          entityType: 'project',
-          entityName: project.name,
-          changes: [{
-            field: 'modules',
-            oldValue: oldModules,
-            newValue: newModules,
-          }],
-          metadata: {
-            action: 'remove_module',
-            moduleCode,
-          },
-        },
-        ipAddress,
-        userAgent,
-      });
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_UPDATE,
+      projectId: id,
+      userId,
+      details: {
+        entityId: id,
+        entityType: 'project',
+        entityName: project.name,
+        changes: [{ field: 'modules', oldValue: oldModules, newValue: newModules }],
+        metadata: { action: 'remove_module', moduleCode },
+      },
+      ipAddress,
+      userAgent,
+    });
 
-      return updatedProject;
-    }
-
-    return project;
+    return updated;
   }
 
-  // Check if user has permission to access the project
-  async checkUserProjectPermission(
-    projectId: string,
-    userId: string,
-  ): Promise<boolean> {
-    // First get project information to find its team
-    const project = await this.projectModel
-      .findById(projectId)
-      .select('teamId')
-      .exec();
-
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
-
-    // Check if user is a team member
-    return this.membershipService.isMember(String(project.teamId), userId);
+  async checkUserProjectPermission(projectId: string, userId: string): Promise<boolean> {
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) throw new NotFoundException('项目不存在');
+    return this.membershipService.isMember(project.teamId, userId);
   }
 
-  // Export project content
   async exportProjectTokens(
     projectId: string,
     options: {
@@ -511,99 +356,58 @@ export class ProjectService {
       showEmptyTranslations?: boolean;
       prettify?: boolean;
       includeMetadata?: boolean;
-      asZip?: boolean; // 添加选项：是否作为ZIP包导出
-      userId?: string; // 用于记录操作日志
+      asZip?: boolean;
+      userId?: string;
       ipAddress?: string;
       userAgent?: string;
     },
   ) {
-    // 获取项目信息，主要是支持的语言列表
-    const project = await this.projectModel.findById(projectId).exec();
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) throw new NotFoundException('项目不存在');
 
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+    let tokens: Token[] = await this.tokenRepository.findByProjectId(projectId);
 
-    // 获取所有令牌
-    let tokens = await this.tokenModel.find({ projectId }).lean().exec();
-
-    // 根据范围筛选令牌
     if (options.scope) {
-      tokens = this.filterTokensByScope(
-        tokens,
-        options.scope,
-        project.languages,
-      );
+      tokens = this.filterTokensByScope(tokens, options.scope, project.languages || []);
     }
 
-    // 如果指定了语言，则仅导出这些语言的翻译
     const targetLanguages =
       options.languages && options.languages.length > 0
-        ? options.languages.filter((lang) => project.languages.includes(lang))
-        : project.languages;
+        ? options.languages.filter((lang) => (project.languages || []).includes(lang))
+        : (project.languages || []);
 
-    // 根据showEmptyTranslations选项过滤
-    if (options.showEmptyTranslations === false) {
-      tokens = tokens.map((token) => {
-        const translations = token.translations || {};
-        const filteredTranslations: Record<string, string> = {};
-
+    let exportTokens: any[] = tokens.map((t) => {
+      const translations = (t.translations as Record<string, string>) || {};
+      if (options.showEmptyTranslations === false) {
+        const filtered: Record<string, string> = {};
         targetLanguages.forEach((lang) => {
-          if (translations[lang]) {
-            filteredTranslations[lang] = translations[lang];
-          }
+          if (translations[lang]) filtered[lang] = translations[lang];
         });
+        return { ...t, translations: filtered };
+      } else {
+        const complete: Record<string, string> = {};
+        targetLanguages.forEach((lang) => { complete[lang] = translations[lang] || ''; });
+        return { ...t, translations: complete };
+      }
+    });
 
-        return {
-          ...token,
-          translations: filteredTranslations,
-        };
-      });
-    } else {
-      // 确保所有令牌都包含所有目标语言，即使是空的
-      tokens = tokens.map((token) => {
-        const translations = token.translations || {};
-        const completeTranslations: Record<string, string> = {};
-
-        targetLanguages.forEach((lang) => {
-          completeTranslations[lang] = translations[lang] || '';
-        });
-
-        return {
-          ...token,
-          translations: completeTranslations,
-        };
-      });
-    }
-
-    // 移除不需要的元数据
     if (!options.includeMetadata) {
-      const formattedTokens = tokens.map(
-        ({ _id, projectId, key, translations }) => ({
-          id: String(_id),
-          projectId,
-          key,
-          translations,
-        }),
-      );
-      tokens = formattedTokens as typeof tokens;
+      exportTokens = exportTokens.map(({ id, projectId, key, translations }) => ({
+        id,
+        projectId,
+        key,
+        translations,
+      }));
     }
 
-    // 默认导出为ZIP（每种语言一个文件）
     const result = await createZipWithLanguageFiles(
-      tokens,
-      {
-        ...project.toObject(),
-        id: String(project._id),
-      },
+      exportTokens,
+      { ...project, id: project.id },
       targetLanguages,
       options.format,
-      {
-        prettify: options.prettify,
-      },
+      { prettify: options.prettify },
     );
 
-    // 记录操作日志
     if (options.userId) {
       await this.activityLogService.create({
         type: ActivityType.PROJECT_EXPORT,
@@ -617,7 +421,7 @@ export class ProjectService {
           metadata: {
             scope: options.scope || 'all',
             languages: targetLanguages,
-            tokensCount: tokens.length,
+            tokensCount: exportTokens.length,
             showEmptyTranslations: options.showEmptyTranslations,
             includeMetadata: options.includeMetadata,
           },
@@ -630,88 +434,46 @@ export class ProjectService {
     return result;
   }
 
-  // Import project content
-  /**
-   * Preview import tokens without actually importing
-   * Returns what will be added, updated, or deleted
-   */
   async previewImportTokens(
     projectId: string,
     data: {
-      language: string; // 要导入的语言
-      content: string; // 文件内容
-      format: SupportedImportFormat; // 导入格式
-      mode: 'append' | 'replace'; // 导入模式
+      language: string;
+      content: string;
+      format: SupportedImportFormat;
+      mode: 'append' | 'replace';
     },
   ) {
-    // 验证项目存在
-    const project = await this.projectModel.findById(projectId).exec();
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) throw new NotFoundException('项目不存在');
 
-    // 验证语言是否在项目的支持语言列表中
-    if (!project.languages.includes(data.language)) {
+    if (!(project.languages || []).includes(data.language)) {
       throw new BadRequestException(`项目不支持"${data.language}"语言`);
     }
 
-    // 解析导入的数据
-    const importData = await parseImportData(
-      data.content,
-      data.format,
-      data.language,
-    );
-
+    const importData = await parseImportData(data.content, data.format, data.language);
     if (!importData || Object.keys(importData).length === 0) {
       throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
     }
 
-    // 获取项目的所有当前令牌
-    const existingTokens = await this.tokenModel
-      .find({ projectId })
-      .lean()
-      .exec();
+    const existingTokens = await this.tokenRepository.findByProjectId(projectId);
 
-    // 分类变更
     const changes = {
       toAdd: [] as Array<{ key: string; translation: string }>,
-      toUpdate: [] as Array<{ 
-        key: string; 
-        oldTranslation: string; 
-        newTranslation: string;
-        tags?: string[];
-        comment?: string;
-      }>,
+      toUpdate: [] as Array<{ key: string; oldTranslation: string; newTranslation: string; tags?: string[]; comment?: string }>,
       toDelete: [] as Array<{ key: string; translation: string }>,
       unchanged: [] as Array<{ key: string; translation: string }>,
-      stats: {
-        added: 0,
-        updated: 0,
-        deleted: 0,
-        unchanged: 0,
-        total: Object.keys(importData).length,
-      },
+      stats: { added: 0, updated: 0, deleted: 0, unchanged: 0, total: Object.keys(importData).length },
     };
 
-    // 检查每个导入的键
     for (const [key, value] of Object.entries(importData)) {
-      const existingToken = existingTokens.find((t) => t.key === key);
-
-      if (!existingToken) {
-        // 新增的 token
+      const existing = existingTokens.find((t) => t.key === key);
+      if (!existing) {
         changes.toAdd.push({ key, translation: value });
         changes.stats.added++;
       } else {
-        // 检查是否需要更新
-        const currentValue = existingToken.translations?.[data.language] || '';
+        const currentValue = (existing.translations as Record<string, string>)?.[data.language] || '';
         if (currentValue !== value) {
-          changes.toUpdate.push({
-            key,
-            oldTranslation: currentValue,
-            newTranslation: value,
-            tags: existingToken.tags,
-            comment: existingToken.comment,
-          });
+          changes.toUpdate.push({ key, oldTranslation: currentValue, newTranslation: value, tags: (existing.tags as string[]) || [], comment: existing.comment || '' });
           changes.stats.updated++;
         } else {
           changes.unchanged.push({ key, translation: value });
@@ -720,15 +482,12 @@ export class ProjectService {
       }
     }
 
-    // 如果是替换模式，找出将被删除翻译的 tokens
     if (data.mode === 'replace') {
       const importKeySet = new Set(Object.keys(importData));
       for (const token of existingTokens) {
-        if (!importKeySet.has(token.key) && token.translations?.[data.language]) {
-          changes.toDelete.push({
-            key: token.key,
-            translation: token.translations[data.language],
-          });
+        const trans = (token.translations as Record<string, string>) || {};
+        if (!importKeySet.has(token.key) && trans[data.language]) {
+          changes.toDelete.push({ key: token.key, translation: trans[data.language] });
           changes.stats.deleted++;
         }
       }
@@ -740,164 +499,71 @@ export class ProjectService {
   async importProjectTokens(
     projectId: string,
     data: {
-      language: string; // 要导入的语言
-      content: string; // 文件内容
-      format: SupportedImportFormat; // 导入格式
-      mode: 'append' | 'replace'; // 导入模式
-      userId?: string; // 用于记录操作日志
+      language: string;
+      content: string;
+      format: SupportedImportFormat;
+      mode: 'append' | 'replace';
+      userId?: string;
       ipAddress?: string;
       userAgent?: string;
     },
   ) {
-    const stats = {
-      added: 0, // 添加的新令牌数量
-      updated: 0, // 更新的令牌数量
-      unchanged: 0, // 未更改的令牌数量
-      total: 0, // 处理的令牌总数
-    };
+    const stats = { added: 0, updated: 0, unchanged: 0, total: 0 };
 
-    // 先进行数据验证和解析，避免在事务中进行
-    const project = await this.projectModel.findById(projectId).exec();
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) throw new NotFoundException('项目不存在');
 
-    // 验证语言是否在项目的支持语言列表中
-    if (!project.languages.includes(data.language)) {
+    if (!(project.languages || []).includes(data.language)) {
       throw new BadRequestException(`项目不支持"${data.language}"语言`);
     }
 
-    // 解析导入的数据
-    const importData = await parseImportData(
-      data.content,
-      data.format,
-      data.language,
-    );
-
+    const importData = await parseImportData(data.content, data.format, data.language);
     if (!importData || Object.keys(importData).length === 0) {
       throw new BadRequestException('导入的文件不包含有效数据或格式不正确');
     }
 
-    // 获取项目的所有当前令牌（在事务外执行）
-    const existingTokens = await this.tokenModel
-      .find({ projectId })
-      .lean()
-      .exec();
-
-    // 统计信息
+    const existingTokens = await this.tokenRepository.findByProjectId(projectId);
     stats.total = Object.keys(importData).length;
 
-    // 分批处理数据以避免事务过大
-    const BATCH_SIZE = 50;
-    const importKeys = Object.keys(importData);
-    
-    for (let i = 0; i < importKeys.length; i += BATCH_SIZE) {
-      const batch = importKeys.slice(i, i + BATCH_SIZE);
-      const session = await this.mongooseService.getConnection().startSession();
-      
-      try {
-        await session.withTransaction(async () => {
-          for (const key of batch) {
-            const value = importData[key];
-            const existingToken = existingTokens.find((t) => t.key === key);
-
-            if (data.mode === 'replace' && existingToken) {
-              // 替换模式：先清除此语言的翻译，然后设置新值
-              const translations = { ...(existingToken.translations || {}) };
-              translations[data.language] = value;
-
-              await this.tokenModel
-                .findByIdAndUpdate(existingToken._id, { translations })
-                .session(session)
-                .exec();
-
-              stats.updated++;
-            } else if (existingToken) {
-              // 追加模式或替换模式下的现有令牌
-              const translations = { ...(existingToken.translations || {}) };
-
-              // 检查是否需要更新
-              if (translations[data.language] !== value) {
-                translations[data.language] = value;
-
-                await this.tokenModel
-                  .findByIdAndUpdate(existingToken._id, { translations })
-                  .session(session)
-                  .exec();
-
-                stats.updated++;
-              } else {
-                stats.unchanged++;
-              }
-            } else {
-              // 创建新令牌
-              const translations: Record<string, string> = {};
-              translations[data.language] = value;
-
-              const newToken = new this.tokenModel({
-                projectId,
-                key,
-                tags: [],
-                comment: '',
-                translations,
-              });
-
-              await newToken.save({ session });
-
-              // 将新令牌添加到项目中
-              await this.projectModel
-                .findByIdAndUpdate(
-                  projectId,
-                  { $push: { tokens: newToken._id } },
-                  { session },
-                )
-                .exec();
-
-              stats.added++;
-              // 将新令牌添加到现有令牌列表中，以便后续批次能够找到它
-              existingTokens.push({
-                _id: newToken._id,
-                key,
-                translations,
-                projectId,
-                tags: [],
-                comment: '',
-              } as any);
-            }
-          }
+    for (const [key, value] of Object.entries(importData)) {
+      const existing = existingTokens.find((t) => t.key === key);
+      if (existing) {
+        const translations: Record<string, string> = { ...(existing.translations as Record<string, string> || {}) };
+        if (translations[data.language] !== value) {
+          translations[data.language] = value;
+          await this.tokenRepository.update(existing.id, { translations });
+          stats.updated++;
+        } else {
+          stats.unchanged++;
+        }
+      } else {
+        const translations: Record<string, string> = { [data.language]: value };
+        const created = await this.tokenRepository.create({
+          projectId,
+          key,
+          translations,
+          tags: [],
+          comment: '',
         });
-      } finally {
-        session.endSession();
+        existingTokens.push(created);
+        stats.added++;
       }
     }
 
-    // 如果是替换模式，需要单独处理清除其他令牌的此语言翻译
+    // Replace mode: clear this language from tokens not in importData
     if (data.mode === 'replace') {
-      const session = await this.mongooseService.getConnection().startSession();
-      try {
-        await session.withTransaction(async () => {
-          // 找出不在导入数据中但存在于项目中的令牌，清除它们的此语言翻译
-          const importKeySet = new Set(Object.keys(importData));
-          const tokensToUpdate = existingTokens.filter(
-            (token) => !importKeySet.has(token.key) && token.translations?.[data.language]
-          );
-
-                     for (const token of tokensToUpdate) {
-             const translations = { ...(token.translations || {}) };
-             delete translations[data.language];
-
-             await this.tokenModel
-               .findByIdAndUpdate(token._id, { translations })
-               .session(session)
-               .exec();
-           }
-        });
-      } finally {
-        session.endSession();
+      const importKeySet = new Set(Object.keys(importData));
+      for (const token of existingTokens) {
+        if (!importKeySet.has(token.key)) {
+          const translations: Record<string, string> = { ...(token.translations as Record<string, string> || {}) };
+          if (translations[data.language]) {
+            delete translations[data.language];
+            await this.tokenRepository.update(token.id, { translations });
+          }
+        }
       }
     }
 
-    // 记录操作日志
     if (data.userId) {
       await this.activityLogService.create({
         type: ActivityType.PROJECT_IMPORT,
@@ -923,11 +589,10 @@ export class ProjectService {
     };
   }
 
-  // Migrate language codes in project and all tokens
   async migrateLanguageCodes(
     projectId: string,
     data: {
-      languageMapping: Record<string, string>; // e.g., {"阿尔巴尼亚语": "sq", "阿塞拜疆语": "az"}
+      languageMapping: Record<string, string>;
       userId: string;
       ipAddress?: string;
       userAgent?: string;
@@ -940,143 +605,49 @@ export class ProjectService {
       historyRecordsUpdated: 0,
     };
 
-    // Get project
-    const project = await this.projectModel.findById(projectId).exec();
-    if (!project) {
-      throw new NotFoundException('项目不存在');
-    }
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) throw new NotFoundException('项目不存在');
 
-    // Step 1: Update project languages array (before transaction)
     const oldLanguages = project.languages || [];
-    const newLanguages = oldLanguages.map(
-      (lang) => data.languageMapping[lang] || lang,
-    );
+    const newLanguages = [...new Set(oldLanguages.map((l) => data.languageMapping[l] || l))];
 
-    // Remove duplicates
-    const uniqueNewLanguages = [...new Set(newLanguages)];
-
-    // Step 2: Get all tokens before transaction to avoid cursor issues
-    const tokens = await this.tokenModel
-      .find({ projectId })
-      .exec();
-
-    // Step 3: Process updates in transaction
-    const session = await this.mongooseService.getConnection().startSession();
-    try {
-      await session.withTransaction(async () => {
-        // Update project languages
-        if (JSON.stringify(oldLanguages) !== JSON.stringify(uniqueNewLanguages)) {
-          await this.projectModel
-            .findByIdAndUpdate(
-              projectId,
-              { languages: uniqueNewLanguages },
-              { session }
-            )
-            .exec();
-          stats.projectLanguagesUpdated = oldLanguages.length;
-        }
-
-        // Process tokens in batches to avoid transaction timeout
-        const BATCH_SIZE = 50;
-        for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
-          const batch = tokens.slice(i, i + BATCH_SIZE);
-
-          for (const token of batch) {
-            let tokenUpdated = false;
-            const oldTranslations = token.translations || {};
-            const newTranslations: Record<string, string> = {};
-
-            // Migrate translation keys
-            for (const [oldLang, value] of Object.entries(oldTranslations)) {
-              const newLang = data.languageMapping[oldLang] || oldLang;
-
-              // If the new language code already exists and is different from current key
-              if (newLang !== oldLang && newTranslations[newLang]) {
-                // Keep the existing translation, don't overwrite
-                continue;
-              }
-
-              newTranslations[newLang] = value;
-
-              if (newLang !== oldLang) {
-                stats.translationsUpdated++;
-              }
-            }
-
-            // Update token translations if changed
-            if (JSON.stringify(oldTranslations) !== JSON.stringify(newTranslations)) {
-              tokenUpdated = true;
-            }
-
-            // Update history records
-            let updatedHistory = token.history;
-            if (token.history && token.history.length > 0) {
-              updatedHistory = token.history.map((historyItem) => {
-                const oldHistoryTranslations = historyItem.translations || {};
-                const newHistoryTranslations: Record<string, any> = {};
-
-                for (const [oldLang, value] of Object.entries(oldHistoryTranslations)) {
-                  const newLang = data.languageMapping[oldLang] || oldLang;
-
-                  if (newLang !== oldLang && newHistoryTranslations[newLang]) {
-                    continue;
-                  }
-
-                  newHistoryTranslations[newLang] = value;
-
-                  if (newLang !== oldLang) {
-                    stats.historyRecordsUpdated++;
-                    tokenUpdated = true;
-                  }
-                }
-
-                return {
-                  ...historyItem,
-                  translations: newHistoryTranslations,
-                };
-              });
-            }
-
-            // Bulk update token if any changes
-            if (tokenUpdated) {
-              await this.tokenModel
-                .findByIdAndUpdate(
-                  token._id,
-                  {
-                    translations: newTranslations,
-                    history: updatedHistory,
-                  },
-                  { session }
-                )
-                .exec();
-              stats.tokensUpdated++;
-            }
-          }
-        }
-      });
-
-      // Record activity log (after transaction completes)
-      await this.activityLogService.create({
-        type: ActivityType.PROJECT_UPDATE,
-        projectId,
-        userId: data.userId,
-        details: {
-          entityId: projectId,
-          entityType: 'project',
-          entityName: project.name,
-          metadata: {
-            languageMapping: data.languageMapping,
-            oldLanguages,
-            newLanguages: uniqueNewLanguages,
-            stats,
-          },
-        },
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-      });
-    } finally {
-      session.endSession();
+    if (JSON.stringify(oldLanguages) !== JSON.stringify(newLanguages)) {
+      await this.projectRepository.update(projectId, { languages: newLanguages });
+      stats.projectLanguagesUpdated = oldLanguages.length;
     }
+
+    const tokens = await this.tokenRepository.findByProjectId(projectId);
+    for (const token of tokens) {
+      const oldTranslations = (token.translations as Record<string, string>) || {};
+      const newTranslations: Record<string, string> = {};
+      let changed = false;
+
+      for (const [oldLang, value] of Object.entries(oldTranslations)) {
+        const newLang = data.languageMapping[oldLang] || oldLang;
+        if (newLang !== oldLang && newTranslations[newLang]) continue;
+        newTranslations[newLang] = value;
+        if (newLang !== oldLang) { stats.translationsUpdated++; changed = true; }
+      }
+
+      if (changed) {
+        await this.tokenRepository.update(token.id, { translations: newTranslations });
+        stats.tokensUpdated++;
+      }
+    }
+
+    await this.activityLogService.create({
+      type: ActivityType.PROJECT_UPDATE,
+      projectId,
+      userId: data.userId,
+      details: {
+        entityId: projectId,
+        entityType: 'project',
+        entityName: project.name,
+        metadata: { languageMapping: data.languageMapping, oldLanguages, newLanguages, stats },
+      },
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    });
 
     return {
       stats,
@@ -1084,32 +655,18 @@ export class ProjectService {
     };
   }
 
-  // Filter tokens by scope
-  private filterTokensByScope(
-    tokens: any[],
-    scope: string,
-    projectLanguages: string[],
-  ) {
+  private filterTokensByScope(tokens: Token[], scope: string, projectLanguages: string[]): Token[] {
     switch (scope) {
-      case 'all':
-        return tokens;
       case 'completed':
-        return tokens.filter((token) => {
-          const translations = token.translations || {};
-          return projectLanguages.every(
-            (lang) => translations[lang] && translations[lang].trim() !== '',
-          );
+        return tokens.filter((t) => {
+          const trans = (t.translations as Record<string, string>) || {};
+          return projectLanguages.every((l) => trans[l] && trans[l].trim() !== '');
         });
       case 'incomplete':
-        return tokens.filter((token) => {
-          const translations = token.translations || {};
-          return projectLanguages.some(
-            (lang) => !translations[lang] || translations[lang].trim() === '',
-          );
+        return tokens.filter((t) => {
+          const trans = (t.translations as Record<string, string>) || {};
+          return projectLanguages.some((l) => !trans[l] || trans[l].trim() === '');
         });
-      case 'custom':
-        // 自定义过滤器可以根据需要扩展
-        return tokens;
       default:
         return tokens;
     }

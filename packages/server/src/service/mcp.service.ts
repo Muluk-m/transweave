@@ -179,7 +179,7 @@ export class McpService {
     try {
       const projects = await this.projectService.findAllProjects();
       return projects.map((project) => ({
-        id: project.id || project._id.toString(),
+        id: project.id,
         name: project.name,
         description: project.description,
         languages: project.languages,

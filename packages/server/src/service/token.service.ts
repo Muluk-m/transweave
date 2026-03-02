@@ -12,7 +12,7 @@ import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { ActivityLogService } from './activity-log.service';
-import { ActivityType } from '../models';
+import { ActivityType } from '../db/schema';
 
 // --- Search & Progress Types ---
 
