@@ -1,4 +1,4 @@
-# qlj-i18n
+# Transweave
 
 Self-hosted internationalization management platform.
 
@@ -6,7 +6,7 @@ Self-hosted internationalization management platform.
 - Team collaboration with role-based access control (owner / manager / member)
 - AI-assisted translation via OpenAI, Claude, DeepL, or Google Translate (optional, bring your own API key)
 - Import and export in JSON, YAML, CSV, XLIFF, and Gettext (.po) formats
-- CLI tool for CI/CD integration (`qlj-i18n pull` / `qlj-i18n push`)
+- CLI tool for CI/CD integration (`transweave pull` / `transweave push`)
 - MCP server for AI coding assistants
 - PGlite support for zero-config local development (no PostgreSQL install needed)
 
@@ -80,7 +80,7 @@ All variables are defined in `.env.example`. Copy it and edit as needed.
 ## Architecture
 
 ```
-qlj-i18n/
+transweave/
   packages/
     server/     NestJS API (authentication, teams, translations, AI, file storage)
     web/        Next.js frontend
