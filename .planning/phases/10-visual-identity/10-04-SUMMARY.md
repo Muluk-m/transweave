@@ -120,3 +120,11 @@ GitHub social preview was uploaded manually by user during the human-verify chec
 ---
 *Phase: 10-visual-identity*
 *Completed: 2026-03-02*
+
+## Self-Check: PASSED
+
+- FOUND: assets/og-image-github.png (1280x640)
+- FOUND: packages/web/public/og-image.png (1200x630)
+- FOUND: .planning/phases/10-visual-identity/10-04-SUMMARY.md
+- FOUND commit: b72c682 (Task 1 — generate social preview images)
+- FOUND commit: ae9bb69 (docs — plan complete)
