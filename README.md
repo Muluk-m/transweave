@@ -16,8 +16,8 @@ Self-hosted internationalization management platform.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/qlj-i18n.git
-cd qlj-i18n
+git clone https://github.com/your-org/transweave.git
+cd transweave
 
 # 2. Configure environment
 cp .env.example .env
@@ -37,8 +37,8 @@ No PostgreSQL installation needed. PGlite runs an embedded database automaticall
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/your-org/qlj-i18n.git
-cd qlj-i18n
+git clone https://github.com/your-org/transweave.git
+cd transweave
 pnpm install
 
 # 2. Configure environment
