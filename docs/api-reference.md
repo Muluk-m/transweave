@@ -1,4 +1,4 @@
-# qlj-i18n REST API Reference
+# Transweave REST API Reference
 
 **Base URL:** `http://localhost:3001` (configurable via the `PORT` environment variable)
 
@@ -1194,7 +1194,7 @@ The platform includes a built-in [Model Context Protocol (MCP)](https://modelcon
 ```json
 {
   "mcpServers": {
-    "qlj-i18n": {
+    "transweave": {
       "url": "http://localhost:3001/api/mcp",
       "headers": {
         "Authorization": "Bearer qlji_your_api_key_here"
@@ -1241,21 +1241,21 @@ The platform includes a built-in [Model Context Protocol (MCP)](https://modelcon
 ### Installation
 
 ```bash
-npm install -g qlj-i18n
+npm install -g transweave
 ```
 
 ### Commands
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `qlj-i18n login` | Authenticate with the server | `qlj-i18n login --server http://localhost:3001` |
-| `qlj-i18n init` | Initialize a project config in the current directory | `qlj-i18n init --project my-app` |
-| `qlj-i18n pull` | Download translation files from the server | `qlj-i18n pull --format json --output ./locales` |
-| `qlj-i18n push` | Upload local translation files to the server | `qlj-i18n push --format json --input ./locales` |
+| `transweave login` | Authenticate with the server | `transweave login --server http://localhost:3001` |
+| `transweave init` | Initialize a project config in the current directory | `transweave init --project my-app` |
+| `transweave pull` | Download translation files from the server | `transweave pull --format json --output ./locales` |
+| `transweave push` | Upload local translation files to the server | `transweave push --format json --input ./locales` |
 
 ### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `QLJ_I18N_API_KEY` | API key for authentication (alternative to `login`) | - |
-| `QLJ_I18N_SERVER` | Server base URL | `http://localhost:3001` |
+| `TRANSWEAVE_API_KEY` | API key for authentication (alternative to `login`) | - |
+| `TRANSWEAVE_SERVER` | Server base URL | `http://localhost:3001` |
