@@ -119,8 +119,8 @@ Requirements for branding and promotion. Each maps to roadmap phases 10-13.
 
 ### Project Rename
 
-- [ ] **REN-01**: All package.json names updated from qlj-i18n/nextjs to transweave scoped names
-- [ ] **REN-02**: Dockerfile --filter flags updated to match new package names
+- [x] **REN-01**: All package.json names updated from qlj-i18n/nextjs to transweave scoped names
+- [x] **REN-02**: Dockerfile --filter flags updated to match new package names
 - [ ] **REN-03**: CLI binary renamed from qlj-i18n to transweave (bin, commands, config paths, env vars)
 - [ ] **REN-04**: MCP server name updated from qlj-i18n-mcp-server to transweave-mcp-server
 - [ ] **REN-05**: Web UI titles, i18n strings, and SVG asset IDs updated to Transweave
@@ -279,8 +279,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIS-03 | Phase 10 | Complete |
 | VIS-04 | Phase 10 | Pending |
 | VIS-05 | Phase 10 | Complete |
-| REN-01 | Phase 11 | Pending |
-| REN-02 | Phase 11 | Pending |
+| REN-01 | Phase 11 | Complete |
+| REN-02 | Phase 11 | Complete |
 | REN-03 | Phase 11 | Pending |
 | REN-04 | Phase 11 | Pending |
 | REN-05 | Phase 11 | Pending |

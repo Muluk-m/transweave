@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Teams can self-host a complete i18n management platform with zero dependency on external proprietary services
-**Current focus:** Phase 10 - Visual Identity (v1.1 Branding & Promotion)
+**Current focus:** Phase 11 - Project Rename (v1.1 Branding & Promotion)
 
 ## Current Position
 
-Phase: 10 of 13 (Visual Identity) -- first phase of v1.1
-Plan: 05 (next plan — phase 10 complete)
-Status: In progress -- 10-01, 10-02, 10-03, 10-04 complete (phase 10 Visual Identity done)
-Last activity: 2026-03-02 -- 10-04 complete (social preview uploaded, VIS-05 fulfilled)
+Phase: 11 of 13 (Project Rename)
+Plan: 02 (next plan — 11-01 complete)
+Status: In progress -- 11-01 complete (package names renamed to Transweave)
+Last activity: 2026-03-02 -- 11-01 complete (all 4 package.json names and 2 Dockerfiles updated)
 
-Progress: [####░░░░░░] ~38%
+Progress: [####░░░░░░] ~42%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [####░░░░░░] ~38%
 | 10-visual-identity | 02 | 5min | 1 | 1 |
 | 10-visual-identity | 03 | 8min | 2 | 10 |
 | 10-visual-identity | 04 | 12min | 2 | 2 |
+| 11-project-rename | 01 | 2min | 3 | 6 |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ New for v1.1:
 - icon.svg uses solid teal + CSS dark mode (not gradient) for reliable favicon rendering as external linked SVG
 - Weaving motif: one unbroken diagonal band (over) + two split segments (under) creates depth via z-order with only 3 shapes
 - [Phase 10-visual-identity]: Dark gradient (#0f172a to #1e1b4b) chosen for social preview — matches app dark mode aesthetic
+- [Phase 11-project-rename]: CLI bin file rename deferred to Plan 02 — package.json reference updated now, file rename in Plan 02
+- [Phase 11-project-rename]: Root package.json scripts use path-based --filter ./packages/* which do not need changing when renaming package names
 
 ### Pending Todos
 
@@ -75,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 10-04-PLAN.md (social preview images uploaded, VIS-05 done, phase 10 complete)
-Resume file: Next phase per ROADMAP.md
+Stopped at: Completed 11-01-PLAN.md (all 4 package.json names + 2 Dockerfiles renamed to Transweave)
+Resume file: .planning/phases/11-project-rename/11-02-PLAN.md
