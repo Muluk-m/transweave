@@ -48,7 +48,14 @@ Plans:
   3. MCP server registers as transweave-mcp-server and web UI shows "Transweave" in all titles and strings
   4. Docker Compose service and volume names use explicit name fields reflecting the Transweave brand
   5. A grep verification confirms zero remaining qlj-i18n/qlj_/nextjs references except the intentionally preserved `qlji_` API key prefix and `qlj-i18n-ai-salt` encryption salt
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 11-01-PLAN.md -- Package.json names (all 4 packages) and Dockerfile --filter flags (REN-01, REN-02)
+- [ ] 11-02-PLAN.md -- CLI binary rename and source file updates: config paths, env vars, command strings (REN-03)
+- [ ] 11-03-PLAN.md -- MCP server name and web UI i18n header title (REN-04, REN-05)
+- [ ] 11-04-PLAN.md -- Docker Compose volume explicit names with data-migration checkpoint (REN-06)
+- [ ] 11-05-PLAN.md -- Documentation updates: README, api-reference.md, .env.example, .env (REN-07, REN-08)
+- [ ] 11-06-PLAN.md -- Grep verification and final human confirmation (REN-08, REN-09)
 
 ### Phase 12: Landing Page
 **Goal**: Visitors to the root URL see a professional marketing page that communicates what Transweave is, what it does, and how to get started in under 30 seconds
@@ -81,7 +88,7 @@ Phases execute in numeric order: 10 -> 11 -> 12 -> 13
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 10. Visual Identity | 4/4 | Complete    | 2026-03-02 | - |
-| 11. Project Rename | v1.1 | 0/TBD | Not started | - |
+| 11. Project Rename | v1.1 | 0/6 | Not started | - |
 | 12. Landing Page | v1.1 | 0/TBD | Not started | - |
 | 13. README & Community | v1.1 | 0/TBD | Not started | - |
 
