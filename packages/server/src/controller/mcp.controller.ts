@@ -588,7 +588,7 @@ export class McpController {
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Service Name</span>
-            <span class="info-value">qlj-i18n-mcp-server</span>
+            <span class="info-value">transweave-mcp-server</span>
           </div>
           <div class="info-item">
             <span class="info-label">Version</span>
@@ -707,7 +707,7 @@ export class McpController {
             </div>
             <pre id="code1"><code>{
   "mcpServers": {
-    "qlj-i18n": {
+    "transweave": {
       "url": "http://localhost:3001/api/mcp",
       "headers": {
         "Authorization": "Bearer qlji_YOUR_API_KEY_HERE"
