@@ -13,7 +13,6 @@ import { LanguageSelector } from "@/components/ui/language-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Book, Code, Github, Globe2, Layers, Lock, Users, Languages, Sparkles, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -200,15 +199,7 @@ export default function WelcomeView() {
                     {/* Hero Image */}
                     <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
                         <div className="relative h-[400px] lg:h-[500px] w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 z-10"></div>
-                            <Image 
-                                src="/fanyi.webp" 
-                                alt="Platform preview"
-                                sizes="(min-width: 1024px) 50vw, 100vw"
-                                fill
-                                className="object-cover"
-                                priority
-                            />
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-accent/20 to-primary/10"></div>
                         </div>
                         {/* Floating elements */}
                         <div className="absolute -top-4 -left-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>

@@ -11,9 +11,21 @@ import { I18nClientProvider } from "@/components/i18n/client-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "i18n Manager",
+  title: "Transweave",
   description:
-    "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
+    "Self-hosted i18n management platform for development teams. Manage multilingual translations with AI, CLI, and team collaboration.",
+  openGraph: {
+    title: "Transweave",
+    description: "Self-hosted i18n management for teams that ship.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Transweave",
+    description: "Self-hosted i18n management for teams that ship.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function Layout({
