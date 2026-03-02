@@ -1,174 +1,89 @@
-# Roadmap: qlj-i18n Open Source Edition
+# Roadmap: Transweave
+
+## Milestones
+
+- v1.0 Open Source Edition (Phases 1-9) -- shipped 2026-03-01
+- v1.1 Branding & Promotion (Phases 10-13) -- in progress
 
 ## Overview
 
-This roadmap converts an internal i18n management platform into an open-source, self-hosted tool. The journey moves through cleanup (removing proprietary code and secrets), rebuilding the data layer (MongoDB to PGlite/PostgreSQL via Drizzle), restoring all user-facing capabilities on the new foundation (auth, teams, files, translations, import/export, AI), adding developer tooling (CLI, MCP, API keys), and packaging everything for one-command deployment. Each phase delivers a verifiable capability that builds on the previous.
+This milestone establishes Transweave as a recognizable open-source brand. The work flows from visual identity (logo, colors, favicons) through project rename (53 code references across 7 naming patterns) to a promotional landing page and polished README. Logo is the critical-path dependency -- favicon, social preview, OG images, landing page hero, and README header all derive from it. The rename touches package names, Dockerfiles, CLI, MCP server, and documentation while preserving load-bearing infrastructure (`qlji_` API key prefix, `qlj-i18n-ai-salt` encryption salt).
 
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+- Phases 10-13: v1.1 Branding & Promotion
+- Decimal phases (10.1, 11.1): Urgent insertions if needed (marked with INSERTED)
 
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: Cleanup & Branch Setup** - Remove all proprietary code, secrets, and internal references; create clean orphan branch
-- [x] **Phase 2: Database Foundation** - Migrate data layer from Mongoose/MongoDB to Drizzle ORM with PGlite and PostgreSQL support
-- [x] **Phase 3: Authentication & Teams** - Built-in username/password auth, team management, RBAC, and first-run setup
-- [x] **Phase 4: Local File Storage** - Replace external CDN with local disk storage and static file serving
-- [x] **Phase 5: Translation Core & Search** - Full translation token management with search, filtering, history, and bulk operations
-- [x] **Phase 6: Import & Export** - Multi-format file import/export with preview and diff
-- [x] **Phase 7: AI Translation** - Multi-provider AI translation with user-supplied API keys (optional feature)
-- [x] **Phase 8: Developer Tools** - CLI tool, MCP server, API key management, and REST API documentation
-- [x] **Phase 9: Deployment & Production Readiness** - Docker Compose packaging, environment config, health checks, and setup documentation
+- [ ] **Phase 10: Visual Identity** - Logo, brand colors, favicon set, and GitHub social preview image
+- [ ] **Phase 11: Project Rename** - Rename all code references from qlj-i18n to Transweave across packages, Docker, CLI, MCP, and docs
+- [ ] **Phase 12: Landing Page** - Marketing landing page with hero, features, getting started, OG images, and dark/light mode
+- [ ] **Phase 13: README & Community** - Branded README, CONTRIBUTING.md, LICENSE, GitHub issue/PR templates
 
 ## Phase Details
 
-### Phase 1: Cleanup & Branch Setup
-**Goal**: A clean git branch exists with zero proprietary code, secrets, or internal references -- safe to make public
-**Depends on**: Nothing (first phase)
-**Requirements**: CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-07, CLEAN-08
+### Phase 10: Visual Identity
+**Goal**: Transweave has a professional visual identity that works from 16px favicon to 512px hero, with consistent brand colors across the application
+**Depends on**: Nothing (first phase of v1.1; v1.0 phases 1-9 complete)
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
 **Success Criteria** (what must be TRUE):
-  1. An orphan git branch (opensource) exists with no inherited commit history containing secrets
-  2. No Feishu OAuth code exists anywhere in the codebase (grep returns zero matches for feishu, lark, oapi)
-  3. No internal company references exist (qiliangjia.org, qiliangjia.one, bondma, internal emails, hardcoded MongoDB ObjectIds)
-  4. A secret scanner (gitleaks or equivalent) returns zero findings on the entire branch
-  5. .gitignore excludes .env files and .dockerignore exists
-**Plans**: 2 plans
+  1. An SVG logo exists with both icon+wordmark and icon-only variants, rendering cleanly at 16px through 512px
+  2. Favicon set is deployed (favicon.ico, favicon.svg with dark mode support, apple-touch-icon.png) and browsers display the correct icon
+  3. Brand colors are defined as both Tailwind theme extension and CSS custom properties, usable throughout the app
+  4. A 1280x640px social preview image with the logo and tagline is uploaded to the GitHub repository settings
+**Plans**: TBD
 
-Plans:
-- [x] 01-01-PLAN.md -- Remove all proprietary code (Feishu OAuth, company references, hardcoded secrets, branding)
-- [x] 01-02-PLAN.md -- Update .gitignore, create .dockerignore, create clean orphan branch, verify with secret scanner
-
-### Phase 2: Database Foundation
-**Goal**: All data models are defined in Drizzle ORM with a repository abstraction layer, and the application can connect to either PGlite or PostgreSQL based on configuration
-**Depends on**: Phase 1
-**Requirements**: DB-01, DB-02, DB-03, DB-04, DB-05, DB-06
+### Phase 11: Project Rename
+**Goal**: Every user-visible and developer-facing reference says "Transweave" instead of "qlj-i18n", while preserving load-bearing infrastructure identifiers
+**Depends on**: Phase 10
+**Requirements**: REN-01, REN-02, REN-03, REN-04, REN-05, REN-06, REN-07, REN-08, REN-09
 **Success Criteria** (what must be TRUE):
-  1. Drizzle schema files define all entities (User, Team, Membership, Project, Token, TokenHistory, ActivityLog) with PostgreSQL types including JSONB for flexible fields
-  2. Running drizzle-kit generates migration files that apply cleanly to both PGlite and PostgreSQL
-  3. Setting DATABASE_URL to a PostgreSQL connection string uses the PostgreSQL driver; omitting it or setting it to a file path uses PGlite
-  4. Repository classes exist for every entity, and no service code imports Drizzle or database drivers directly
-  5. A simple integration test can create, read, update, and delete a record through the repository layer on both database backends
-**Plans**: 3 plans in 3 waves
+  1. All package.json files use @transweave scoped names and Dockerfile --filter flags match the new names
+  2. CLI binary is `transweave` (not qlj-i18n) with updated command names, config paths (~/.config/transweave), and env vars
+  3. MCP server registers as transweave-mcp-server and web UI shows "Transweave" in all titles and strings
+  4. Docker Compose service and volume names use explicit name fields reflecting the Transweave brand
+  5. A grep verification confirms zero remaining qlj-i18n/qlj_/nextjs references except the intentionally preserved `qlji_` API key prefix and `qlj-i18n-ai-salt` encryption salt
+**Plans**: TBD
 
-Plans:
-- [x] 02-01-PLAN.md -- Drizzle schema definitions, DrizzleModule with conditional provider, drizzle-kit migration
-- [x] 02-02-PLAN.md -- Repository abstraction layer (base + 7 entity repositories)
-- [x] 02-03-PLAN.md -- Integration tests verifying CRUD, JSONB, aggregation on PGlite
-
-### Phase 3: Authentication & Teams
-**Goal**: Users can register, log in, manage teams, and control access -- all without any external auth provider
-**Depends on**: Phase 2
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, TEAM-01, TEAM-02, TEAM-03, TEAM-04, TEAM-05, TEAM-06
+### Phase 12: Landing Page
+**Goal**: Visitors to the root URL see a professional marketing page that communicates what Transweave is, what it does, and how to get started in under 30 seconds
+**Depends on**: Phase 10, Phase 11
+**Requirements**: LAND-01, LAND-02, LAND-03, LAND-04, LAND-05
 **Success Criteria** (what must be TRUE):
-  1. A new user can register with username and password, then log in and receive a JWT that persists across browser refreshes
-  2. On first launch with an empty database, a setup wizard creates the initial admin user and default team
-  3. A team owner can invite members, assign roles (owner/manager/member), change roles, and remove members
-  4. A user who belongs to multiple teams can view and switch between them
-  5. An admin can reset any other user's password
-**Plans**: 3 plans in 2 waves
+  1. Root URL serves a landing page with hero section containing headline, tagline, and dual CTAs (e.g., "Get Started" and "View on GitHub")
+  2. Feature highlights section showcases 4-6 core capabilities with icons/illustrations
+  3. Getting started section displays a docker-compose code block with a working copy button
+  4. Sharing the URL on social platforms (Twitter, Slack, Discord) shows a branded OG image with title and description
+  5. Landing page renders correctly in both dark and light mode
+**Plans**: TBD
 
-Plans:
-- [x] 03-01-PLAN.md -- Backend auth & user services: remove Feishu, migrate to repositories, add setup + admin reset endpoints
-- [x] 03-02-PLAN.md -- Backend team & membership services: migrate to repositories, replace Mongoose patterns with Drizzle
-- [x] 03-03-PLAN.md -- Frontend auth: rewrite login page, add setup wizard, clean auth context
-
-### Phase 4: Local File Storage
-**Goal**: File uploads and screenshots work using local disk storage with no external CDN dependency
-**Depends on**: Phase 2
-**Requirements**: FILE-01, FILE-02, FILE-03, FILE-04
+### Phase 13: README & Community
+**Goal**: A developer discovering Transweave on GitHub immediately understands what it is, how to run it, and how to contribute
+**Depends on**: Phase 10, Phase 11, Phase 12
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04
 **Success Criteria** (what must be TRUE):
-  1. Uploading a file via the API stores it on the local disk in a configurable directory
-  2. Uploaded files are accessible via a built-in static file server URL (no external CDN needed)
-  3. Attaching a screenshot to a translation token saves and displays correctly using local storage
-**Plans**: 1 plan
-
-Plans:
-- [x] 04-01-PLAN.md -- Server-side file storage (Multer + serve-static) and frontend upload integration
-
-### Phase 5: Translation Core & Search
-**Goal**: Users can fully manage translation tokens with multi-language values, organize them, track history, and find what they need through search and filtering
-**Depends on**: Phase 3, Phase 4
-**Requirements**: TRANS-01, TRANS-02, TRANS-03, TRANS-04, TRANS-05, TRANS-06, TRANS-07, TRANS-08, SRCH-01, SRCH-02, SRCH-03
-**Success Criteria** (what must be TRUE):
-  1. User can create, edit, and delete translation tokens with values in multiple languages, organized by modules/namespaces
-  2. User can view the change history of any translation token
-  3. Translation progress is visible as per-language completion percentage on the project view
-  4. User can search across token keys and translation values, and filter by language completion status or module
-  5. User can perform bulk operations (delete, status change, tag) on selected translations
-**Plans**: 3 plans in 2 waves
-
-Plans:
-- [x] 05-01-PLAN.md -- Token service & CRUD backend (extract from ProjectService to dedicated TokenService/TokenController)
-- [x] 05-02-PLAN.md -- Search, filter & progress API (server-side search, module/completion filtering, per-language progress)
-- [x] 05-03-PLAN.md -- Bulk operations & frontend integration (bulk delete/tag/module endpoint, connect frontend to new APIs)
-
-### Phase 6: Import & Export
-**Goal**: Users can get translation data in and out of the platform in standard file formats with confidence about what will change
-**Depends on**: Phase 5
-**Requirements**: IMEX-01, IMEX-02, IMEX-03, IMEX-04, IMEX-05, IMEX-06
-**Success Criteria** (what must be TRUE):
-  1. User can import translations from JSON, YAML, XLIFF, and Gettext (.po) files
-  2. User can export translations in JSON, YAML, CSV, XLIFF, and Gettext formats
-  3. Before applying an import, the user sees a preview diff showing which tokens will be added, modified, or unchanged
-**Plans**: 2 plans
-
-Plans:
-- [x] 06-01-PLAN.md -- Add XLIFF and Gettext parsers/serializers, integrate into import/export pipeline (TDD)
-- [x] 06-02-PLAN.md -- Update frontend UI for new formats, end-to-end verification
-
-### Phase 7: AI Translation
-**Goal**: Users who have their own AI/translation API keys can use AI-assisted translation, while the platform works fully without any AI configured
-**Depends on**: Phase 5
-**Requirements**: AI-01, AI-02, AI-03, AI-04, AI-05
-**Success Criteria** (what must be TRUE):
-  1. The platform starts and operates fully (all CRUD, search, import/export) with no AI provider configured
-  2. User can configure an AI provider (OpenAI, Claude, DeepL, or Google Translate) by entering their own API key at the team or project level
-  3. User can trigger AI translation for a single token or a batch of selected tokens, and the translated values appear in the UI
-**Plans**: 2 plans
-
-Plans:
-- [x] 07-01-PLAN.md -- Multi-provider backend: provider interface, adapters (OpenAI, Claude, DeepL, Google Translate), encrypted API key storage, config CRUD, AI service rewrite
-- [x] 07-02-PLAN.md -- Frontend: AI provider settings UI, conditional translate buttons, updated API client
-
-### Phase 8: Developer Tools
-**Goal**: Developers can interact with the platform programmatically -- pulling/pushing translations from the command line, using AI coding assistants via MCP, and integrating via documented REST APIs
-**Depends on**: Phase 5
-**Requirements**: DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06, DEV-07
-**Success Criteria** (what must be TRUE):
-  1. A developer can generate an API key from the web UI and use it to authenticate CLI and API requests
-  2. Running `qlj-i18n pull` downloads translation files from the server to local disk; running `qlj-i18n push` uploads local files to the server
-  3. An AI coding assistant connected via MCP can list projects, list tokens, create tokens, and update token values
-  4. A REST API reference document exists listing all endpoints with request/response examples
-**Plans**: 3 plans
-
-Plans:
-- [x] 08-01-PLAN.md -- API key management (schema, service, unified auth guard, web UI)
-- [x] 08-02-PLAN.md -- MCP server auth + update_token tool, CLI tool with pull/push/init/login
-- [x] 08-03-PLAN.md -- REST API reference documentation
-
-### Phase 9: Deployment & Production Readiness
-**Goal**: A new user can go from git clone to running platform in under 5 minutes with Docker, or run locally without Docker using PGlite
-**Depends on**: Phase 1-8 (all prior phases)
-**Requirements**: DEPL-01, DEPL-02, DEPL-03, DEPL-04, DEPL-05, DEPL-06
-**Success Criteria** (what must be TRUE):
-  1. Running `docker-compose up` starts the complete platform (web, server, PostgreSQL) and the UI is accessible in the browser
-  2. Running the server without Docker and without DATABASE_URL uses PGlite as a zero-config database (no PostgreSQL install needed)
-  3. A .env.example file documents every required and optional environment variable
-  4. Data (database and uploads) persists across container restarts via Docker volumes
-  5. A README exists with clear step-by-step instructions for both Docker and local development setup
-**Plans**: 2 plans
-
-Plans:
-- [x] 09-01-PLAN.md -- Docker infrastructure: Dockerfiles, docker-compose.yml, .dockerignore, .env.example, health check endpoint
-- [x] 09-02-PLAN.md -- README documentation and Next.js standalone config for Docker + PGlite setup paths
+  1. README displays the Transweave logo, a badge row (license, Docker pulls, GitHub stars), feature list, quick-start instructions, and at least one screenshot
+  2. CONTRIBUTING.md documents development setup, coding standards, and PR process
+  3. MIT LICENSE file exists at the repository root
+  4. GitHub issue templates (bug report, feature request) and a PR template are configured in .github/
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
-Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other. They can be executed in any order after Phase 5 completes.
+Phases execute in numeric order: 10 -> 11 -> 12 -> 13
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 10. Visual Identity | v1.1 | 0/TBD | Not started | - |
+| 11. Project Rename | v1.1 | 0/TBD | Not started | - |
+| 12. Landing Page | v1.1 | 0/TBD | Not started | - |
+| 13. README & Community | v1.1 | 0/TBD | Not started | - |
+
+---
+
+<details>
+<summary>v1.0 Open Source Edition (Phases 1-9) -- SHIPPED 2026-03-01</summary>
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -181,3 +96,5 @@ Note: Phases 6, 7, and 8 all depend on Phase 5 but are independent of each other
 | 7. AI Translation | 2/2 | Complete | 2026-03-01 |
 | 8. Developer Tools | 3/3 | Complete | 2026-03-01 |
 | 9. Deployment & Production Readiness | 2/2 | Complete | 2026-03-01 |
+
+</details>

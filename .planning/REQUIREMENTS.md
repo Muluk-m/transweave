@@ -198,6 +198,8 @@ Deferred to future release. Tracked but not in current roadmap.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
+### v1.0 (Phases 1-9)
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CLEAN-01 | Phase 1 | Complete |
@@ -266,11 +268,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEPL-05 | Phase 9 | Pending |
 | DEPL-06 | Phase 9 | Pending |
 
-**Coverage:**
-- v1 requirements: 65 total
-- Mapped to phases: 65
-- Unmapped: 0
+**v1.0 coverage:** 65 mapped / 65 total / 0 unmapped
+
+### v1.1 (Phases 10-13)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| VIS-01 | Phase 10 | Pending |
+| VIS-02 | Phase 10 | Pending |
+| VIS-03 | Phase 10 | Pending |
+| VIS-04 | Phase 10 | Pending |
+| VIS-05 | Phase 10 | Pending |
+| REN-01 | Phase 11 | Pending |
+| REN-02 | Phase 11 | Pending |
+| REN-03 | Phase 11 | Pending |
+| REN-04 | Phase 11 | Pending |
+| REN-05 | Phase 11 | Pending |
+| REN-06 | Phase 11 | Pending |
+| REN-07 | Phase 11 | Pending |
+| REN-08 | Phase 11 | Pending |
+| REN-09 | Phase 11 | Pending |
+| LAND-01 | Phase 12 | Pending |
+| LAND-02 | Phase 12 | Pending |
+| LAND-03 | Phase 12 | Pending |
+| LAND-04 | Phase 12 | Pending |
+| LAND-05 | Phase 12 | Pending |
+| DOC-01 | Phase 13 | Pending |
+| DOC-02 | Phase 13 | Pending |
+| DOC-03 | Phase 13 | Pending |
+| DOC-04 | Phase 13 | Pending |
+
+**v1.1 coverage:** 23 mapped / 23 total / 0 unmapped
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after roadmap creation (traceability updated)*
+*Last updated: 2026-03-02 after v1.1 roadmap creation (traceability updated)*
