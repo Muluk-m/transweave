@@ -14,7 +14,7 @@ FROM deps AS builder
 COPY packages/web ./packages/web
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-RUN pnpm --filter nextjs build
+RUN pnpm --filter @transweave/web build
 
 # Stage 4: Production runner
 FROM node:22-alpine AS runner
@@ -31,4 +31,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["pnpm", "--filter", "nextjs", "start"]
+CMD ["pnpm", "--filter", "@transweave/web", "start"]

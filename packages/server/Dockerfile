@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 # Stage 3: Build
 FROM deps AS builder
 COPY packages/server ./packages/server
-RUN pnpm --filter qlj-i18n-server build
+RUN pnpm --filter @transweave/server build
 
 # Stage 4: Production runner
 FROM node:22-alpine AS runner
