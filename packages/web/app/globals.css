@@ -66,6 +66,15 @@
     --sidebar-accent-foreground: 224 71% 4%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 243 75% 59%;
+
+    /* Transweave brand identity — static palette (not semantic, not dark-mode adaptive) */
+    --brand-teal: 173 80% 40%;           /* #14b8a6 — primary brand teal */
+    --brand-teal-50: 166 76% 97%;        /* #f0fdfa — light tint for backgrounds */
+    --brand-teal-600: 174 77% 31%;       /* #0d9488 — darker teal for favicon bg */
+    --brand-indigo: 239 84% 67%;         /* #6366f1 — secondary brand indigo */
+    --brand-indigo-dark: 243 74% 50%;    /* #4338ca — indigo hover state */
+    --brand-gradient-start: #14b8a6;     /* teal-500 — gradient start (hex for SVG use) */
+    --brand-gradient-end: #6366f1;       /* indigo-500 — gradient end (hex for SVG use) */
   }
 
   .dark {
