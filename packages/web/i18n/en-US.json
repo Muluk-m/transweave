@@ -1,9 +1,4 @@
 {
-  "sdsc": "saefg",
-  "ewfds": "wefsd",
-  "hello": {
-    "word": "dscedv"
-  },
   "welcome": {
     "title": "Simplify Translation Process with <span>i18n Platform</span>",
     "tagline": "Localization Management Solution",
@@ -319,7 +314,8 @@
           "manager": "Manager",
           "owner": "Owner",
           "member": "Member",
-          "viewer": "Viewer"
+          "viewer": "Viewer",
+          "updated": "Role updated successfully"
         },
         "dropdown": {
           "actions": "Actions",
@@ -633,7 +629,8 @@
     "deleteConfirmDescription": "This action cannot be undone. The translation data will be permanently removed.",
     "cancel": "Cancel",
     "delete": "Delete",
-    "noData": "No data available"
+    "noData": "No data available",
+    "edit": "Edit"
   },
   "batchAdd": {
     "title": "Batch Add Translations",
@@ -867,9 +864,20 @@
         "noLanguages": "No languages added, please add at least one language",
         "add": "Add Language",
         "addPlaceholder": "Enter language code, e.g. en-US",
+        "codePlaceholder": "Language code (e.g. th-TH)",
+        "labelPlaceholder": "Label (e.g. Thai)",
+        "addHelpText": "Built-in languages only require a code. Custom languages require both a code and a label.",
         "common": "Common Languages",
         "saveSuccess": "Language settings saved",
-        "saveButton": "Save Language Settings"
+        "saveButton": "Save Language Settings",
+        "customLanguageAdded": "Custom language added",
+        "customLanguageAddedDescription": "Custom language {label} ({code}) has been added",
+        "error": {
+          "codeRequired": "Please enter a language code",
+          "languageExists": "This language already exists",
+          "labelRequired": "Custom languages require a label",
+          "labelRequiredDescription": "Non-built-in languages must also have a label"
+        }
       },
       "advanced": {
         "title": "Advanced Settings",
