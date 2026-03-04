@@ -34,7 +34,7 @@ services:
         fromService:
           name: transweave-server
           type: web
-          property: url
+          property: host
       - key: PORT
         value: 3000
       - key: NODE_ENV

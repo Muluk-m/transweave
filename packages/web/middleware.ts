@@ -5,7 +5,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/api/')) {
-    const apiBaseUrl = process.env.NEXT_INTERNAL_API_URL || 'http://localhost:3001'
+    const raw = process.env.NEXT_INTERNAL_API_URL || 'http://localhost:3001'
+    const apiBaseUrl = raw.startsWith('http') ? raw : `https://${raw}`
     const url = new URL(pathname, apiBaseUrl)
     
     url.search = request.nextUrl.search
