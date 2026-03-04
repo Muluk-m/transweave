@@ -6,6 +6,7 @@ import "./globals.css";
 import { HeaderView } from "@/components/views/headerView";
 import { Toaster } from "@/components/ui/toaster";
 import { HeaderManager } from "@/components/views/header-manager";
+import { SidebarManager } from "@/components/views/sidebar-manager";
 import { I18nClientProvider } from "@/components/i18n/client-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -38,17 +39,20 @@ export default function Layout({
       <body className={inter.className}>
         <NuqsAdapter>
           <AuthProvider>
-            <div className="min-h-screen flex flex-col">
-              <I18nClientProvider>
+            <I18nClientProvider>
+              <div className="min-h-screen flex flex-col">
                 <HeaderManager>
                   <HeaderView />
                 </HeaderManager>
-                <main className="flex-1">{children}</main>
-              </I18nClientProvider>
+                <div className="flex flex-1 overflow-hidden">
+                  <SidebarManager />
+                  <main className="flex-1 overflow-y-auto">{children}</main>
+                </div>
+              </div>
               <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center">
                 <Toaster />
               </div>
-            </div>
+            </I18nClientProvider>
           </AuthProvider>
         </NuqsAdapter>
       </body>

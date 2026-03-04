@@ -675,11 +675,11 @@
     "tabs": {
       "overview": "概览",
       "tokens": "文案",
-      "task": "任务",
+      "setting": "设置",
+      "translations": "翻译",
+      "files": "文件",
       "import": "导入",
-      "export": "导出",
-      "activity": "操作日志",
-      "setting": "设置"
+      "export": "导出"
     },
     "import": {
       "title": "导入翻译文案",
@@ -989,5 +989,15 @@
     "teamDefault": "团队默认配置",
     "teamDefaultHint": "项目级别配置会覆盖团队默认配置。未在此处设置时，使用团队默认配置。",
     "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译"
+  },
+  "sidebar": {
+    "teams": "团队",
+    "noTeams": "暂无团队",
+    "noProjects": "暂无项目",
+    "newProject": "新建项目",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏",
+    "apiKeys": "API Keys",
+    "settings": "设置"
   }
 }

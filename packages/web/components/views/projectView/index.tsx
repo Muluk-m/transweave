@@ -4,21 +4,10 @@ import { useAtom } from "jotai";
 import { nowProjectAtom } from "@/jotai";
 import { ProjectOverviewTab } from "@/components/views/projectView/ProjectOverviewTab";
 import { ProjectTokensTab } from "@/components/views/projectView/ProjectTokensTab";
-import { ProjectModulesTab } from "@/components/views/projectView/ProjectModulesTab";
-import { ProjectImportTab } from "@/components/views/projectView/ProjectImportTab";
-import { ProjectExportTab } from "@/components/views/projectView/ProjectExportTab";
+import { ProjectFilesTab } from "@/components/views/projectView/ProjectFilesTab";
 import { ProjectSettingTab } from "@/components/views/projectView/ProjectSettingTab";
-import { ProjectActivityTab } from "@/components/views/projectView/ProjectActivityTab";
 import { useTranslations } from "next-intl";
-import {
-  BarChart3,
-  FileText,
-  Boxes,
-  Download,
-  Upload,
-  Activity,
-  Settings,
-} from "lucide-react";
+import { BarChart3, FileText, FolderOpen, Settings } from "lucide-react";
 
 export function ProjectView() {
   const [nowProject] = useAtom(nowProjectAtom);
@@ -26,11 +15,8 @@ export function ProjectView() {
 
   const tabs = [
     { value: "overview", label: t("project.tabs.overview"), icon: BarChart3 },
-    { value: "tokens", label: t("project.tabs.tokens"), icon: FileText },
-    { value: "modules", label: "模块管理", icon: Boxes },
-    { value: "import", label: t("project.tabs.import"), icon: Upload },
-    { value: "export", label: t("project.tabs.export"), icon: Download },
-    { value: "activity", label: t("project.tabs.activity"), icon: Activity },
+    { value: "tokens", label: t("project.tabs.translations"), icon: FileText },
+    { value: "files", label: t("project.tabs.files"), icon: FolderOpen },
     { value: "setting", label: t("project.tabs.setting"), icon: Settings },
   ];
 
@@ -51,9 +37,9 @@ export function ProjectView() {
       )}
 
       <Tabs defaultValue="overview" className="w-full">
-        {/* Modern Tab Navigation */}
+        {/* Tab Navigation */}
         <div className="relative mb-6">
-          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1 flex-wrap">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -62,7 +48,7 @@ export function ProjectView() {
                   value={tab.value}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg
                     text-muted-foreground hover:text-foreground
-                    data-[state=active]:bg-background data-[state=active]:text-foreground 
+                    data-[state=active]:bg-background data-[state=active]:text-foreground
                     data-[state=active]:shadow-sm data-[state=active]:shadow-black/5
                     transition-all duration-200"
                 >
@@ -74,7 +60,7 @@ export function ProjectView() {
           </TabsList>
         </div>
 
-        {/* Tab Contents with Animation */}
+        {/* Tab Contents */}
         <div className="bg-card rounded-xl border border-border/50 shadow-soft overflow-hidden">
           <TabsContent value="overview" className="m-0 p-6 animate-fade-in">
             <ProjectOverviewTab project={nowProject} />
@@ -84,20 +70,8 @@ export function ProjectView() {
             <ProjectTokensTab project={nowProject} />
           </TabsContent>
 
-          <TabsContent value="modules" className="m-0 p-6 animate-fade-in">
-            <ProjectModulesTab />
-          </TabsContent>
-
-          <TabsContent value="import" className="m-0 p-6 animate-fade-in">
-            <ProjectImportTab project={nowProject} />
-          </TabsContent>
-
-          <TabsContent value="export" className="m-0 p-6 animate-fade-in">
-            <ProjectExportTab project={nowProject} />
-          </TabsContent>
-
-          <TabsContent value="activity" className="m-0 p-6 animate-fade-in">
-            <ProjectActivityTab project={nowProject} />
+          <TabsContent value="files" className="m-0 p-6 animate-fade-in">
+            <ProjectFilesTab project={nowProject} />
           </TabsContent>
 
           <TabsContent value="setting" className="m-0 p-6 animate-fade-in">

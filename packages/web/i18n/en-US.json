@@ -675,11 +675,11 @@
     "tabs": {
       "overview": "Overview",
       "tokens": "Translations",
-      "task": "Tasks",
+      "setting": "Settings",
+      "translations": "Translations",
+      "files": "Files",
       "import": "Import",
-      "export": "Export",
-      "activity": "Activity Log",
-      "setting": "Settings"
+      "export": "Export"
     },
     "import": {
       "title": "Import Translations",
@@ -989,5 +989,15 @@
     "teamDefault": "Team Default",
     "teamDefaultHint": "Project-level configuration overrides team default. If not set here, the team default is used.",
     "enableAiHint": "Configure an AI provider in project settings to enable AI translation"
+  },
+  "sidebar": {
+    "teams": "Teams",
+    "noTeams": "No teams yet",
+    "noProjects": "No projects yet",
+    "newProject": "New Project",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "apiKeys": "API Keys",
+    "settings": "Settings"
   }
 }

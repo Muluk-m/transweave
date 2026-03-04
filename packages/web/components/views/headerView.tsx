@@ -8,38 +8,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { nowProjectAtom, nowTeamAtom, projectsAtom, teamsAtom } from "@/jotai";
-import { Team } from "@/jotai/types";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useAtom, useAtomValue } from "jotai";
 import {
   ChevronDown,
-  ChevronRight,
   Globe,
   LogOut,
   Moon,
   Sun,
   User,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getUserLanguage, setUserLanguage } from "@/lib/cookies";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { Logo } from "@/components/Logo";
 
 export function HeaderView() {
-  const [projects, setProjects] = useAtom(projectsAtom);
-  const [teams, setTeams] = useAtom(teamsAtom);
-  const [nowTeam, setNowTeam] = useAtom(nowTeamAtom);
-  const [nowProject, setNowProject] = useAtom(nowProjectAtom);
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const t = useTranslations();
   const [isDark, setIsDark] = useState(false);
 
-  // Initialize theme from localStorage (default dark)
   useEffect(() => {
     const theme = localStorage.getItem("theme");
     const shouldBeDark = theme ? theme === "dark" : true;
@@ -57,10 +45,6 @@ export function HeaderView() {
     document.documentElement.classList.toggle("dark", newTheme);
   };
 
-  const onNowTeamClick = () => {
-    setNowProject(null);
-  };
-
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -70,109 +54,16 @@ export function HeaderView() {
     router.push("/login");
   };
 
-  const handleTeamSelect = (team: Team) => {
-    setNowTeam(team);
-    setNowProject(null);
-    router.push(`/team/${team.id}`);
-  };
-
-  const onHomeBtnClick = () => {
-    setNowTeam(null);
-    setNowProject(null);
-    router.push("/");
-  };
-
   const handleLanguageChange = (locale: string) => {
     setUserLanguage(locale);
     window.dispatchEvent(new Event("storage"));
   };
 
-  const getCurrentLocale = () => {
-    return getUserLanguage();
-  };
-
-  const currentLocale = getCurrentLocale();
+  const currentLocale = getUserLanguage();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
-        {/* Left: Logo & Breadcrumb */}
-        <div className="flex items-center gap-1">
-          {/* Logo/Brand */}
-          <Logo className="h-6 w-6" />
-          <Button
-            onClick={onHomeBtnClick}
-            variant="ghost"
-            className="flex items-center hover:bg-primary/5 transition-colors h-auto gap-2"
-          >
-            <span className="font-semibold text-xl text-foreground hidden sm:inline-block tracking-tight">
-              {t("header.title")}
-            </span>
-          </Button>
-
-          {/* Breadcrumb Navigation */}
-          {!!user && !!nowTeam && (
-            <div className="flex items-center animate-fade-in">
-              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-1 px-2 text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-colors"
-                  >
-                    <span className="max-w-[120px] truncate">{nowTeam?.name}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 animate-scale-in">
-                  {teams.map((team) => (
-                    <DropdownMenuItem
-                      key={team.id}
-                      onClick={() => handleTeamSelect(team)}
-                      className={`cursor-pointer ${team.id === nowTeam?.id ? "bg-primary/10 text-primary" : ""}`}
-                    >
-                      {team.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-
-          {!!user && !!nowProject && (
-            <div className="flex items-center animate-fade-in">
-              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-1 px-2 text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-colors"
-                  >
-                    <span className="max-w-[120px] truncate">{nowProject?.name}</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 animate-scale-in">
-                  {projects.map((project) => (
-                    <DropdownMenuItem
-                      key={project.id}
-                      onClick={() => {
-                        setNowProject(project);
-                        router.push(`/project/${project.id}`);
-                      }}
-                      className={`cursor-pointer ${project.id === nowProject?.id ? "bg-primary/10 text-primary" : ""}`}
-                    >
-                      {project.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-        </div>
-
+      <div className="flex h-16 items-center justify-end px-4 md:px-6 lg:px-8">
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
           {/* Theme Toggle */}

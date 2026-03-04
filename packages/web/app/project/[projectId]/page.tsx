@@ -4,8 +4,9 @@ import { useAuth } from "../../../lib/auth/auth-context";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LoadingView } from "../../../components/views/loadingView";
-import { nowProjectAtom } from "@/jotai";
+import { nowProjectAtom, nowTeamAtom } from "@/jotai";
 import { useAtom } from "jotai";
+import { getTeamById } from "@/api/team";
 import NoPermissionView from "../../../components/views/noPermissionView";
 import { ProjectView } from "@/components/views/projectView";
 import { checkProjectPermission, getProject } from "@/api/project";
@@ -13,6 +14,7 @@ import { useTranslations } from "next-intl";
 
 export default function ProjectPage() {
   const [nowProject, setNowProject] = useAtom(nowProjectAtom);
+  const [, setNowTeam] = useAtom(nowTeamAtom);
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -25,9 +27,17 @@ export default function ProjectPage() {
   const check = async () => {
     if (user && projectId) {
       try {
-        // Get project details
+        // Get project details and restore team context from URL
         const project = await getProject(projectId);
         setNowProject(project);
+        if (project.teamId) {
+          try {
+            const team = await getTeamById(project.teamId);
+            setNowTeam(team);
+          } catch {
+            // non-critical
+          }
+        }
 
         // Check if user has permission to access the project
         const hasAccess = await checkProjectPermission(projectId);
