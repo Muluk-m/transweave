@@ -125,7 +125,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const getActivityDescription = (activity: ActivityLog) => {
     const user = typeof activity.userId === "object" ? activity.userId : null;
     const userName = user?.name || t("unknownUser");
-    const entityName = activity.details.entityName || "";
+    const entityName = activity.details?.entityName || "";
 
     switch (activity.type) {
       case ActivityType.PROJECT_CREATE:
@@ -137,12 +137,12 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       case ActivityType.PROJECT_LANGUAGE_ADD:
         return t("activityLanguageAdded", {
           user: userName,
-          language: activity.details.language,
+          language: activity.details?.language,
         });
       case ActivityType.PROJECT_LANGUAGE_REMOVE:
         return t("activityLanguageRemoved", {
           user: userName,
-          language: activity.details.language,
+          language: activity.details?.language,
         });
       case ActivityType.TOKEN_CREATE:
         return t("activityTokenCreated", {
@@ -162,13 +162,13 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       case ActivityType.PROJECT_EXPORT:
         return t("activityProjectExported", {
           user: userName,
-          format: activity.details.format,
+          format: activity.details?.format,
         });
       case ActivityType.PROJECT_IMPORT:
         return t("activityProjectImported", {
           user: userName,
-          language: activity.details.language,
-          count: activity.details.stats?.added || 0,
+          language: activity.details?.language,
+          count: activity.details?.stats?.added || 0,
         });
       default:
         return t("activityUnknown", { user: userName });

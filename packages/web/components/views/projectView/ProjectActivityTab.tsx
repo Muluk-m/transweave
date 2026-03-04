@@ -200,7 +200,7 @@ export function ProjectActivityTab({ project }: ProjectActivityTabProps) {
       changes,
       language,
       format,
-    } = activity.details;
+    } = activity.details ?? {};
 
     // Build description based on activity type
     let description = "";
