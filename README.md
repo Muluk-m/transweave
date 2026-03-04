@@ -14,6 +14,12 @@
 
 **技术栈：** Next.js、NestJS、PostgreSQL / PGlite、Drizzle ORM、pnpm monorepo
 
+## 一键部署到 Render（免费）
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Muluk-m/transweave)
+
+> 点击按钮，用 GitHub 账号登录 Render，点击 Apply 即可自动创建所有服务。
+
 ## Docker 快速开始
 
 ```bash

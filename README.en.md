@@ -14,6 +14,12 @@ Self-hosted internationalization management platform.
 
 **Tech stack:** Next.js, NestJS, PostgreSQL / PGlite, Drizzle ORM, pnpm monorepo
 
+## One-Click Deploy to Render (Free)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Muluk-m/transweave)
+
+> Click the button, sign in with GitHub, then click Apply to automatically provision all services.
+
 ## Quick Start with Docker
 
 ```bash
