@@ -14,7 +14,7 @@ export async function uploadImage(file: File): Promise<UploadFile> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
   const response = await fetch(`${apiUrl}/api/upload`, {
     method: 'POST',
     body: formData,
@@ -52,6 +52,6 @@ export function getImageUrl(url: string): string {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
   return `${apiUrl}${url}`;
 }

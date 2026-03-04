@@ -1,0 +1,41 @@
+databases:
+  - name: transweave-db
+    databaseName: transweave
+    user: transweave
+    plan: free
+
+services:
+  - type: web
+    name: transweave-server
+    runtime: docker
+    dockerfilePath: packages/server/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: transweave-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: transweave-web
+    runtime: docker
+    dockerfilePath: packages/web/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: NEXT_INTERNAL_API_URL
+        fromService:
+          name: transweave-server
+          type: web
+          property: url
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
