@@ -3,11 +3,12 @@ import { loginCommand } from './commands/login.js';
 import { initCommand } from './commands/init.js';
 import { pullCommand } from './commands/pull.js';
 import { pushCommand } from './commands/push.js';
+import { version } from '../package.json'
 
 const program = new Command()
   .name('transweave')
   .description('CLI for Transweave translation management')
-  .version('1.0.0');
+  .version(version);
 
 program.addCommand(loginCommand);
 program.addCommand(initCommand);

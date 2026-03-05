@@ -1,6 +1,6 @@
 {
-  "name": "transweave",
-  "version": "1.0.0",
+  "name": "@transweave/cli",
+  "version": "0.0.1",
   "description": "CLI tool for Transweave translation management",
   "bin": {
     "transweave": "./bin/transweave.js"

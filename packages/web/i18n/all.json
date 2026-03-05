@@ -9,22 +9,7 @@
     ]
   },
   "translations": {
-    "sdsc": {
-      "en-US": "saefg"
-    },
-    "ewfds": {
-      "en-US": "wefsd"
-    },
-    "hello": {
-      "word": {
-        "en-US": "dscedv"
-      }
-    },
     "welcome": {
-      "title": {
-        "zh-CN": "使用 <span>汤师爷</span> 简化翻译流程",
-        "en-US": "Simplify Translation Process with <span>i18n Platform</span>"
-      },
       "tagline": {
         "zh-CN": "本地化管理解决方案",
         "en-US": "Localization Management Solution"
