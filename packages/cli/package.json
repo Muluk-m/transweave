@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "release": "bumpp --tag 'cli-v%s' --commit 'release(cli): v%s' --push"
   },
   "dependencies": {
     "commander": "^13.0.0",
