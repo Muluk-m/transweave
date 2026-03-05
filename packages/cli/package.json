@@ -6,6 +6,10 @@
     "transweave": "./bin/transweave.js"
   },
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "bin"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts"
@@ -18,5 +22,9 @@
     "typescript": "^5.7.3",
     "ts-node": "^10.9.2",
     "@types/node": "^22.10.7"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
+
