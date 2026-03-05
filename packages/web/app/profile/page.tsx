@@ -29,14 +29,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { updateUserProfile } from "@/api/auth";
 import { useTranslations } from "next-intl";
 
-// Form validation schema
-const profileFormSchema = (t: any) => z.object({
+interface ProfileFormValues {
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+const profileFormSchema = (t: (key: string) => string) => z.object({
   name: z.string().min(2, { message: t('profile.form.validation.nameRequired') }),
   email: z.string().email({ message: t('profile.form.validation.emailInvalid') }),
   avatar: z.string().url({ message: t('profile.form.validation.avatarUrlInvalid') }).optional().or(z.literal(''))
 });
-
-type ProfileFormValues = z.infer<ReturnType<typeof profileFormSchema>>;
 
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
@@ -45,8 +48,9 @@ export default function ProfilePage() {
   const t = useTranslations();
 
   // Initialize form
+  const resolve = zodResolver as any;
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema(t)),
+    resolver: resolve(profileFormSchema(t)),
     defaultValues: {
       name: "",
       email: "",

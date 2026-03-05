@@ -15,7 +15,7 @@ import {
   Folder,
   Users,
   Key,
-  Settings,
+  Plus,
   PanelLeftClose,
   PanelLeft,
   Loader2,
@@ -184,7 +184,18 @@ export function SidebarView() {
         )}
 
         {!loading && teamsWithProjects.length === 0 && (
-          <p className="text-xs text-muted-foreground px-4 py-3">{t('sidebar.noTeams')}</p>
+          <div className="px-3 py-3 space-y-2">
+            <p className="text-xs text-muted-foreground px-1">{t('sidebar.noTeams')}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2 h-8 text-xs"
+              onClick={() => router.push('/')}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('sidebar.createTeam')}
+            </Button>
+          </div>
         )}
 
         {!loading &&

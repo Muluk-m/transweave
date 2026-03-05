@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
+import TeamsView from '@/components/views/teamsView';
 
 export default function Page() {
   const router = useRouter();
@@ -14,5 +15,7 @@ export default function Page() {
     }
   }, [router, isAuthenticated, isLoading]);
 
-  return null;
+  if (isLoading || !isAuthenticated) return null;
+
+  return <TeamsView />;
 }
