@@ -114,6 +114,7 @@
     "description": "Join Transweave now to experience efficient localization management and make your product speak the languages of the world.",
     "register": "Register for Free",
     "demo": "Schedule a Demo",
+    "tryDemo": "Try Demo",
     "note": "Free version includes basic features, upgradable anytime"
   },
   "language": "Language",
@@ -136,6 +137,13 @@
     "success": {
       "title": "Login Successful",
       "description": "Welcome back!"
+    },
+    "or": "or",
+    "demoButton": "Try Demo Account",
+    "demoLoading": "Logging in to demo...",
+    "demoSuccess": {
+      "title": "Welcome to Demo",
+      "description": "You are using the demo account. Data resets daily."
     }
   },
   "register": {
@@ -1078,5 +1086,8 @@
       "revokeFailed": "Failed to revoke API key",
       "unknownError": "Unknown error"
     }
+  },
+  "demo": {
+    "banner": "Demo mode \u2014 data resets daily at 12:00 PM (UTC+8)"
   }
 }

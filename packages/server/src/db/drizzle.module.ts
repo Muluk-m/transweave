@@ -8,6 +8,7 @@ import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ActivityLogRepository } from '../repository/activity-log.repository';
 import { ApiKeyRepository } from '../repository/api-key.repository';
+import { FileRepository } from '../repository/file.repository';
 import { ApiKeyService } from '../service/api-key.service';
 
 @Global()
@@ -22,6 +23,7 @@ import { ApiKeyService } from '../service/api-key.service';
     TokenHistoryRepository,
     ActivityLogRepository,
     ApiKeyRepository,
+    FileRepository,
     ApiKeyService,
   ],
   exports: [
@@ -34,6 +36,7 @@ import { ApiKeyService } from '../service/api-key.service';
     TokenHistoryRepository,
     ActivityLogRepository,
     ApiKeyRepository,
+    FileRepository,
     ApiKeyService,
   ],
 })

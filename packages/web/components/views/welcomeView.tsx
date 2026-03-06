@@ -11,45 +11,44 @@ import {
 } from "@/components/ui/card";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Book, Code, Github, Globe2, Layers, Lock, Users, Languages, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Book, Code, Github, Globe2, Layers, Loader2, Lock, Users, Languages, Sparkles, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { toast } from "@/hooks/use-toast";
 
 export default function WelcomeView() {
     const router = useRouter();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { login } = useAuth();
+    const [isDemoLoading, setIsDemoLoading] = useState(false);
     const t = useTranslations();
-    
-    // 添加对下一个section的引用
+
     const featuresRef = useRef<HTMLElement>(null);
-    
-    // 检查用户是否已登录
-    useEffect(() => {
-        // 这里可以实际检查用户登录状态，例如从localStorage或cookie中获取token
-        // 或者调用API检查session有效性
-        const checkLoginStatus = () => {
-            // 示例: 检查localStorage中是否有token
-            const token = localStorage.getItem('userToken');
-            setIsLoggedIn(!!token);
-        };
-        
-        checkLoginStatus();
-    }, []);
-    
-    // 处理开始使用按钮点击
+
     const handleGetStarted = () => {
-        if (isLoggedIn) {
-            router.push('/teams');
-        } else {
-            router.push('/login');
-        }
+        router.push('/login');
     };
 
-    // 处理教程按钮点击
     const handleTutorial = () => {
         router.push('/tutorial');
+    };
+
+    const handleDemoLogin = async () => {
+        setIsDemoLoading(true);
+        try {
+            await login('admin@test.com', 'admin123456');
+            toast({
+                title: t("login.demoSuccess.title"),
+                description: t("login.demoSuccess.description"),
+            });
+            router.push('/');
+        } catch {
+            router.push('/login');
+        } finally {
+            setIsDemoLoading(false);
+        }
     };
 
     // 使用i18n获取功能列表
@@ -169,13 +168,19 @@ export default function WelcomeView() {
                                 {t('welcome.getStarted')}
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
-                            <Button 
-                                variant="outline" 
-                                size="lg" 
-                                onClick={handleTutorial}
-                                className="rounded-xl px-8 h-12 text-base border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                onClick={handleDemoLogin}
+                                disabled={isDemoLoading}
+                                className="rounded-xl px-8 h-12 text-base border-primary/30 text-primary hover:bg-primary/5"
                             >
-                                {t('welcome.learnMore')}
+                                {isDemoLoading ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-5 w-5" />
+                                )}
+                                {t('cta.tryDemo')}
                             </Button>
                         </div>
                         
@@ -417,13 +422,19 @@ export default function WelcomeView() {
                                 {t('cta.register')}
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
-                            <Button 
-                                onClick={handleTutorial} 
-                                variant="outline" 
-                                size="lg" 
-                                className="rounded-xl px-8 h-12 text-base border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                            <Button
+                                onClick={handleDemoLogin}
+                                disabled={isDemoLoading}
+                                variant="outline"
+                                size="lg"
+                                className="rounded-xl px-8 h-12 text-base border-primary/30 text-primary hover:bg-primary/5"
                             >
-                                {t('cta.demo')}
+                                {isDemoLoading ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-5 w-5" />
+                                )}
+                                {t('cta.tryDemo')}
                             </Button>
                         </div>
                         <p className="text-sm text-muted-foreground mt-6">

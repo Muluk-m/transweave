@@ -25,9 +25,6 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-i18n}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-i18n}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       PORT: 3001
-      UPLOAD_DIR: /app/uploads
-    volumes:
-      - uploads:/app/uploads
     restart: unless-stopped
 
   web:
@@ -49,7 +46,3 @@ volumes:
     # WARNING: Adding name: creates a new volume. Existing data in the old implicit
     # volume (qlj-fe-i18n_pgdata) must be manually migrated. See docs for guidance.
     name: transweave-pgdata
-  uploads:
-    # WARNING: Adding name: creates a new volume. Existing data in the old implicit
-    # volume (qlj-fe-i18n_uploads) must be manually migrated. See docs for guidance.
-    name: transweave-uploads

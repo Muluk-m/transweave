@@ -14,13 +14,8 @@ import { TeamService } from '../service/team.service';
 import { MembershipService } from '../service/membership.service';
 import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
-import { CurrentUser } from '../jwt/current-user.decorator';
-
-interface UserPayload {
-  userId: string;
-  email: string;
-  name: string;
-}
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
+import { CreateTeamDto, UpdateTeamDto, InviteMemberDto, UpdateMemberRoleDto } from '../dto/team.dto';
 
 @Controller('api/team')
 export class TeamController {
@@ -33,7 +28,7 @@ export class TeamController {
   @Post('create')
   @UseGuards(AuthGuard)
   async createTeam(
-    @Body() data: { name: string; url: string },
+    @Body() data: CreateTeamDto,
     @CurrentUser() user: UserPayload,
   ) {
     return this.teamService.createTeam({
@@ -80,7 +75,7 @@ export class TeamController {
   @UseGuards(AuthGuard)
   async updateTeam(
     @Param('id') id: string,
-    @Body() data: { name?: string; url?: string },
+    @Body() data: UpdateTeamDto,
     @CurrentUser() user: UserPayload,
   ) {
     const isManagerOrOwner = await this.membershipService.isManagerOrOwner(
@@ -113,7 +108,7 @@ export class TeamController {
   @UseGuards(AuthGuard)
   async addMember(
     @Param('id') teamId: string,
-    @Body() data: { userId: string; role: string },
+    @Body() data: InviteMemberDto,
     @CurrentUser() user: UserPayload,
   ) {
     // Ensure only team owners or managers can add members
@@ -146,7 +141,7 @@ export class TeamController {
   async updateMemberRole(
     @Param('id') teamId: string,
     @Param('memberId') memberId: string,
-    @Body() data: { role: string },
+    @Body() data: UpdateMemberRoleDto,
     @CurrentUser() user: UserPayload,
   ) {
     const callerRole = await this.membershipService.getUserRole(teamId, user.userId);

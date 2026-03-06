@@ -7,11 +7,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { memoryStorage } from 'multer';
 import { AuthGuard } from '../jwt/guard';
 import { FileStorageService } from '../service/file-storage.service';
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 
 @Controller('api/upload')
 export class UploadController {
@@ -21,16 +20,8 @@ export class UploadController {
   @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_DIR || './uploads');
-        },
-        filename: (req, file, cb) => {
-          const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/^image\//)) {
           return cb(
@@ -42,12 +33,22 @@ export class UploadController {
       },
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserPayload,
+  ) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
+    const result = await this.fileStorage.storeFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      file.size,
+      user.userId,
+    );
     return {
-      url: this.fileStorage.getFileUrl(file.filename),
+      url: result.url,
       name: file.originalname,
       size: file.size,
       type: file.mimetype,

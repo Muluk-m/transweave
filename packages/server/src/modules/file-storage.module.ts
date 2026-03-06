@@ -1,21 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { resolve } from 'path';
 import { FileStorageService } from '../service/file-storage.service';
 import { UploadController } from '../controller/upload.controller';
+import { FileController } from '../controller/file.controller';
 
 @Module({
-  imports: [
-    ServeStaticModule.forRoot({
-      rootPath: resolve(process.env.UPLOAD_DIR || './uploads'),
-      serveRoot: '/uploads',
-      serveStaticOptions: {
-        index: false,
-        fallthrough: false,
-      },
-    }),
-  ],
-  controllers: [UploadController],
+  controllers: [UploadController, FileController],
   providers: [FileStorageService],
   exports: [FileStorageService],
 })

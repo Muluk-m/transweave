@@ -13,6 +13,7 @@ import { AuthGuard } from '../jwt/guard';
 import { AuthService } from '../service/auth.service';
 import { UserService } from '../service/user.service';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
+import { RegisterDto, LoginDto, SetupDto } from '../dto/auth.dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -31,9 +32,7 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(
-    @Body() data: { name: string; email: string; password: string; avatar: string },
-  ) {
+  async register(@Body() data: RegisterDto) {
     try {
       const result = await this.authService.register(data);
 
@@ -56,7 +55,7 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() data: { email: string; password: string }) {
+  async login(@Body() data: LoginDto) {
     try {
       const { token, user } = await this.authService.login(data);
 
@@ -92,9 +91,7 @@ export class AuthController {
   }
 
   @Post('setup')
-  async setup(
-    @Body() data: { name: string; email: string; password: string; teamName: string },
-  ) {
+  async setup(@Body() data: SetupDto) {
     try {
       const result = await this.authService.setup(data);
 

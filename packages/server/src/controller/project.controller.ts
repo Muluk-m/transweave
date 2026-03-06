@@ -15,22 +15,20 @@ import {
   Res,
   Header,
   Query,
-  UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { Response } from 'express';
-import { UserService } from 'src/service/user.service';
 import { TeamService } from 'src/service/team.service';
-import type { SupportedImportFormat, SupportedExportFormat } from 'src/utils/formats/types';
+import type { SupportedExportFormat } from 'src/utils/formats/types';
+import { CreateProjectDto, UpdateProjectDto, ExportProjectDto, ImportProjectDto, MigrateLanguagesDto } from '../dto/project.dto';
 
 @Controller('api/project')
 export class ProjectController {
   constructor(
     private projectService: ProjectService,
-    private userService: UserService,
     private teamService: TeamService,
   ) {}
 
@@ -38,14 +36,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async createProject(
     @CurrentUser() user: UserPayload,
-    @Body()
-    data: {
-      name: string;
-      teamId: string;
-      url: string;
-      description?: string;
-      languages?: string[];
-    },
+    @Body() data: CreateProjectDto,
   ) {
     
     return this.projectService.createProject({
@@ -55,15 +46,28 @@ export class ProjectController {
   }
 
   @Get('all')
-  async findAllProjects() {
-    return this.projectService.findAllProjects();
+  @UseGuards(AuthGuard)
+  async findAllProjects(@CurrentUser() user: UserPayload) {
+    // Only return projects the user has access to via their teams
+    const teams = await this.teamService.findTeamsByUserId(user.userId);
+    const projects: any[] = [];
+    for (const team of teams) {
+      const teamProjects = await this.projectService.findProjectsByTeamId(team.id);
+      projects.push(...teamProjects);
+    }
+    return projects;
   }
 
   @Get('find/:id')
-  async findProjectById(@Param('id') id: string) {
+  @UseGuards(AuthGuard)
+  async findProjectById(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     const project = await this.projectService.findProjectById(id);
     if (!project) {
       throw new NotFoundException('Can not find the project');
+    }
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) {
+      throw new ForbiddenException('You do not have permission to access this project');
     }
     const memberships = await this.teamService.getTeamMembers(project.teamId);
     return { ...project, memberships };
@@ -74,15 +78,7 @@ export class ProjectController {
   async updateProject(
     @CurrentUser() user: UserPayload,
     @Param('id') id: string,
-    @Body()
-    data: {
-      name?: string;
-      description?: string;
-      languages?: string[];
-      languageLabels?: Record<string, string>; // 自定义语言的中文备注
-      modules?: Array<{ name: string; code: string }>;
-      url?: string;
-    },
+    @Body() data: UpdateProjectDto,
   ) {
     return this.projectService.updateProject(id, {
       ...data,
@@ -151,15 +147,7 @@ export class ProjectController {
   @Header('Content-Type', 'application/zip')
   async exportProject(
     @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      format: SupportedExportFormat; // Export format
-      scope?: 'all' | 'completed' | 'incomplete' | 'custom'; // Export scope
-      languages?: string[]; // Selected languages
-      showEmptyTranslations?: boolean; // Whether to include empty translations
-      prettify?: boolean; // Beautify output
-      includeMetadata?: boolean; // Whether to include metadata
-    },
+    @Body() data: ExportProjectDto,
     @CurrentUser() user: UserPayload,
     @Res() res: Response,
   ) {
@@ -185,50 +173,25 @@ export class ProjectController {
     }
   }
 
-  // Directly download project content via URL (supports direct download in browser)
+  // Directly download project content via URL (supports Bearer token auth)
   @Get('download/:projectId')
+  @UseGuards(AuthGuard)
   @Header('Content-Type', 'application/zip')
   async downloadProject(
     @Param('projectId') projectId: string,
-    @Query('format') format: SupportedExportFormat = 'json', // Default to json
+    @Query('format') format: SupportedExportFormat = 'json',
     @Query('scope')
     scope: 'all' | 'completed' | 'incomplete' | 'custom' = 'all',
-    @Query('languages') languages: string, // Comma-separated language list, e.g. 'zh,en,ja'
+    @Query('languages') languages: string,
     @Query('showEmptyTranslations') showEmptyTranslations: string,
     @Query('prettify') prettify: string,
     @Query('includeMetadata') includeMetadata: string,
-    @Query('username') username: string, // Username
-    @Query('password') password: string, // Password
-    @Query('apiKey') apiKey: string, // Optional API key
+    @CurrentUser() user: UserPayload,
     @Res() res: Response,
   ) {
     try {
-      // First try to authenticate user
-      let userId: string;
-
-      // If apiKey is provided, use apiKey for verification first
-      // if (apiKey) {
-      //   const apiKeyInfo = await this.userService.validateApiKey(apiKey, projectId);
-      //   if (!apiKeyInfo) {
-      //     throw new UnauthorizedException('API key is invalid or expired');
-      //   }
-      //   userId = apiKeyInfo.userId;
-      // }
-      // Otherwise, use username and password for verification
-      if (username && password) {
-        const user = await this.userService.validateUser(username, password);
-        if (!user) {
-          throw new UnauthorizedException('Username or password incorrect');
-        }
-        userId = user.id;
-      } else {
-        throw new UnauthorizedException(
-          'Please provide valid authentication information (username/password or API key)',
-        );
-      }
-
       // Verify project permission
-      const hasPermission = await this.projectService.checkUserProjectPermission(projectId, userId);
+      const hasPermission = await this.projectService.checkUserProjectPermission(projectId, user.userId);
       if (!hasPermission) {
         throw new ForbiddenException('You do not have permission to download this project');
       }
@@ -264,13 +227,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async previewImport(
     @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      language: string; // Language to import
-      content: string; // File content
-      format: SupportedImportFormat; // Import format
-      mode: 'append' | 'replace'; // Import mode
-    },
+    @Body() data: ImportProjectDto,
     @CurrentUser() user: UserPayload,
   ) {
     // Verify permission
@@ -296,13 +253,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async importProject(
     @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      language: string; // Language to import
-      content: string; // File content
-      format: SupportedImportFormat; // Import format
-      mode: 'append' | 'replace'; // Import mode
-    },
+    @Body() data: ImportProjectDto,
     @CurrentUser() user: UserPayload,
   ) {
     // Verify permission
@@ -331,10 +282,7 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async migrateLanguages(
     @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      languageMapping: Record<string, string>; // Map from old language code/name to new code
-    },
+    @Body() data: MigrateLanguagesDto,
     @CurrentUser() user: UserPayload,
   ) {
     // Verify permission

@@ -9,7 +9,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Languages, Loader2 } from "lucide-react";
+import { Languages, Loader2, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -27,6 +27,30 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    setFormError(null);
+    try {
+      await login('admin@test.com', 'admin123456');
+      toast({
+        title: t("login.demoSuccess.title"),
+        description: t("login.demoSuccess.description"),
+      });
+      router.push('/');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("login.errors.defaultError");
+      setFormError(message);
+      toast({
+        title: t("login.errors.loginFailed"),
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
 
   // Redirect to /setup if first-run setup is needed
   useEffect(() => {
@@ -169,6 +193,37 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          {!isSignUp && (
+            <>
+              <div className="relative my-1">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">{t("login.or")}</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 rounded-xl font-medium border-primary/30 text-primary hover:bg-primary/5"
+                disabled={isSubmitting || isDemoLoading}
+                onClick={handleDemoLogin}
+              >
+                {isDemoLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("login.demoLoading")}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {t("login.demoButton")}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isSignUp ? (
               <p>

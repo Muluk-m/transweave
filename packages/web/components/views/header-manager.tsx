@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import React from "react";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,8 +57,11 @@ function AuthHeader() {
 
 export function HeaderManager({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
-  const isAuthPage = authPaths.some(path => pathname === path || pathname.startsWith(`${path}/`));
+  const isAuthPage =
+    !isAuthenticated ||
+    authPaths.some(path => pathname === path || pathname.startsWith(`${path}/`));
 
   if (isAuthPage) {
     return <AuthHeader />;

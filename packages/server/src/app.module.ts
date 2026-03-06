@@ -26,6 +26,8 @@ import { FileStorageModule } from './modules/file-storage.module';
 import { TokenService } from './service/token.service';
 import { TokenController } from './controller/token.controller';
 import { ApiKeyController } from './controller/api-key.controller';
+import { SeedController } from './controller/seed.controller';
+import { SeedService } from './service/seed.service';
 import { HealthModule } from './health/health.module';
 import { requireEnv } from './config/env';
 
@@ -53,6 +55,7 @@ import { requireEnv } from './config/env';
     McpController,
     TokenController,
     ApiKeyController,
+    SeedController,
   ],
   providers: [
     AppService,
@@ -66,6 +69,7 @@ import { requireEnv } from './config/env';
     ActivityLogService,
     McpService,
     TokenService,
+    SeedService,
   ],
 })
 export class AppModule implements NestModule {

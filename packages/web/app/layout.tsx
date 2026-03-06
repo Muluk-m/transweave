@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { HeaderManager } from "@/components/views/header-manager";
 import { SidebarManager } from "@/components/views/sidebar-manager";
 import { I18nClientProvider } from "@/components/i18n/client-provider";
+import { DemoBanner } from "@/components/demo-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,6 +42,7 @@ export default function Layout({
           <AuthProvider>
             <I18nClientProvider>
               <div className="min-h-screen flex flex-col">
+                <DemoBanner />
                 <HeaderManager>
                   <HeaderView />
                 </HeaderManager>

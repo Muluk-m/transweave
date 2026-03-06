@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { projects } from './projects';
 
 export const tokens = pgTable(
@@ -19,7 +19,7 @@ export const tokens = pgTable(
   },
   (table) => [
     index('tokens_project_id_idx').on(table.projectId),
-    index('tokens_key_idx').on(table.key),
+    uniqueIndex('tokens_project_key_unique').on(table.projectId, table.key),
   ],
 );
 

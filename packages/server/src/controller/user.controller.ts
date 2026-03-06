@@ -9,6 +9,9 @@ import {
   UseGuards,
   ForbiddenException,
   BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
@@ -32,8 +35,8 @@ export class UserController {
     try {
       return this.userService.searchUsers(keyword);
     } catch (error) {
-      console.error(error);
-      return { status: 500, message: 'Failed to search users' };
+      Logger.error('Failed to search users', error);
+      throw new InternalServerErrorException('Failed to search users');
     }
   }
 
@@ -43,7 +46,7 @@ export class UserController {
   async getUserById(@Param('id') id: string) {
     const user = await this.userService.findUserById(id);
     if (!user) {
-      return { status: 404, message: 'User does not exist' };
+      throw new NotFoundException('User does not exist');
     }
 
     // Don't return sensitive information like password
@@ -80,7 +83,7 @@ export class UserController {
   async deleteUser(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     // Verify if current user is operating on their own account
     if (id !== user.userId) {
-      return { status: 403, message: 'You can only delete your own account' };
+      throw new ForbiddenException('You can only delete your own account');
     }
     return this.userService.deleteUser(id);
   }

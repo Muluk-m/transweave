@@ -39,6 +39,12 @@ yarn-error.log*
 # planning docs (not needed in opensource)
 .planning/
 
+# MCP config (contains API tokens)
+.mcp.json
+
+# Playwright CLI cache
+.playwright-cli/
+
 # vercel
 .vercel
 

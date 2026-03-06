@@ -113,6 +113,7 @@
     "description": "立即加入 Transweave，体验高效的本地化管理，让您的产品说出全世界的语言。",
     "register": "免费注册",
     "demo": "预约演示",
+    "tryDemo": "免费试用",
     "note": "免费版本包含基本功能，可随时升级"
   },
   "language": "语言",
@@ -135,6 +136,13 @@
     "success": {
       "title": "登录成功",
       "description": "欢迎回来！"
+    },
+    "or": "或",
+    "demoButton": "试用 Demo 账号",
+    "demoLoading": "正在登录演示账号...",
+    "demoSuccess": {
+      "title": "欢迎体验",
+      "description": "您正在使用演示账号，数据每日重置。"
     }
   },
   "register": {
@@ -1077,5 +1085,8 @@
       "revokeFailed": "撤销 API 密钥失败",
       "unknownError": "未知错误"
     }
+  },
+  "demo": {
+    "banner": "演示模式 — 数据每日 12:00（北京时间）重置"
   }
 }

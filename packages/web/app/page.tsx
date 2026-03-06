@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import TeamsView from '@/components/views/teamsView';
+import WelcomeView from '@/components/views/welcomeView';
+import { Loader2 } from 'lucide-react';
 
 export default function Page() {
-  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
-    }
-  }, [router, isAuthenticated, isLoading]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-  if (isLoading || !isAuthenticated) return null;
+  if (!isAuthenticated) {
+    return <WelcomeView />;
+  }
 
   return <TeamsView />;
 }

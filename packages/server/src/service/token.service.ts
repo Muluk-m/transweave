@@ -117,16 +117,24 @@ export class TokenService {
       throw new BadRequestException(`Token key '${data.key}' already exists`);
     }
 
-    // Insert token
-    const token = await this.tokenRepository.create({
-      projectId: data.projectId,
-      key: data.key,
-      module: data.module || '',
-      tags: data.tags || [],
-      comment: data.comment || '',
-      translations: data.translations || {},
-      screenshots: data.screenshots || [],
-    });
+    // Insert token (unique index on projectId+key prevents race conditions)
+    let token;
+    try {
+      token = await this.tokenRepository.create({
+        projectId: data.projectId,
+        key: data.key,
+        module: data.module || '',
+        tags: data.tags || [],
+        comment: data.comment || '',
+        translations: data.translations || {},
+        screenshots: data.screenshots || [],
+      });
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        throw new BadRequestException(`Token key '${data.key}' already exists`);
+      }
+      throw error;
+    }
 
     // Insert initial history record
     await this.tokenHistoryRepository.create({

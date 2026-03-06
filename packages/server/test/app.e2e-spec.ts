@@ -215,6 +215,7 @@ describe('Transweave Server (e2e)', () => {
     it('GET /api/project/all should list projects', () => {
       return request(app.getHttpServer())
         .get('/api/project/all')
+        .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200)
         .expect((res) => {
           expect(Array.isArray(res.body)).toBe(true);
@@ -225,6 +226,7 @@ describe('Transweave Server (e2e)', () => {
     it('GET /api/project/find/:id should return project with memberships', () => {
       return request(app.getHttpServer())
         .get(`/api/project/find/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200)
         .expect((res) => {
           expect(res.body.id).toBe(projectId);

@@ -71,7 +71,7 @@ export const pullCommand = new Command('pull')
       for (const lang of languages) {
         try {
           const response = await client.getRaw(
-            `/api/project/download/${projectId}?format=${format}&languages=${lang}&username=${encodeURIComponent('__api_key__')}&password=${encodeURIComponent('__api_key__')}`,
+            `/api/project/download/${projectId}?format=${format}&languages=${lang}`,
           );
 
           // The download endpoint returns a ZIP file
