@@ -3,6 +3,7 @@
     "network": "网络连接失败，请检查网络后重试"
   },
   "welcome": {
+    "title": "用 <span>Transweave</span> 简化翻译流程",
     "tagline": "本地化管理解决方案",
     "description": "专为开发团队设计的本地化管理平台，帮助您高效管理多语言项目，无缝协作翻译。",
     "getStarted": "开始使用",
