@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   ChevronDown,
+  Github,
   Globe,
   LogOut,
   Moon,
@@ -73,6 +74,22 @@ export function HeaderView() {
         </Link>
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
+          {/* GitHub */}
+          <a
+            href="https://github.com/Muluk-m/transweave"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full hover:bg-primary/10 transition-colors"
+            >
+              <Github className="h-[1.1rem] w-[1.1rem] text-muted-foreground hover:text-foreground transition-colors" />
+              <span className="sr-only">GitHub</span>
+            </Button>
+          </a>
+
           {/* Theme Toggle */}
           <Button
             variant="ghost"

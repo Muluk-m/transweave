@@ -44,5 +44,5 @@ services:
 volumes:
   pgdata:
     # WARNING: Adding name: creates a new volume. Existing data in the old implicit
-    # volume (qlj-fe-i18n_pgdata) must be manually migrated. See docs for guidance.
+    # volume must be manually migrated. See docs for guidance.
     name: transweave-pgdata

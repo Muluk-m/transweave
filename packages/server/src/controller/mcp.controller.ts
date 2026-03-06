@@ -127,7 +127,7 @@ export class McpController {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QLJ i18n MCP Server</title>
+  <title>Transweave MCP Server</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -561,7 +561,7 @@ export class McpController {
             <path d="M2 17l10 5 10-5"/>
             <path d="M2 12l10 5 10-5"/>
           </svg>
-          <h1>QLJ i18n MCP Server</h1>
+          <h1>Transweave MCP Server</h1>
         </div>
         <div class="status">
           <span class="status-dot"></span>

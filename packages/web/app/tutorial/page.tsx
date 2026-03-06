@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, CheckCircle, Coffee, FileText, Info, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
@@ -23,7 +24,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.gettingStarted.overview.title'),
                     description: t('sections.gettingStarted.overview.description'),
-                    image: "/tutorial/overview.jpg",
+                    image: "/tutorial/overview.png",
                     steps: [
                         t('sections.gettingStarted.overview.steps.0'),
                         t('sections.gettingStarted.overview.steps.1'),
@@ -34,7 +35,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.gettingStarted.quickstart.title'),
                     description: t('sections.gettingStarted.quickstart.description'),
-                    image: "/tutorial/quickstart.jpg",
+                    image: "/tutorial/quickstart.png",
                     steps: [
                         t('sections.gettingStarted.quickstart.steps.0'),
                         t('sections.gettingStarted.quickstart.steps.1'),
@@ -52,7 +53,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.teamManagement.create.title'),
                     description: t('sections.teamManagement.create.description'),
-                    image: "/tutorial/teams.jpg",
+                    image: "/tutorial/teams.png",
                     steps: [
                         t('sections.teamManagement.create.steps.0'),
                         t('sections.teamManagement.create.steps.1'),
@@ -63,7 +64,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.teamManagement.collaboration.title'),
                     description: t('sections.teamManagement.collaboration.description'),
-                    image: "/tutorial/collaboration.jpg",
+                    image: "/tutorial/collaboration.png",
                     steps: [
                         t('sections.teamManagement.collaboration.steps.0'),
                         t('sections.teamManagement.collaboration.steps.1'),
@@ -81,7 +82,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.projects.setup.title'),
                     description: t('sections.projects.setup.description'),
-                    image: "/tutorial/project-setup.jpg",
+                    image: "/tutorial/project-setup.png",
                     steps: [
                         t('sections.projects.setup.steps.0'),
                         t('sections.projects.setup.steps.1'),
@@ -92,7 +93,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.projects.importExport.title'),
                     description: t('sections.projects.importExport.description'),
-                    image: "/tutorial/import-export.jpg",
+                    image: "/tutorial/import-export.png",
                     steps: [
                         t('sections.projects.importExport.steps.0'),
                         t('sections.projects.importExport.steps.1'),
@@ -110,7 +111,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.translation.interface.title'),
                     description: t('sections.translation.interface.description'),
-                    image: "/tutorial/translation-editor.jpg",
+                    image: "/tutorial/translation-editor.png",
                     steps: [
                         t('sections.translation.interface.steps.0'),
                         t('sections.translation.interface.steps.1'),
@@ -121,7 +122,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.translation.quality.title'),
                     description: t('sections.translation.quality.description'),
-                    image: "/tutorial/quality.jpg",
+                    image: "/tutorial/quality.png",
                     steps: [
                         t('sections.translation.quality.steps.0'),
                         t('sections.translation.quality.steps.1'),
@@ -139,7 +140,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.advanced.api.title'),
                     description: t('sections.advanced.api.description'),
-                    image: "/tutorial/api.jpg",
+                    image: "/tutorial/api.png",
                     steps: [
                         t('sections.advanced.api.steps.0'),
                         t('sections.advanced.api.steps.1'),
@@ -150,7 +151,7 @@ export default function TutorialPage() {
                 {
                     title: t('sections.advanced.customize.title'),
                     description: t('sections.advanced.customize.description'),
-                    image: "/tutorial/customize.jpg",
+                    image: "/tutorial/customize.png",
                     steps: [
                         t('sections.advanced.customize.steps.0'),
                         t('sections.advanced.customize.steps.1'),
@@ -239,16 +240,12 @@ export default function TutorialPage() {
                                         
                                         {/* Image section */}
                                         <div className="relative h-[250px] md:h-[400px] w-full mb-6 bg-muted rounded-lg overflow-hidden">
-                                            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                                                {t('imageExample')}: {item.title}
-                                            </div>
-                                            {/* Use real tutorial screenshots when deployed, currently using placeholders */}
-                                            {/* <Image
+                                            <Image
                                                 src={item.image}
                                                 alt={item.title}
                                                 fill
                                                 className="object-contain"
-                                            /> */}
+                                            />
                                         </div>
                                         
                                         {/* Steps list */}
@@ -277,7 +274,7 @@ export default function TutorialPage() {
                                 {t('backToHome')}
                             </Button>
                         </Link>
-                        <Link href="/teams">
+                        <Link href="/team">
                             <Button>
                                 {t('gotoConsole')}
                                 <ArrowRight className="h-4 w-4 ml-2" />
