@@ -493,14 +493,14 @@ export function TokenFormDrawer({
                   ))}
                   <label
                     htmlFor="screenshot-upload"
-                    className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
                   >
                     {isUploadingImage ? (
-                      <div className="text-xs text-gray-500">上传中...</div>
+                      <div className="text-xs text-muted-foreground">上传中...</div>
                     ) : (
                       <>
-                        <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                        <span className="text-xs text-gray-500">上传图片</span>
+                        <Upload className="w-6 h-6 text-muted-foreground/60 mb-1" />
+                        <span className="text-xs text-muted-foreground">上传图片</span>
                       </>
                     )}
                   </label>

@@ -463,9 +463,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">{t("billing.projects")}</span>
                       <span className="text-sm">3/5</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-blue-500 h-2 rounded-full"
+                        className="bg-primary h-2 rounded-full"
                         style={{ width: "60%" }}
                       ></div>
                     </div>
@@ -476,9 +476,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">{t("billing.members")}</span>
                       <span className="text-sm">3/10</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-blue-500 h-2 rounded-full"
+                        className="bg-primary h-2 rounded-full"
                         style={{ width: "30%" }}
                       ></div>
                     </div>
@@ -489,9 +489,9 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                       <span className="text-sm">{t("billing.storage")}</span>
                       <span className="text-sm">256MB/1GB</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-blue-500 h-2 rounded-full"
+                        className="bg-primary h-2 rounded-full"
                         style={{ width: "25%" }}
                       ></div>
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getProject } from "@/api/project";
@@ -9,7 +9,7 @@ import { LoadingView } from "@/components/views/loadingView";
 import { AiProviderSettings } from "@/components/views/settings/AiProviderSettings";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 
 export default function ProjectAiSettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -73,20 +73,35 @@ export default function ProjectAiSettingsPage() {
           projectId={project.id}
         />
 
-        {/* Team-level AI config */}
+        {/* Team-level AI config (collapsed by default) */}
         {project.teamId && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground px-1">
-              {t("teamDefaultHint")}
-            </p>
-            <AiProviderSettings
-              scope="team"
-              scopeId={project.teamId}
-              projectId={project.id}
-            />
-          </div>
+          <TeamAiConfigSection teamId={project.teamId} projectId={project.id} />
         )}
       </div>
+    </div>
+  );
+}
+
+function TeamAiConfigSection({ teamId, projectId }: { teamId: string; projectId: string }) {
+  const t = useTranslations("aiSettings");
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-1"
+      >
+        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        {t("teamDefaultHint")}
+      </button>
+      {expanded && (
+        <AiProviderSettings
+          scope="team"
+          scopeId={teamId}
+          projectId={projectId}
+        />
+      )}
     </div>
   );
 }

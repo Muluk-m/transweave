@@ -45,7 +45,7 @@ export function TokenPagination({ currentPage, totalPages, onPageChange }: Token
                             <PaginationLink 
                                 onClick={() => onPageChange(pageNumber)}
                                 isActive={currentPage === pageNumber}
-                                className={`text-sm ${currentPage === pageNumber ? 'bg-blue-500 text-white' : 'text-blue-500'}`}
+                                className={`text-sm ${currentPage === pageNumber ? 'bg-primary text-primary-foreground' : 'text-primary'}`}
                             >
                                 {pageNumber}
                             </PaginationLink>

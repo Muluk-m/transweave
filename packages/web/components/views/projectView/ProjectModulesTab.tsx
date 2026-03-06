@@ -196,7 +196,7 @@ export function ProjectModulesTab() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            模块名称用于展示，模块代码将作为 key 前缀，例如：<code className="bg-gray-100 px-1 rounded">smartShield.link</code>
+            模块名称用于展示，模块代码将作为 key 前缀，例如：<code className="bg-muted px-1 rounded">smartShield.link</code>
           </p>
         </CardContent>
       </Card>

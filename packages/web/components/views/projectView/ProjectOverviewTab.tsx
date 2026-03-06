@@ -83,40 +83,40 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       case ActivityType.TOKEN_CREATE:
         return {
           icon: <Plus className={iconClass} />,
-          colorClass: "bg-green-100 text-green-600",
+          colorClass: "bg-green-500/15 text-green-500",
         };
       case ActivityType.PROJECT_UPDATE:
       case ActivityType.TOKEN_UPDATE:
         return {
           icon: <Edit className={iconClass} />,
-          colorClass: "bg-blue-100 text-blue-600",
+          colorClass: "bg-blue-500/15 text-blue-500",
         };
       case ActivityType.PROJECT_DELETE:
       case ActivityType.TOKEN_DELETE:
         return {
           icon: <Trash className={iconClass} />,
-          colorClass: "bg-red-100 text-red-600",
+          colorClass: "bg-red-500/15 text-red-500",
         };
       case ActivityType.PROJECT_LANGUAGE_ADD:
       case ActivityType.PROJECT_LANGUAGE_REMOVE:
         return {
           icon: <Languages className={iconClass} />,
-          colorClass: "bg-purple-100 text-purple-600",
+          colorClass: "bg-purple-500/15 text-purple-500",
         };
       case ActivityType.PROJECT_EXPORT:
         return {
           icon: <Download className={iconClass} />,
-          colorClass: "bg-indigo-100 text-indigo-600",
+          colorClass: "bg-indigo-500/15 text-indigo-500",
         };
       case ActivityType.PROJECT_IMPORT:
         return {
           icon: <Upload className={iconClass} />,
-          colorClass: "bg-yellow-100 text-yellow-600",
+          colorClass: "bg-yellow-500/15 text-yellow-500",
         };
       default:
         return {
           icon: <FileText className={iconClass} />,
-          colorClass: "bg-gray-100 text-gray-600",
+          colorClass: "bg-muted text-muted-foreground",
         };
     }
   };

@@ -28,9 +28,9 @@ export function StatsCard({
           {description}
         </p>
         {progressValue !== undefined && (
-          <div className="h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-            <div 
-              className="h-full bg-green-500" 
+          <div className="h-2 bg-muted rounded-full mt-2 overflow-hidden">
+            <div
+              className="h-full bg-primary"
               style={{ width: `${progressValue}%` }}
             ></div>
           </div>

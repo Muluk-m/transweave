@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText, Bot } from "lucide-react";
+import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText, Bot, ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Languages, formatLanguageDisplay, isBuiltInLanguage } from "@/constants";
 import { deleteProject, updateProject } from "@/api/project";
@@ -455,18 +455,9 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             />
                         )}
 
-                        {/* Team-level AI config */}
+                        {/* Team-level AI config (collapsed by default) */}
                         {project?.teamId && (
-                            <div className="space-y-2">
-                                <p className="text-sm text-muted-foreground px-1">
-                                    {t('aiSettings.teamDefaultHint')}
-                                </p>
-                                <AiProviderSettings
-                                    scope="team"
-                                    scopeId={project.teamId}
-                                    projectId={project.id}
-                                />
-                            </div>
+                            <TeamAiConfigSection teamId={project.teamId} projectId={project.id} />
                         )}
                     </div>
                 </TabsContent>
@@ -526,6 +517,30 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                     </Card>
                 </TabsContent>
             </Tabs>
+        </div>
+    );
+}
+
+function TeamAiConfigSection({ teamId, projectId }: { teamId: string; projectId: string }) {
+    const t = useTranslations();
+    const [expanded, setExpanded] = useState(false);
+
+    return (
+        <div className="space-y-2">
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-1"
+            >
+                {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {t('aiSettings.teamDefaultHint')}
+            </button>
+            {expanded && (
+                <AiProviderSettings
+                    scope="team"
+                    scopeId={teamId}
+                    projectId={projectId}
+                />
+            )}
         </div>
     );
 }
