@@ -3,11 +3,16 @@
     "network": "Network connection failed, please check and try again"
   },
   "welcome": {
-    "title": "Simplify Translation Process with <span>Transweave</span>",
+    "title": "Simplify Translation with <highlight>Transweave</highlight>",
     "tagline": "Localization Management Solution",
     "description": "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
     "getStarted": "Get Started",
-    "learnMore": "Learn More"
+    "learnMore": "Learn More",
+    "stats": {
+      "languages": "Languages",
+      "uptime": "Uptime",
+      "support": "Support"
+    }
   },
   "header": {
     "title": "Transweave",
@@ -24,6 +29,7 @@
     "register": "Register"
   },
   "features": {
+    "badge": "Features",
     "title": "Powerful Features",
     "description": "Transweave provides professional localization tools to help teams manage multilingual content more efficiently",
     "items": {
@@ -54,6 +60,7 @@
     }
   },
   "workflow": {
+    "badge": "Workflow",
     "title": "Simplified Workflow",
     "description": "From importing projects to exporting translations, Transweave provides an end-to-end localization management solution",
     "tabs": {
@@ -107,6 +114,11 @@
       "subtitle": "Consistent Management of Multi-platform Content",
       "quote": "\"Transweave helps us maintain the consistency of brand information across multiple platforms, reducing translation errors by 90%.\"",
       "readMore": "Read full case"
+    },
+    "tags": {
+      "multilingual": "Multilingual",
+      "ecommerce": "E-commerce",
+      "i18n": "i18n"
     }
   },
   "cta": {
@@ -115,6 +127,7 @@
     "register": "Register for Free",
     "demo": "Schedule a Demo",
     "tryDemo": "Try Demo",
+    "badge": "Get Started",
     "note": "Free version includes basic features, upgradable anytime"
   },
   "language": "Language",

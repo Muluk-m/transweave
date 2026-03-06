@@ -145,7 +145,7 @@ export default function WelcomeView() {
                         {/* Title */}
                         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                             {t.rich('welcome.title', {
-                                span: (chunks) => (
+                                highlight: (chunks) => (
                                     <span className="text-gradient bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer">
                                         {chunks}
                                     </span>
@@ -188,15 +188,15 @@ export default function WelcomeView() {
                         <div className="flex gap-8 pt-4 justify-center lg:justify-start">
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-foreground">10+</div>
-                                <div className="text-sm text-muted-foreground">支持语言</div>
+                                <div className="text-sm text-muted-foreground">{t('welcome.stats.languages')}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-foreground">99.9%</div>
-                                <div className="text-sm text-muted-foreground">可用性</div>
+                                <div className="text-sm text-muted-foreground">{t('welcome.stats.uptime')}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-foreground">24/7</div>
-                                <div className="text-sm text-muted-foreground">技术支持</div>
+                                <div className="text-sm text-muted-foreground">{t('welcome.stats.support')}</div>
                             </div>
                         </div>
                     </div>
@@ -221,7 +221,7 @@ export default function WelcomeView() {
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-4">
                             <Zap className="h-4 w-4" />
-                            功能特性
+                            {t('features.badge')}
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('features.title')}</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -255,7 +255,7 @@ export default function WelcomeView() {
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent border border-accent/20 mb-4">
                             <Book className="h-4 w-4" />
-                            工作流程
+                            {t('workflow.badge')}
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('workflow.title')}</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -344,11 +344,11 @@ export default function WelcomeView() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
                             <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
                                 <div className="h-48 bg-gradient-to-br from-primary via-violet-500 to-accent relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
+                                    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
                                     <div className="absolute bottom-4 left-4 right-4">
                                         <div className="flex gap-2">
                                             <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">SaaS</span>
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">多语言</span>
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.multilingual')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -371,11 +371,11 @@ export default function WelcomeView() {
 
                             <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
                                 <div className="h-48 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
+                                    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
                                     <div className="absolute bottom-4 left-4 right-4">
                                         <div className="flex gap-2">
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">电商</span>
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">国际化</span>
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.ecommerce')}</span>
+                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.i18n')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -407,7 +407,7 @@ export default function WelcomeView() {
                     <div className="max-w-3xl mx-auto px-4">
                         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-6">
                             <Sparkles className="h-4 w-4" />
-                            立即开始
+                            {t('cta.badge')}
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-6">{t('cta.title')}</h2>
                         <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">

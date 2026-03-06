@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getUserLanguage, setUserLanguage } from "@/lib/cookies";
 import { useTranslations } from "next-intl";
+import { Logo } from "@/components/Logo";
+import Link from "next/link";
 
 const authPaths = ['/login', '/register', '/signup', '/setup', '/forgot-password', '/reset-password'];
 
@@ -27,7 +29,11 @@ function AuthHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-end px-4 md:px-6 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Logo className="h-7 w-7" />
+          <span className="font-semibold text-lg tracking-tight">Transweave</span>
+        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">

@@ -18,9 +18,11 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getUserLanguage, setUserLanguage } from "@/lib/cookies";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
 
 export function HeaderView() {
   const { user, logout, isLoading } = useAuth();
@@ -63,7 +65,12 @@ export function HeaderView() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center justify-end px-4 md:px-6 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Logo className="h-7 w-7" />
+          <span className="font-semibold text-lg tracking-tight hidden sm:inline-block">Transweave</span>
+        </Link>
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
           {/* Theme Toggle */}

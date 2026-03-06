@@ -172,14 +172,6 @@ export default function TutorialPage() {
         <div className="container mx-auto py-10 px-4 md:px-6">
             {/* Page header */}
             <div className="mb-10 pb-8 border-b">
-                <div className="flex justify-between items-center mb-6">
-                    <Link href="/">
-                        <Button variant="ghost" size="sm">
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            {t('backToHome')}
-                        </Button>
-                    </Link>
-                </div>
                 <h1 className="text-4xl font-bold mb-4">{t('pageTitle')}</h1>
                 <p className="text-xl text-muted-foreground max-w-3xl">
                     {t('pageDescription')}

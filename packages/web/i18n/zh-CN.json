@@ -3,11 +3,16 @@
     "network": "网络连接失败，请检查网络后重试"
   },
   "welcome": {
-    "title": "用 <span>Transweave</span> 简化翻译流程",
+    "title": "用 <highlight>Transweave</highlight> 简化翻译流程",
     "tagline": "本地化管理解决方案",
     "description": "专为开发团队设计的本地化管理平台，帮助您高效管理多语言项目，无缝协作翻译。",
     "getStarted": "开始使用",
-    "learnMore": "了解更多"
+    "learnMore": "了解更多",
+    "stats": {
+      "languages": "支持语言",
+      "uptime": "可用性",
+      "support": "技术支持"
+    }
   },
   "header": {
     "title": "Transweave",
@@ -24,6 +29,7 @@
     "register": "注册"
   },
   "features": {
+    "badge": "功能特性",
     "title": "强大特性",
     "description": "Transweave 提供专业的本地化工具，帮助团队更高效地管理多语言内容",
     "items": {
@@ -54,6 +60,7 @@
     }
   },
   "workflow": {
+    "badge": "工作流程",
     "title": "简化的工作流程",
     "description": "从导入项目到导出翻译，Transweave 提供端到端的本地化管理解决方案",
     "tabs": {
@@ -107,6 +114,11 @@
       "subtitle": "多平台内容的一致性管理",
       "quote": "\"Transweave 帮助我们在多个平台上保持品牌信息的一致性，翻译错误减少了90%。\"",
       "readMore": "阅读完整案例"
+    },
+    "tags": {
+      "multilingual": "多语言",
+      "ecommerce": "电商",
+      "i18n": "国际化"
     }
   },
   "cta": {
@@ -115,6 +127,7 @@
     "register": "免费注册",
     "demo": "预约演示",
     "tryDemo": "免费试用",
+    "badge": "立即开始",
     "note": "免费版本包含基本功能，可随时升级"
   },
   "language": "语言",
