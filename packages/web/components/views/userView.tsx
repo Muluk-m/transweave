@@ -55,7 +55,7 @@ export default function UserView() {
         setUser(userData);
       } catch (error) {
         console.error("Failed to fetch user data:", error);
-        setError("无法获取用户信息");
+        setError("Failed to fetch user data");
       } finally {
         setLoading(false);
       }
@@ -86,7 +86,7 @@ export default function UserView() {
       <div className="container mx-auto py-10 px-4 md:px-6">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <h1 className="text-3xl font-bold mb-4">{t('user.userNotExist')}</h1>
-          <p className="text-muted-foreground mb-6">{t('user.userNotFound')}</p>
+          <p className="text-muted-foreground mb-6">{t('user.userNotFound', { userId: userId as string })}</p>
           <Button onClick={() => router.push('/')}>{t('user.backToHome')}</Button>
         </div>
       </div>

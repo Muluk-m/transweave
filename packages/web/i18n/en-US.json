@@ -1,4 +1,7 @@
 {
+  "error": {
+    "network": "Network connection failed, please check and try again"
+  },
   "welcome": {
     "title": "Simplify Translation Process with <span>Transweave</span>",
     "tagline": "Localization Management Solution",
@@ -211,7 +214,23 @@
       "inviteMembers": "Invite Members",
       "deleteTeam": "Delete Team",
       "viewMore": "View {count} more",
-      "viewAllProjects": "View All Projects"
+      "viewAllProjects": "View All Projects",
+      "teamSelected": "Team switched",
+      "selectFailed": "Failed to switch team",
+      "selectFailedDesc": "Unable to load team details",
+      "error": "Error",
+      "notLoggedIn": "Not logged in, please login first",
+      "nameRequired": "Team name cannot be empty",
+      "teamCreated": "Team created",
+      "createFailed": "Creation failed",
+      "createFailedDesc": "Unable to create team",
+      "teamDeleted": "Team deleted",
+      "teamDeletedDesc": "Team has been successfully deleted",
+      "deleteFailed": "Deletion failed",
+      "deleteFailedDesc": "Unable to delete team",
+      "membersFailed": "Failed to get members",
+      "membersFailedDesc": "Unable to load team members",
+      "current": "Current"
     },
     "create": {
       "title": "Create New Team",
@@ -701,7 +720,9 @@
         "title": "Import Notes:",
         "jsonNote": "JSON files should contain valid translation key-value pairs",
         "csvNote": "CSV files should have headers in the first row, with keys in the first column and values in the second",
-        "formatNote": "Format will be automatically inferred based on file type"
+        "formatNote": "Format will be automatically inferred based on file type",
+        "xliffNote": "XLIFF files (.xlf) import both source and target language translations",
+        "gettextNote": "Gettext files (.po) import the target language specified in the PO header"
       },
       "importButton": "Import File",
       "importing": "Importing...",
@@ -775,6 +796,10 @@
       "today": "Today",
       "tagCount": "Tag Count",
       "commonTags": "Common Tags",
+      "noTags": "No tags",
+      "moduleStats": "Module Statistics",
+      "moduleStatsDesc": "Token distribution by functional module",
+      "uncategorized": "Uncategorized",
       "noDescription": "No description",
       "loadingActivities": "Loading activities...",
       "noRecentActivities": "No recent activities",
@@ -999,6 +1024,59 @@
     "expand": "Expand sidebar",
     "apiKeys": "API Keys",
     "settings": "Settings",
-    "createTeam": "Create Team"
+    "createTeam": "Create Team",
+    "tutorial": "Tutorial"
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "description": "Create and manage API keys for CLI tools, MCP integrations, and programmatic access.",
+    "notLoggedIn": "Not logged in",
+    "notLoggedInDesc": "Please log in to manage your API keys.",
+    "goToLogin": "Go to Login",
+    "createTitle": "Generate New API Key",
+    "createDesc": "API keys authenticate CLI and API requests. The key is shown once after creation.",
+    "name": "Name",
+    "namePlaceholder": "e.g. CI Pipeline, Local CLI",
+    "scopes": "Scopes",
+    "read": "Read",
+    "write": "Write",
+    "expiration": "Expiration (optional)",
+    "generateButton": "Generate API Key",
+    "generating": "Generating...",
+    "createdTitle": "API Key Created",
+    "createdWarning": "This key will only be shown once. Copy it now.",
+    "copyButton": "Copy to Clipboard",
+    "copied": "Copied!",
+    "done": "Done",
+    "listTitle": "Your API Keys",
+    "noKeys": "No API keys yet. Create one above.",
+    "noKeysFound": "No API keys found. Generate one to get started.",
+    "keyCount": "{count} keys",
+    "tableHeaders": {
+      "name": "Name",
+      "keyPrefix": "Key Prefix",
+      "scopes": "Scopes",
+      "created": "Created",
+      "lastUsed": "Last Used",
+      "expires": "Expires"
+    },
+    "never": "Never",
+    "revokeTitle": "Revoke API Key",
+    "revokeDesc": "Are you sure you want to revoke {name}? Any applications using this key will lose access immediately. This action cannot be undone.",
+    "revokeButton": "Revoke Key",
+    "cancel": "Cancel",
+    "revokeSuccess": "API key revoked",
+    "errors": {
+      "loadFailed": "Failed to load API keys",
+      "nameRequired": "Name required",
+      "nameRequiredDesc": "Please enter a name for the API key.",
+      "scopeRequired": "Scope required",
+      "scopeRequiredDesc": "Please select at least one scope.",
+      "createFailed": "Failed to create API key",
+      "copyFailed": "Copy failed",
+      "copyFailedDesc": "Please select and copy the key manually.",
+      "revokeFailed": "Failed to revoke API key",
+      "unknownError": "Unknown error"
+    }
   }
 }

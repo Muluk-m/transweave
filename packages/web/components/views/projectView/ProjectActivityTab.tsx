@@ -370,10 +370,7 @@ export function ProjectActivityTab({ project }: ProjectActivityTabProps) {
                   </TableRow>
                 ) : (
                   activities.map((activity, index) => {
-                    const user =
-                      typeof activity.userId === "object"
-                        ? activity.userId
-                        : null;
+                    const user = (activity as ActivityLog & { _user?: { name: string; avatar?: string } | null })._user || null;
                     return (
                       <TableRow key={index}>
                         <TableCell>

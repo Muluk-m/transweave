@@ -122,9 +122,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   };
 
   // Get activity description
-  const getActivityDescription = (activity: ActivityLog) => {
-    const user = typeof activity.userId === "object" ? activity.userId : null;
-    const userName = user?.name || t("unknownUser");
+  const getActivityDescription = (activity: ActivityLog & { _user?: { name: string } | null }) => {
+    const userName = activity._user?.name || t("unknownUser");
     const entityName = activity.details?.entityName || "";
 
     switch (activity.type) {
@@ -445,7 +444,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs text-muted-foreground">暂无标签</span>
+                  <span className="text-xs text-muted-foreground">{t("noTags")}</span>
                 )}
               </div>
             </div>
@@ -499,9 +498,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">模块统计</CardTitle>
+                <CardTitle className="text-lg">{t("moduleStats")}</CardTitle>
                 <CardDescription>
-                  按功能模块划分的词条分布情况
+                  {t("moduleStatsDesc")}
                 </CardDescription>
               </div>
             </div>
@@ -548,7 +547,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                         <Package className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className="text-sm text-muted-foreground">未分类</span>
+                      <span className="text-sm text-muted-foreground">{t("uncategorized")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">

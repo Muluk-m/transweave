@@ -38,7 +38,7 @@ export default function LoginPage() {
   // Redirect to /teams if already logged in
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.push('/teams');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
           description: t("login.success.description"),
         });
       }
-      router.push('/teams');
+      router.push('/');
     } catch (error) {
       const message = error instanceof Error ? error.message : (
         isSignUp ? t("register.errors.defaultError") : t("login.errors.defaultError")

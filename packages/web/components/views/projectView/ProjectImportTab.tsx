@@ -350,8 +350,8 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                 <li>{t('project.import.importNotes.jsonNote')}</li>
                                 <li>{t('project.import.importNotes.csvNote')}</li>
                                 <li>{t('project.import.importNotes.formatNote')}</li>
-                                <li>XLIFF files (.xlf) import both source and target language translations</li>
-                                <li>Gettext files (.po) import the target language specified in the PO header</li>
+                                <li>{t('project.import.importNotes.xliffNote')}</li>
+                                <li>{t('project.import.importNotes.gettextNote')}</li>
                             </ul>
                         </div>
 
@@ -363,7 +363,7 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
                                 className="flex items-center gap-2"
                             >
                                 {isLoadingPreview
-                                    ? '预览中...'
+                                    ? t('project.import.status.processing')
                                     : importStatus === 'loading'
                                     ? t('project.import.importing')
                                     : t('project.import.importButton')}

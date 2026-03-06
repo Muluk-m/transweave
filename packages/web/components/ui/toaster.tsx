@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import {
   Toast,
   ToastClose,
@@ -9,9 +10,23 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+import { useTranslations } from "next-intl"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts, toast } = useToast()
+  const t = useTranslations()
+
+  // Listen for global API network errors
+  useEffect(() => {
+    const handler = () => {
+      toast({
+        title: t('error.network'),
+        variant: "destructive",
+      })
+    }
+    window.addEventListener('api-network-error', handler)
+    return () => window.removeEventListener('api-network-error', handler)
+  }, [toast, t])
 
   return (
     <ToastProvider>

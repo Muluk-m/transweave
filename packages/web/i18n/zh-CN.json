@@ -1,4 +1,7 @@
 {
+  "error": {
+    "network": "网络连接失败，请检查网络后重试"
+  },
   "welcome": {
     "tagline": "本地化管理解决方案",
     "description": "专为开发团队设计的本地化管理平台，帮助您高效管理多语言项目，无缝协作翻译。",
@@ -210,7 +213,23 @@
       "inviteMembers": "邀请成员",
       "deleteTeam": "删除团队",
       "viewMore": "查看更多 {count} 个",
-      "viewAllProjects": "查看所有项目"
+      "viewAllProjects": "查看所有项目",
+      "teamSelected": "已切换团队",
+      "selectFailed": "切换团队失败",
+      "selectFailedDesc": "无法加载团队详情",
+      "error": "错误",
+      "notLoggedIn": "未登录，请先登录",
+      "nameRequired": "团队名称不能为空",
+      "teamCreated": "团队创建成功",
+      "createFailed": "创建失败",
+      "createFailedDesc": "无法创建团队",
+      "teamDeleted": "团队已删除",
+      "teamDeletedDesc": "团队已成功删除",
+      "deleteFailed": "删除失败",
+      "deleteFailedDesc": "无法删除团队",
+      "membersFailed": "获取成员失败",
+      "membersFailedDesc": "无法加载团队成员",
+      "current": "当前"
     },
     "create": {
       "title": "创建新团队",
@@ -700,7 +719,9 @@
         "title": "导入注意事项：",
         "jsonNote": "JSON 文件应包含有效的翻译键值对",
         "csvNote": "CSV 文件第一行应为列标题，第一列为键，第二列为值",
-        "formatNote": "导入会根据文件类型自动推断格式"
+        "formatNote": "导入会根据文件类型自动推断格式",
+        "xliffNote": "XLIFF 文件 (.xlf) 会同时导入源语言和目标语言的翻译",
+        "gettextNote": "Gettext 文件 (.po) 会导入 PO 头信息中指定的目标语言"
       },
       "importButton": "导入文件",
       "importing": "导入中...",
@@ -774,6 +795,10 @@
       "today": "今天",
       "tagCount": "标签数量",
       "commonTags": "常用标签",
+      "noTags": "暂无标签",
+      "moduleStats": "模块统计",
+      "moduleStatsDesc": "按功能模块划分的词条分布情况",
+      "uncategorized": "未分类",
       "noDescription": "暂无描述",
       "loadingActivities": "加载活动记录中...",
       "noRecentActivities": "暂无最近活动",
@@ -998,6 +1023,59 @@
     "expand": "展开侧边栏",
     "apiKeys": "API Keys",
     "settings": "设置",
-    "createTeam": "创建团队"
+    "createTeam": "创建团队",
+    "tutorial": "使用教程"
+  },
+  "apiKeys": {
+    "title": "API 密钥",
+    "description": "创建和管理 API 密钥，用于 CLI 工具、MCP 集成和编程访问。",
+    "notLoggedIn": "未登录",
+    "notLoggedInDesc": "请先登录以管理您的 API 密钥。",
+    "goToLogin": "前往登录",
+    "createTitle": "生成新密钥",
+    "createDesc": "API 密钥用于验证 CLI 和 API 请求。创建后密钥仅显示一次。",
+    "name": "名称",
+    "namePlaceholder": "例如：CI Pipeline、Local CLI",
+    "scopes": "权限范围",
+    "read": "读取",
+    "write": "写入",
+    "expiration": "过期时间（可选）",
+    "generateButton": "生成 API 密钥",
+    "generating": "生成中...",
+    "createdTitle": "API 密钥已创建",
+    "createdWarning": "此密钥仅显示一次，请立即复制。",
+    "copyButton": "复制到剪贴板",
+    "copied": "已复制！",
+    "done": "完成",
+    "listTitle": "您的 API 密钥",
+    "noKeys": "尚无 API 密钥。在上方创建一个。",
+    "noKeysFound": "未找到 API 密钥。创建一个开始使用。",
+    "keyCount": "{count} 个密钥",
+    "tableHeaders": {
+      "name": "名称",
+      "keyPrefix": "密钥前缀",
+      "scopes": "权限",
+      "created": "创建时间",
+      "lastUsed": "最后使用",
+      "expires": "过期时间"
+    },
+    "never": "永不",
+    "revokeTitle": "撤销 API 密钥",
+    "revokeDesc": "确定要撤销 {name} 吗？使用此密钥的所有应用将立即失去访问权限。此操作无法撤销。",
+    "revokeButton": "撤销密钥",
+    "cancel": "取消",
+    "revokeSuccess": "API 密钥已撤销",
+    "errors": {
+      "loadFailed": "加载 API 密钥失败",
+      "nameRequired": "请输入名称",
+      "nameRequiredDesc": "请输入 API 密钥名称。",
+      "scopeRequired": "请选择权限",
+      "scopeRequiredDesc": "请至少选择一个权限范围。",
+      "createFailed": "创建 API 密钥失败",
+      "copyFailed": "复制失败",
+      "copyFailedDesc": "请手动选择并复制密钥。",
+      "revokeFailed": "撤销 API 密钥失败",
+      "unknownError": "未知错误"
+    }
   }
 }

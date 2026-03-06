@@ -14,6 +14,7 @@ import { Team } from "@/jotai/types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useAtom } from "jotai";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 // Team operation hook
@@ -21,6 +22,7 @@ export const useHooks = () => {
     const { user } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    const t = useTranslations();
     const [newTeamName, setNewTeamName] = useState("");
     const [newTeamUrl, setNewTeamUrl] = useState("");
     const [teamDialogOpen, setTeamDialogOpen] = useState(false);
@@ -48,11 +50,14 @@ export const useHooks = () => {
             setLoadingTeamId(team.id);
             const teamDetail = await getTeamById(team.id);
             setNowTeam(teamDetail);
-            router.push(`/team/${team.id}`);
+            toast({
+                title: t('teams.card.teamSelected'),
+                description: team.name,
+            });
         } catch (error) {
             toast({
-                title: "Failed to select team",
-                description: error instanceof Error ? error.message : "Unable to load team details",
+                title: t('teams.card.selectFailed'),
+                description: error instanceof Error ? error.message : t('teams.card.selectFailedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -64,8 +69,8 @@ export const useHooks = () => {
     const handleCreateTeam = async () => {
         if (!user) {
             toast({
-                title: "Error",
-                description: "Not logged in, please login first",
+                title: t('teams.card.error'),
+                description: t('teams.card.notLoggedIn'),
                 variant: "destructive"
             });
             return;
@@ -73,8 +78,8 @@ export const useHooks = () => {
 
         if (!newTeamName.trim()) {
             toast({
-                title: "Error",
-                description: "Team name cannot be empty",
+                title: t('teams.card.error'),
+                description: t('teams.card.nameRequired'),
                 variant: "destructive"
             });
             return;
@@ -83,23 +88,21 @@ export const useHooks = () => {
         try {
             setLoading(true);
             const newTeam = await createTeam({name: newTeamName});
-            
+
             setTeams([...teams, newTeam]);
             setNewTeamName("");
             setNewTeamUrl("");
             setTeamDialogOpen(false);
             setNowTeam(newTeam);
-            
+
             toast({
-                title: "Team created",
-                description: `Team ${newTeam.name} created successfully`,
+                title: t('teams.card.teamCreated'),
+                description: newTeam.name,
             });
-            
-            router.push(`/team/${newTeam.id}`);
         } catch (error) {
             toast({
-                title: "Creation failed",
-                description: error instanceof Error ? error.message : "Unable to create team",
+                title: t('teams.card.createFailed'),
+                description: error instanceof Error ? error.message : t('teams.card.createFailedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -109,14 +112,14 @@ export const useHooks = () => {
 
     // Delete team
     const handleDeleteTeam = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+        if (!confirm(t('teams.card.deleteDescription'))) {
             return;
         }
-        
+
         try {
             setLoadingTeamId(id);
             await deleteTeam(id);
-            
+
             const updatedTeams = teams.filter(team => team.id !== id);
             setTeams(updatedTeams);
 
@@ -125,13 +128,13 @@ export const useHooks = () => {
             }
 
             toast({
-                title: "Team deleted",
-                description: "Team has been successfully deleted",
+                title: t('teams.card.teamDeleted'),
+                description: t('teams.card.teamDeletedDesc'),
             });
         } catch (error) {
             toast({
-                title: "Deletion failed",
-                description: error instanceof Error ? error.message : "Unable to delete team",
+                title: t('teams.card.deleteFailed'),
+                description: error instanceof Error ? error.message : t('teams.card.deleteFailedDesc'),
                 variant: "destructive"
             });
         } finally {
@@ -147,8 +150,8 @@ export const useHooks = () => {
             router.push(`/teams/${teamId}/members`);
         } catch (error) {
             toast({
-                title: "Failed to get members",
-                description: error instanceof Error ? error.message : "Unable to load team members",
+                title: t('teams.card.membersFailed'),
+                description: error instanceof Error ? error.message : t('teams.card.membersFailedDesc'),
                 variant: "destructive"
             });
         } finally {

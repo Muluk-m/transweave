@@ -16,6 +16,7 @@ import {
   Users,
   Key,
   Plus,
+  BookOpen,
   PanelLeftClose,
   PanelLeft,
   Loader2,
@@ -89,27 +90,44 @@ export function SidebarView() {
     );
   };
 
+  // Sync teamsWithProjects from teamsAtom
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchMyTeams();
-        setTeams(data);
-        // Auto-expand team that owns current project (lazy: expand all initially)
-        const expanded = data.map((team) => ({
-          ...team,
-          expanded: true,
-          projects: undefined,
-          projectsLoaded: false,
-        }));
-        setTeamsWithProjects(expanded);
-        // Load projects for all teams in parallel
-        expanded.forEach((team) => loadProjects(team.id));
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    if (teams.length > 0) {
+      setTeamsWithProjects((prev) => {
+        const prevMap = new Map(prev.map((t) => [t.id, t]));
+        return teams.map((team) => {
+          const existing = prevMap.get(team.id);
+          if (existing) return { ...existing, ...team };
+          return { ...team, expanded: true, projects: undefined, projectsLoaded: false };
+        });
+      });
+      setLoading(false);
+    }
+  }, [teams]);
+
+  // Fallback: fetch teams if atom is empty (e.g. direct navigation to /project/xxx)
+  useEffect(() => {
+    if (teams.length === 0) {
+      const fallback = async () => {
+        try {
+          const data = await fetchMyTeams();
+          if (data.length > 0) setTeams(data);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fallback();
+    }
   }, []);
+
+  // Load projects for new teams that don't have projects loaded yet
+  useEffect(() => {
+    teamsWithProjects.forEach((team) => {
+      if (team.expanded && !team.projectsLoaded) {
+        loadProjects(team.id);
+      }
+    });
+  }, [teamsWithProjects, loadProjects]);
 
   const handleProjectClick = (project: Project, team: Team) => {
     setNowTeam(team);
@@ -151,6 +169,17 @@ export function SidebarView() {
           >
             <Link href="/settings/api-keys">
               <Key className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg hover:bg-primary/10"
+            title={t('sidebar.tutorial')}
+            asChild
+          >
+            <Link href="/tutorial">
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
             </Link>
           </Button>
           <Button
@@ -202,21 +231,30 @@ export function SidebarView() {
           teamsWithProjects.map((team) => (
             <div key={team.id} className="mb-1">
               {/* Team row */}
-              <button
-                onClick={() => toggleTeam(team.id)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md mx-1 transition-colors"
-                style={{ width: 'calc(100% - 8px)' }}
-              >
-                {team.expanded ? (
-                  <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
-                ) : (
-                  <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
-                )}
-                <Users className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="truncate font-medium text-xs uppercase tracking-wide">
-                  {team.name}
-                </span>
-              </button>
+              <div className="flex items-center mx-1" style={{ width: 'calc(100% - 8px)' }}>
+                <button
+                  onClick={() => toggleTeam(team.id)}
+                  className="flex items-center gap-1 px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {team.expanded ? (
+                    <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setNowTeam(team);
+                    toggleTeam(team.id);
+                  }}
+                  className="flex-1 flex items-center gap-2 px-1 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors truncate"
+                >
+                  <Users className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate font-medium text-xs uppercase tracking-wide">
+                    {team.name}
+                  </span>
+                </button>
+              </div>
 
               {/* Projects */}
               {team.expanded && (
@@ -250,6 +288,20 @@ export function SidebarView() {
                       </button>
                     );
                   })}
+
+                  {/* New project shortcut */}
+                  {team.projectsLoaded && (
+                    <button
+                      onClick={() => {
+                        setNowTeam(team);
+                        router.push('/');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <Plus className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{t('sidebar.newProject')}</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -267,6 +319,17 @@ export function SidebarView() {
           <Link href="/settings/api-keys">
             <Key className="h-3.5 w-3.5" />
             <span className="text-sm">{t('sidebar.apiKeys')}</span>
+          </Link>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 h-8 px-3 text-muted-foreground hover:text-foreground"
+          asChild
+        >
+          <Link href="/tutorial">
+            <BookOpen className="h-3.5 w-3.5" />
+            <span className="text-sm">{t('sidebar.tutorial')}</span>
           </Link>
         </Button>
         <Button

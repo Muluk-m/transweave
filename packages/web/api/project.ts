@@ -248,7 +248,12 @@ export async function getProjectRecentActivities(projectId: string, limit?: numb
   if (limit) {
     params.append('limit', limit.toString());
   }
-  return apiClient.get(`/api/activity-logs/project/${projectId}/recent?${params.toString()}`);
+  const data = await apiClient.get<Array<{ log: ActivityLog; user: { id: string; name: string; email: string; avatar: string | null } | null }>>(`/api/activity-logs/project/${projectId}/recent?${params.toString()}`);
+  // Backend returns {log, user}[] via LEFT JOIN — flatten to ActivityLog[] with user info
+  return data.map((item) => ({
+    ...item.log,
+    _user: item.user,
+  }));
 }
 
 // Query project activities with filters

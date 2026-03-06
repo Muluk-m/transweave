@@ -145,7 +145,7 @@ export function HeaderView() {
                   <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
                 <DropdownMenuItem
-                  onClick={() => router.push(`/user/${user.userId}`)}
+                  onClick={() => router.push('/profile')}
                   className="cursor-pointer mt-1"
                 >
                   <User className="mr-2 h-4 w-4" />

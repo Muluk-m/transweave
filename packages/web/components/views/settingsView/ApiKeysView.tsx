@@ -49,10 +49,12 @@ import {
   type ApiKeyInfo,
 } from '@/api/api-key';
 import { Loader2, Plus, Copy, Check, Trash2, Key } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function ApiKeysView() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const t = useTranslations('apiKeys');
 
   // Key list state
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
@@ -77,15 +79,15 @@ export function ApiKeysView() {
       setKeys(result);
     } catch (error) {
       toast({
-        title: 'Failed to load API keys',
+        title: t('errors.loadFailed'),
         description:
-          error instanceof Error ? error.message : 'Unknown error',
+          error instanceof Error ? error.message : t('errors.unknownError'),
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     if (user) {
@@ -97,8 +99,8 @@ export function ApiKeysView() {
   const handleCreate = async () => {
     if (!name.trim()) {
       toast({
-        title: 'Name required',
-        description: 'Please enter a name for the API key.',
+        title: t('errors.nameRequired'),
+        description: t('errors.nameRequiredDesc'),
         variant: 'destructive',
       });
       return;
@@ -110,8 +112,8 @@ export function ApiKeysView() {
 
     if (scopes.length === 0) {
       toast({
-        title: 'Scope required',
-        description: 'Please select at least one scope.',
+        title: t('errors.scopeRequired'),
+        description: t('errors.scopeRequiredDesc'),
         variant: 'destructive',
       });
       return;
@@ -132,9 +134,9 @@ export function ApiKeysView() {
       loadKeys();
     } catch (error) {
       toast({
-        title: 'Failed to create API key',
+        title: t('errors.createFailed'),
         description:
-          error instanceof Error ? error.message : 'Unknown error',
+          error instanceof Error ? error.message : t('errors.unknownError'),
         variant: 'destructive',
       });
     } finally {
@@ -151,8 +153,8 @@ export function ApiKeysView() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({
-        title: 'Copy failed',
-        description: 'Please select and copy the key manually.',
+        title: t('errors.copyFailed'),
+        description: t('errors.copyFailedDesc'),
         variant: 'destructive',
       });
     }
@@ -162,13 +164,13 @@ export function ApiKeysView() {
   const handleDelete = async (keyId: string) => {
     try {
       await deleteApiKey(keyId);
-      toast({ title: 'API key revoked' });
+      toast({ title: t('revokeSuccess') });
       loadKeys();
     } catch (error) {
       toast({
-        title: 'Failed to revoke API key',
+        title: t('errors.revokeFailed'),
         description:
-          error instanceof Error ? error.message : 'Unknown error',
+          error instanceof Error ? error.message : t('errors.unknownError'),
         variant: 'destructive',
       });
     }
@@ -176,7 +178,7 @@ export function ApiKeysView() {
 
   // Format date for display
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Never';
+    if (!dateStr) return t('never');
     return new Date(dateStr).toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
@@ -197,14 +199,14 @@ export function ApiKeysView() {
       <div className="container mx-auto py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Not logged in</CardTitle>
+            <CardTitle>{t('notLoggedIn')}</CardTitle>
             <CardDescription>
-              Please log in to manage your API keys.
+              {t('notLoggedInDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => (window.location.href = '/login')}>
-              Go to Login
+              {t('goToLogin')}
             </Button>
           </CardContent>
         </Card>
@@ -219,30 +221,28 @@ export function ApiKeysView() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Key className="h-6 w-6" />
-            API Keys
+            {t('title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Create and manage API keys for CLI tools, MCP integrations, and
-            programmatic access.
+            {t('description')}
           </p>
         </div>
 
         {/* Create key card */}
         <Card>
           <CardHeader>
-            <CardTitle>Generate New API Key</CardTitle>
+            <CardTitle>{t('createTitle')}</CardTitle>
             <CardDescription>
-              API keys authenticate CLI and API requests. The key is shown once
-              after creation.
+              {t('createDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="key-name">Name</Label>
+                <Label htmlFor="key-name">{t('name')}</Label>
                 <Input
                   id="key-name"
-                  placeholder="e.g. CI Pipeline, Local CLI"
+                  placeholder={t('namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => {
@@ -252,7 +252,7 @@ export function ApiKeysView() {
               </div>
 
               <div className="space-y-2">
-                <Label>Scopes</Label>
+                <Label>{t('scopes')}</Label>
                 <div className="flex gap-4">
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -261,7 +261,7 @@ export function ApiKeysView() {
                       onCheckedChange={(c) => setScopeRead(!!c)}
                     />
                     <Label htmlFor="scope-read" className="font-normal">
-                      Read
+                      {t('read')}
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export function ApiKeysView() {
                       onCheckedChange={(c) => setScopeWrite(!!c)}
                     />
                     <Label htmlFor="scope-write" className="font-normal">
-                      Write
+                      {t('write')}
                     </Label>
                   </div>
                 </div>
@@ -279,7 +279,7 @@ export function ApiKeysView() {
 
               <div className="space-y-2">
                 <Label htmlFor="key-expires">
-                  Expiration (optional)
+                  {t('expiration')}
                 </Label>
                 <Input
                   id="key-expires"
@@ -294,12 +294,12 @@ export function ApiKeysView() {
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    {t('generating')}
                   </>
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Generate API Key
+                    {t('generateButton')}
                   </>
                 )}
               </Button>
@@ -319,9 +319,9 @@ export function ApiKeysView() {
         >
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>API Key Created</DialogTitle>
+              <DialogTitle>{t('createdTitle')}</DialogTitle>
               <DialogDescription className="text-amber-500 font-medium">
-                This key will only be shown once. Copy it now.
+                {t('createdWarning')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
@@ -338,12 +338,12 @@ export function ApiKeysView() {
                 {copied ? (
                   <>
                     <Check className="mr-2 h-4 w-4" />
-                    Copied!
+                    {t('copied')}
                   </>
                 ) : (
                   <>
                     <Copy className="mr-2 h-4 w-4" />
-                    Copy to Clipboard
+                    {t('copyButton')}
                   </>
                 )}
               </Button>
@@ -356,7 +356,7 @@ export function ApiKeysView() {
                   setCopied(false);
                 }}
               >
-                Done
+                {t('done')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -365,11 +365,11 @@ export function ApiKeysView() {
         {/* Key list card */}
         <Card>
           <CardHeader>
-            <CardTitle>Your API Keys</CardTitle>
+            <CardTitle>{t('listTitle')}</CardTitle>
             <CardDescription>
               {keys.length === 0
-                ? 'No API keys yet. Create one above.'
-                : `${keys.length} key${keys.length !== 1 ? 's' : ''}`}
+                ? t('noKeys')
+                : t('keyCount', { count: keys.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -379,18 +379,18 @@ export function ApiKeysView() {
               </div>
             ) : keys.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No API keys found. Generate one to get started.
+                {t('noKeysFound')}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Key Prefix</TableHead>
-                    <TableHead>Scopes</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Last Used</TableHead>
-                    <TableHead>Expires</TableHead>
+                    <TableHead>{t('tableHeaders.name')}</TableHead>
+                    <TableHead>{t('tableHeaders.keyPrefix')}</TableHead>
+                    <TableHead>{t('tableHeaders.scopes')}</TableHead>
+                    <TableHead>{t('tableHeaders.created')}</TableHead>
+                    <TableHead>{t('tableHeaders.lastUsed')}</TableHead>
+                    <TableHead>{t('tableHeaders.expires')}</TableHead>
                     <TableHead className="w-[80px]" />
                   </TableRow>
                 </TableHeader>
@@ -427,7 +427,7 @@ export function ApiKeysView() {
                       <TableCell className="text-sm text-muted-foreground">
                         {apiKey.expiresAt
                           ? formatDate(apiKey.expiresAt)
-                          : 'Never'}
+                          : t('never')}
                       </TableCell>
                       <TableCell>
                         <AlertDialog>
@@ -443,22 +443,19 @@ export function ApiKeysView() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Revoke API Key
+                                {t('revokeTitle')}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to revoke{' '}
-                                <strong>{apiKey.name}</strong>? Any
-                                applications using this key will lose access
-                                immediately. This action cannot be undone.
+                                {t('revokeDesc', { name: apiKey.name })}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDelete(apiKey.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Revoke Key
+                                {t('revokeButton')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

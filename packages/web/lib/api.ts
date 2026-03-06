@@ -81,6 +81,16 @@ export async function apiFetch<T = any>(
 
     // Handle non-2xx responses
     if (!response.ok) {
+      // Auto-redirect on 401 (token expired/invalid)
+      if (response.status === 401 && requireAuth) {
+        console.groupEnd();
+        localStorage.removeItem('authToken');
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
+        return { error: 'Session expired', status: 401 };
+      }
+
       // Try to parse error information
       try {
         const errorData = await response.json();
@@ -135,6 +145,14 @@ export async function apiFetch<T = any>(
     // Handle network errors
     console.error('Network Error:', error);
     console.groupEnd();
+
+    // Show global toast for network errors
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('api-network-error', {
+        detail: { message: error instanceof Error ? error.message : 'Network request failed' }
+      }));
+    }
+
     return {
       error: error instanceof Error ? error.message : 'Network request failed',
       status: 0 // 0 indicates network error

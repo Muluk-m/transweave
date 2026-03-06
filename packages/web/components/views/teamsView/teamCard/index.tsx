@@ -21,6 +21,8 @@ import { NewProjectDialog } from "../newProjectDialog";
 import { TeamMembersDialog } from "../teamMembersDialog";
 import { EditTeamDialog } from "../EditTeamDialog";
 import { useTeamProjectsData } from "./useHooks";
+import { useAuth } from "@/lib/auth/auth-context";
+import { canDeleteTeam, canEditTeam, canManageMembers } from "@/lib/permissions";
 
 export function TeamView(props: {
     team: Team;
@@ -34,6 +36,11 @@ export function TeamView(props: {
     const [nowTeam] = useAtom(nowTeamAtom);
     const [teams, setTeams] = useAtom(teamsAtom);
     const t = useTranslations();
+    const { user } = useAuth();
+    const userId = user?.userId ?? '';
+    const showEdit = canEditTeam(team, userId);
+    const showDelete = canDeleteTeam(team, userId);
+    const showMembers = canManageMembers(team, userId);
     const maxVisibleProjects = 6;
 
     // Use custom hook to get project data
@@ -113,7 +120,7 @@ export function TeamView(props: {
                             </h3>
                             {nowTeam?.id === team.id && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0">
-                                    当前
+                                    {t('teams.card.current')}
                                 </span>
                             )}
                         </div>
@@ -150,39 +157,47 @@ export function TeamView(props: {
                                 t('teams.card.enterTeam')
                             )}
                         </Button>
-                        <Button
-                            variant="ghost"
-                            onClick={handleViewMembers}
-                            size="icon"
-                            className="h-8 w-8 rounded-lg hover:bg-muted"
-                        >
-                            <UserPlus className="h-4 w-4" />
-                        </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-lg hover:bg-muted"
-                                >
-                                    <Settings className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={openEditDialog} className="cursor-pointer">
-                                    <Pencil className="h-4 w-4 mr-2" />
-                                    {t('teams.card.editTeam')}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => handleDeleteTeam(team.id)}
-                                    className="text-destructive focus:text-destructive cursor-pointer"
-                                >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    {t('teams.card.deleteTeam')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {showMembers && (
+                            <Button
+                                variant="ghost"
+                                onClick={handleViewMembers}
+                                size="icon"
+                                className="h-8 w-8 rounded-lg hover:bg-muted"
+                            >
+                                <UserPlus className="h-4 w-4" />
+                            </Button>
+                        )}
+                        {(showEdit || showDelete) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg hover:bg-muted"
+                                    >
+                                        <Settings className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {showEdit && (
+                                        <DropdownMenuItem onClick={openEditDialog} className="cursor-pointer">
+                                            <Pencil className="h-4 w-4 mr-2" />
+                                            {t('teams.card.editTeam')}
+                                        </DropdownMenuItem>
+                                    )}
+                                    {showEdit && showDelete && <DropdownMenuSeparator />}
+                                    {showDelete && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleDeleteTeam(team.id)}
+                                            className="text-destructive focus:text-destructive cursor-pointer"
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            {t('teams.card.deleteTeam')}
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
 
@@ -253,7 +268,7 @@ export function TeamView(props: {
                             className="h-7 text-xs text-muted-foreground hover:text-primary"
                         >
                             <Plus className="h-3 w-3 mr-1" />
-                            创建第一个项目
+                            {t('teams.card.createFirstProject')}
                         </Button>
                     </div>
                 )}
@@ -263,7 +278,7 @@ export function TeamView(props: {
                     <div className="border-t border-border/30 px-4 py-2 bg-muted/20">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            加载项目中...
+                            {t('teams.card.loading')}...
                         </div>
                     </div>
                 )}
