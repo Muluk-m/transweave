@@ -203,8 +203,8 @@ export default function WelcomeView() {
                     
                     {/* Hero Image */}
                     <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
-                        <div className="relative h-[400px] lg:h-[500px] w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-accent/20 to-primary/10"></div>
+                        <div className="relative w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
+                            <img src="/screenshots/hero-preview.png" alt="Transweave" className="w-full h-auto" />
                         </div>
                         {/* Floating elements */}
                         <div className="absolute -top-4 -left-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
