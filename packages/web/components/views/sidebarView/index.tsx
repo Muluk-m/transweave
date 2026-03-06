@@ -21,7 +21,6 @@ import {
   PanelLeft,
   Loader2,
 } from 'lucide-react';
-import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 
 const COLLAPSED_KEY = 'sidebar-collapsed';
@@ -137,11 +136,6 @@ export function SidebarView() {
   if (collapsed) {
     return (
       <div className="flex flex-col h-full w-[52px] border-r border-border/50 bg-background/95 flex-shrink-0 transition-all duration-200">
-        {/* Logo */}
-        <div className="flex items-center justify-center h-16 border-b border-border/40">
-          <Logo className="h-6 w-6" />
-        </div>
-
         {/* Teams as icons */}
         <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-1 items-center">
           {teamsWithProjects.map((team) => (
@@ -198,12 +192,6 @@ export function SidebarView() {
 
   return (
     <div className="flex flex-col h-full w-[240px] border-r border-border/50 bg-background/95 flex-shrink-0 transition-all duration-200">
-      {/* Logo row */}
-      <div className="flex items-center gap-2 h-16 px-4 border-b border-border/40">
-        <Logo className="h-6 w-6 flex-shrink-0" />
-        <span className="font-semibold text-base truncate">{t('header.title')}</span>
-      </div>
-
       {/* Teams + Projects */}
       <div className="flex-1 overflow-y-auto py-2">
         {loading && (
