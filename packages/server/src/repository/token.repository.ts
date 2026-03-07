@@ -88,6 +88,19 @@ export class TokenRepository extends BaseRepository<
     return result?.count ?? 0;
   }
 
+  async countByProjectIdAndModule(
+    projectId: string,
+    module: string,
+  ): Promise<number> {
+    const [result] = await this.db
+      .select({ count: count() })
+      .from(tokens)
+      .where(
+        and(eq(tokens.projectId, projectId), eq(tokens.module, module)),
+      );
+    return result?.count ?? 0;
+  }
+
   async searchByKeyOrTranslation(
     projectId: string,
     query: string,

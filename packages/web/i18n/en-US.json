@@ -697,6 +697,7 @@
       "tokens": "Translations",
       "setting": "Settings",
       "translations": "Translations",
+      "modules": "Modules",
       "files": "Files",
       "import": "Import",
       "export": "Export"

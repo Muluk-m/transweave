@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
 import { nowProjectAtom } from "@/jotai";
 import type { ProjectModule } from "@/jotai/types";
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -36,7 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { updateProject } from "@/api/project";
+import { addModule, removeModule, getModuleStats } from "@/api/project";
 
 export function ProjectModulesTab() {
   const [project, setProject] = useAtom(nowProjectAtom);
@@ -45,12 +44,33 @@ export function ProjectModulesTab() {
   const [newModuleCode, setNewModuleCode] = useState("");
   const [moduleError, setModuleError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [moduleTokenCounts, setModuleTokenCounts] = useState<Record<string, number>>({});
 
   const modules: ProjectModule[] = project?.modules || [];
 
-  // 计算每个模块的词条数量
+  // Fetch module token counts from backend
+  const fetchModuleStats = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const stats = await getModuleStats(project.id);
+      const counts: Record<string, number> = {};
+      for (const stat of stats) {
+        if (stat.module) {
+          counts[stat.module] = stat.count;
+        }
+      }
+      setModuleTokenCounts(counts);
+    } catch {
+      // Silently fail - counts will show 0
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    fetchModuleStats();
+  }, [fetchModuleStats]);
+
   const getModuleTokenCount = (moduleCode: string) => {
-    return project?.tokens?.filter((token) => token.module === moduleCode).length || 0;
+    return moduleTokenCounts[moduleCode] || 0;
   };
 
   // 添加模块
@@ -73,53 +93,52 @@ export function ProjectModulesTab() {
       return;
     }
 
-    const updatedModules: ProjectModule[] = [
-      ...modules,
-      { name: newModuleName, code: newModuleCode },
-    ];
-    setNewModuleName("");
-    setNewModuleCode("");
-
-    // 保存到后端
-    await saveModules(updatedModules);
-  };
-
-  // 删除模块
-  const handleDeleteModule = async (moduleCode: string) => {
-    const tokenCount = getModuleTokenCount(moduleCode);
-    if (tokenCount > 0) {
-      toast({
-        title: "无法删除",
-        description: `该模块下还有 ${tokenCount} 个词条，请先删除或移动这些词条`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const updatedModules = modules.filter((m) => m.code !== moduleCode);
-    await saveModules(updatedModules);
-  };
-
-  // 保存模块到后端
-  const saveModules = async (updatedModules: ProjectModule[]) => {
     if (!project) return;
 
     setIsLoading(true);
     try {
-      const updatedProject = await updateProject(project.id, {
-        modules: updatedModules,
+      const updatedProject = await addModule(project.id, {
+        name: newModuleName,
+        code: newModuleCode,
       });
-
       setProject(updatedProject);
+      setNewModuleName("");
+      setNewModuleCode("");
 
       toast({
-        title: "保存成功",
-        description: "模块配置已更新",
+        title: "添加成功",
+        description: "模块已添加",
       });
     } catch (error) {
       toast({
-        title: "保存失败",
+        title: "添加失败",
         description: error instanceof Error ? error.message : "请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 删除模块
+  const handleDeleteModule = async (moduleCode: string) => {
+    if (!project) return;
+
+    setIsLoading(true);
+    try {
+      const updatedProject = await removeModule(project.id, moduleCode);
+      setProject(updatedProject);
+      await fetchModuleStats();
+
+      toast({
+        title: "删除成功",
+        description: "模块已删除",
+      });
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || "请重试";
+      toast({
+        title: "删除失败",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -306,4 +325,3 @@ export function ProjectModulesTab() {
     </div>
   );
 }
-

@@ -277,7 +277,7 @@ export class ProjectService {
     if (!module.name || !module.code) {
       throw new BadRequestException('模块名称和代码必须齐全');
     }
-    if (!/^[a-z][a-z0-9]*$/i.test(module.code)) {
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(module.code)) {
       throw new BadRequestException('模块名只能包含字母、数字和下划线，且必须以字母开头');
     }
 
@@ -316,6 +316,17 @@ export class ProjectService {
   ): Promise<Project | null> {
     const project = await this.projectRepository.findById(id);
     if (!project) throw new NotFoundException('项目不存在');
+
+    // Check if any tokens are using this module
+    const tokenCount = await this.tokenRepository.countByProjectIdAndModule(
+      id,
+      moduleCode,
+    );
+    if (tokenCount > 0) {
+      throw new BadRequestException(
+        `该模块下还有 ${tokenCount} 个词条，请先移除词条的模块归属`,
+      );
+    }
 
     const oldModules = project.modules || [];
     const newModules = oldModules.filter((m) => m.code !== moduleCode);

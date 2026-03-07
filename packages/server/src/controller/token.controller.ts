@@ -182,6 +182,34 @@ export class TokenController {
   // ============= Parameterized sub-path routes =============
 
   /**
+   * GET /api/tokens/:projectId/tags
+   * Get all unique tags used by tokens in a project.
+   */
+  @Get(':projectId/tags')
+  @UseGuards(AuthGuard)
+  async getProjectTags(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    await this.checkPermission(projectId, user.userId);
+    return this.tokenService.getProjectTags(projectId);
+  }
+
+  /**
+   * GET /api/tokens/:projectId/module-stats
+   * Get token count per module for a project.
+   */
+  @Get(':projectId/module-stats')
+  @UseGuards(AuthGuard)
+  async getModuleStats(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    await this.checkPermission(projectId, user.userId);
+    return this.tokenService.getModuleStats(projectId);
+  }
+
+  /**
    * GET /api/tokens/:projectId/search
    * Search and filter tokens with pagination and sorting.
    */

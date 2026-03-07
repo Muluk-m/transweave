@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ProjectRepository } from '../repository/project.repository';
@@ -35,16 +36,34 @@ export class AiConfigService {
       baseUrl: config.baseUrl,
     });
 
-    const isValid = await provider.validateApiKey();
-    if (!isValid) {
+    try {
+      const isValid = await provider.validateApiKey();
+      if (!isValid) {
+        throw new BadRequestException(
+          'Invalid API key for the selected provider',
+        );
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`API key validation failed: ${error.message}`);
       throw new BadRequestException(
-        'Invalid API key for the selected provider',
+        'Failed to validate API key. Please check your key and try again.',
+      );
+    }
+
+    let encryptedKey: string;
+    try {
+      encryptedKey = encryptApiKey(config.apiKey);
+    } catch (error) {
+      this.logger.error(`API key encryption failed: ${error.message}`);
+      throw new InternalServerErrorException(
+        'AI_ENCRYPTION_KEY is not configured on the server. Please contact your administrator.',
       );
     }
 
     const stored: AiConfigStored = {
       provider: config.provider,
-      apiKey: encryptApiKey(config.apiKey),
+      apiKey: encryptedKey,
       model: config.model,
       baseUrl: config.baseUrl,
     };
@@ -72,16 +91,34 @@ export class AiConfigService {
       baseUrl: config.baseUrl,
     });
 
-    const isValid = await provider.validateApiKey();
-    if (!isValid) {
+    try {
+      const isValid = await provider.validateApiKey();
+      if (!isValid) {
+        throw new BadRequestException(
+          'Invalid API key for the selected provider',
+        );
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`API key validation failed: ${error.message}`);
       throw new BadRequestException(
-        'Invalid API key for the selected provider',
+        'Failed to validate API key. Please check your key and try again.',
+      );
+    }
+
+    let encryptedKey: string;
+    try {
+      encryptedKey = encryptApiKey(config.apiKey);
+    } catch (error) {
+      this.logger.error(`API key encryption failed: ${error.message}`);
+      throw new InternalServerErrorException(
+        'AI_ENCRYPTION_KEY is not configured on the server. Please contact your administrator.',
       );
     }
 
     const stored: AiConfigStored = {
       provider: config.provider,
-      apiKey: encryptApiKey(config.apiKey),
+      apiKey: encryptedKey,
       model: config.model,
       baseUrl: config.baseUrl,
     };

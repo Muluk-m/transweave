@@ -167,12 +167,22 @@ export async function batchUpdateTokenModule(
 }
 
 // Module management
-export async function addModule(projectId: string, module: string): Promise<Project> {
-  return apiClient.post(`${API_BASE}/module/${projectId}`, { module });
+export async function addModule(projectId: string, data: { name: string; code: string }): Promise<Project> {
+  return apiClient.post(`${API_BASE}/module/${projectId}`, data);
 }
 
-export async function removeModule(projectId: string, module: string): Promise<Project> {
-  return apiClient.delete(`${API_BASE}/module/${projectId}/${module}`);
+export async function removeModule(projectId: string, moduleCode: string): Promise<Project> {
+  return apiClient.delete(`${API_BASE}/module/${projectId}/${moduleCode}`);
+}
+
+// Get all unique tags for a project
+export async function getProjectTags(projectId: string): Promise<string[]> {
+  return apiClient.get(`${TOKEN_API_BASE}/${projectId}/tags`);
+}
+
+// Get token count per module
+export async function getModuleStats(projectId: string): Promise<Array<{ module: string; count: number }>> {
+  return apiClient.get(`${TOKEN_API_BASE}/${projectId}/module-stats`);
 }
 
 // Export project copy

@@ -543,6 +543,42 @@ export class TokenService {
     return results;
   }
 
+  /**
+   * Get all unique tags used by tokens in a project.
+   */
+  async getProjectTags(projectId: string): Promise<string[]> {
+    const result = await (this.db as any)
+      .select({
+        tag: sql<string>`jsonb_array_elements_text(${tokens.tags})`,
+      })
+      .from(tokens)
+      .where(eq(tokens.projectId, projectId));
+
+    const tagSet = new Set<string>(result.map((r: any) => r.tag));
+    return Array.from(tagSet).sort();
+  }
+
+  /**
+   * Get token count per module for a project.
+   */
+  async getModuleStats(
+    projectId: string,
+  ): Promise<Array<{ module: string; count: number }>> {
+    const results = await (this.db as any)
+      .select({
+        module: tokens.module,
+        count: count(),
+      })
+      .from(tokens)
+      .where(eq(tokens.projectId, projectId))
+      .groupBy(tokens.module);
+
+    return results.map((r: any) => ({
+      module: r.module || '',
+      count: r.count,
+    }));
+  }
+
   // ============= Bulk Operations (Plan 05-03) =============
 
   /**
