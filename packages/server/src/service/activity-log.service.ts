@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, count, desc, eq, lt } from 'drizzle-orm';
 import { ActivityLogRepository } from '../repository/activity-log.repository';
+import { DRIZZLE } from '../db/drizzle.provider';
+import type { DrizzleDB } from '../db/drizzle.types';
 import {
+  activityLogs,
   type ActivityLog,
   type NewActivityLog,
   ActivityType,
@@ -30,7 +34,10 @@ export interface QueryActivityLogDto {
 
 @Injectable()
 export class ActivityLogService {
-  constructor(private readonly activityLogRepository: ActivityLogRepository) {}
+  constructor(
+    private readonly activityLogRepository: ActivityLogRepository,
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
+  ) {}
 
   async create(data: CreateActivityLogDto): Promise<ActivityLog> {
     const record: NewActivityLog = {
@@ -56,22 +63,31 @@ export class ActivityLogService {
     const { projectId, type, page = 1, limit = 20 } = params;
     const offset = (page - 1) * limit;
 
-    let logs: ActivityLog[] = [];
+    const conditions: any[] = [];
     if (projectId) {
-      logs = await this.activityLogRepository.findByProjectId(projectId, {
-        limit,
-        offset,
-        type: type as string | undefined,
-      });
-    } else {
-      logs = await this.activityLogRepository.findAll();
-      if (type) {
-        logs = logs.filter((l) => l.type === type);
-      }
-      logs = logs.slice(offset, offset + limit);
+      conditions.push(eq(activityLogs.projectId, projectId));
+    }
+    if (type) {
+      conditions.push(eq(activityLogs.type, type));
     }
 
-    const total = logs.length;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [countResult] = await (this.db as any)
+      .select({ count: count() })
+      .from(activityLogs)
+      .where(whereClause);
+
+    const total: number = countResult?.count ?? 0;
+
+    const logs = await (this.db as any)
+      .select()
+      .from(activityLogs)
+      .where(whereClause)
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit)
+      .offset(offset);
+
     return {
       data: logs,
       pagination: {
@@ -110,21 +126,17 @@ export class ActivityLogService {
   }
 
   async cleanOldLogs(days = 90) {
-    // Simple approach: fetch all then delete old ones
-    // For production use a raw SQL delete instead
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    const all = await this.activityLogRepository.findAll();
-    let deleted = 0;
-    for (const log of all) {
-      if (log.createdAt < cutoff) {
-        await this.activityLogRepository.delete(log.id);
-        deleted++;
-      }
-    }
+
+    const deleted = await (this.db as any)
+      .delete(activityLogs)
+      .where(lt(activityLogs.createdAt, cutoff))
+      .returning();
+
     return {
-      deleted,
-      message: `删除了 ${deleted} 条超过 ${days} 天的日志`,
+      deleted: deleted.length,
+      message: `Cleaned logs older than ${days} days`,
     };
   }
 

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserRepository } from '../repository/user.repository';
 import { hashPassword, verifyPassword } from '../utils/crypto';
 import type { User, NewUser } from '../db/schema/users';
@@ -90,5 +94,60 @@ export class UserService {
   async isAdmin(userId: string): Promise<boolean> {
     const user = await this.userRepo.findById(userId);
     return user?.isAdmin ?? false;
+  }
+
+  // Change user password (requires current password verification)
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ success: true; message: string }> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Password change is not available for OAuth accounts',
+      );
+    }
+
+    const isValid = verifyPassword(currentPassword, user.password);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashed = hashPassword(newPassword);
+    await this.userRepo.update(userId, { password: hashed });
+
+    return { success: true, message: 'Password changed successfully' };
+  }
+
+  // Update user profile (name, avatar)
+  async updateProfile(
+    userId: string,
+    data: { name?: string; avatar?: string },
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updateData: Partial<NewUser> = {};
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+    if (data.avatar !== undefined) {
+      updateData.avatar = data.avatar;
+    }
+
+    const updated = await this.userRepo.update(userId, updateData);
+    if (!updated) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { password: _, ...safeUser } = updated;
+    return safeUser;
   }
 }

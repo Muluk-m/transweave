@@ -50,23 +50,24 @@ export class TokenService {
    */
   async findByProject(projectId: string) {
     const tokenRows = await this.tokenRepository.findByProjectId(projectId);
+    if (tokenRows.length === 0) return [];
 
-    // Populate history with user details for each token
-    const tokensWithHistory = await Promise.all(
-      tokenRows.map(async (token) => {
-        const historyRows =
-          await this.tokenHistoryRepository.findByTokenIdWithUser(token.id);
-        return {
-          ...token,
-          history: historyRows.map((row) => ({
-            ...row.history,
-            user: row.user,
-          })),
-        };
-      }),
-    );
+    const tokenIds = tokenRows.map(t => t.id);
+    // Batch query: fetch all history for all tokens at once
+    const allHistory = await this.tokenHistoryRepository.findByTokenIdsWithUser(tokenIds);
 
-    return tokensWithHistory;
+    // Group by tokenId
+    const historyMap = new Map<string, any[]>();
+    for (const row of allHistory) {
+      const list = historyMap.get(row.history.tokenId) || [];
+      list.push({ ...row.history, user: row.user });
+      historyMap.set(row.history.tokenId, list);
+    }
+
+    return tokenRows.map(token => ({
+      ...token,
+      history: historyMap.get(token.id) || [],
+    }));
   }
 
   /**
@@ -440,7 +441,7 @@ export class TokenService {
     projectId: string,
     options: TokenSearchOptions,
   ): Promise<{ tokens: Token[]; total: number }> {
-    const page = Math.max(1, options.page || 1);
+    const page = Math.max(1, Math.min(options.page || 1, 10000));
     const perPage = Math.min(Math.max(1, options.perPage || 50), 200);
     const offset = (page - 1) * perPage;
     const sortOrder = options.sortOrder || 'desc';
@@ -474,6 +475,13 @@ export class TokenService {
     // Completion status filter
     if (options.status && options.status !== 'all') {
       if (options.language) {
+        // Validate language against project languages
+        const langProject = await this.projectRepository.findById(projectId);
+        if (!langProject) throw new NotFoundException(`Project ${projectId} not found`);
+        const projectLangs = (langProject.languages as string[]) || [];
+        if (!projectLangs.includes(options.language)) {
+          throw new BadRequestException(`Invalid language: ${options.language}`);
+        }
         // Filter by specific language completion
         if (options.status === 'completed') {
           conditions.push(
@@ -591,30 +599,28 @@ export class TokenService {
       }));
     }
 
-    const results: LanguageProgress[] = [];
+    if (languages.length === 0) return [];
 
-    for (const lang of languages) {
-      const [completedResult] = await (this.db as any)
-        .select({ count: count() })
-        .from(tokens)
-        .where(
-          and(
-            eq(tokens.projectId, projectId),
-            sql`${tokens.translations}->>${lang} IS NOT NULL AND ${tokens.translations}->>${lang} != ''`,
-          ),
-        );
+    // Single query: compute all language completions at once
+    const selectObj: Record<string, any> = {};
+    languages.forEach((lang, i) => {
+      selectObj[`lang_${i}`] = sql<number>`COUNT(CASE WHEN ${tokens.translations}->>${lang} IS NOT NULL AND ${tokens.translations}->>${lang} != '' THEN 1 END)`;
+    });
 
-      const completed: number = completedResult?.count ?? 0;
+    const [result] = await (this.db as any)
+      .select(selectObj)
+      .from(tokens)
+      .where(eq(tokens.projectId, projectId));
 
-      results.push({
+    return languages.map((lang, i) => {
+      const completed = Number(result[`lang_${i}`]) || 0;
+      return {
         language: lang,
         total,
         completed,
         percentage: Math.round((completed / total) * 100),
-      });
-    }
-
-    return results;
+      };
+    });
   }
 
   /**
@@ -666,6 +672,10 @@ export class TokenService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ deleted: number }> {
+    const MAX_BULK_SIZE = 500;
+    if (tokenIds.length > MAX_BULK_SIZE) {
+      throw new BadRequestException(`Maximum ${MAX_BULK_SIZE} tokens per bulk operation`);
+    }
     if (tokenIds.length === 0) {
       throw new BadRequestException('No token IDs provided');
     }
@@ -725,6 +735,10 @@ export class TokenService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<Token[]> {
+    const MAX_BULK_SIZE = 500;
+    if (tokenIds.length > MAX_BULK_SIZE) {
+      throw new BadRequestException(`Maximum ${MAX_BULK_SIZE} tokens per bulk operation`);
+    }
     if (tokenIds.length === 0) {
       throw new BadRequestException('No token IDs provided');
     }
@@ -784,6 +798,10 @@ export class TokenService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<Token[]> {
+    const MAX_BULK_SIZE = 500;
+    if (tokenIds.length > MAX_BULK_SIZE) {
+      throw new BadRequestException(`Maximum ${MAX_BULK_SIZE} tokens per bulk operation`);
+    }
     if (tokenIds.length === 0) {
       throw new BadRequestException('No token IDs provided');
     }

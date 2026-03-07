@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Delete,
   Param,
@@ -16,6 +17,7 @@ import {
 import { UserService } from '../service/user.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
+import { ChangePasswordDto, UpdateProfileDto } from '../dto/user.dto';
 
 @Controller('api/user')
 export class UserController {
@@ -26,6 +28,30 @@ export class UserController {
   @UseGuards(AuthGuard)
   async getMe(@CurrentUser() user: UserPayload) {
     return this.userService.findUserById(user.userId);
+  }
+
+  // Change own password
+  @Post('change-password')
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @CurrentUser() user: UserPayload,
+    @Body() data: ChangePasswordDto,
+  ) {
+    return this.userService.changePassword(
+      user.userId,
+      data.currentPassword,
+      data.newPassword,
+    );
+  }
+
+  // Update own profile
+  @Put('profile')
+  @UseGuards(AuthGuard)
+  async updateProfile(
+    @CurrentUser() user: UserPayload,
+    @Body() data: UpdateProfileDto,
+  ) {
+    return this.userService.updateProfile(user.userId, data);
   }
 
   // Search users
