@@ -308,10 +308,10 @@ export function TokenTable({
         return (
           <div className="flex items-center gap-1">
             {screenshots.length > 0 ? (
-              <TooltipProvider>
+              <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div 
+                    <div
                       className="flex items-center gap-1 cursor-pointer hover:bg-muted rounded px-2 py-1 transition-colors"
                       onClick={() => handlePreviewImages(screenshots)}
                     >
@@ -319,19 +319,19 @@ export function TokenTable({
                       <span className="text-sm text-muted-foreground">{screenshots.length}</span>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="p-2">
+                  <TooltipContent side="right" sideOffset={8} className="p-2">
                     <div className="flex flex-col gap-2">
-                      <div className="flex flex-wrap gap-2 max-w-[400px]">
+                      <div className="flex flex-wrap gap-2 max-w-[300px]">
                         {screenshots.slice(0, 3).map((screenshot: string, index: number) => (
                           <img
                             key={index}
                             src={getImageUrl(screenshot)}
                             alt={`Screenshot ${index + 1}`}
-                            className="w-50 h-50 object-cover rounded border border-border"
+                            className="w-20 h-20 object-cover rounded border border-border"
                           />
                         ))}
                         {screenshots.length > 3 && (
-                          <div className="w-50 h-50 flex items-center justify-center bg-muted rounded border border-border text-sm text-muted-foreground">
+                          <div className="w-20 h-20 flex items-center justify-center bg-muted rounded border border-border text-sm text-muted-foreground">
                             +{screenshots.length - 3}
                           </div>
                         )}

@@ -135,7 +135,7 @@ export function SidebarView() {
 
   if (collapsed) {
     return (
-      <div className="flex flex-col h-full w-[52px] border-r border-border/50 bg-background/95 flex-shrink-0 transition-all duration-200">
+      <div className="flex flex-col h-full w-[52px] border-r border-border bg-background/95 flex-shrink-0 transition-all duration-200">
         {/* Teams as icons */}
         <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-1 items-center">
           {teamsWithProjects.map((team) => (
@@ -191,7 +191,7 @@ export function SidebarView() {
   }
 
   return (
-    <div className="flex flex-col h-full w-[240px] border-r border-border/50 bg-background/95 flex-shrink-0 transition-all duration-200">
+    <div className="flex flex-col h-full w-[240px] border-r border-border bg-background/95 flex-shrink-0 transition-all duration-200">
       {/* Teams + Projects */}
       <div className="flex-1 overflow-y-auto py-2">
         {loading && (

@@ -730,7 +730,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   };
 
   return (
-    <div className="p-4 bg-card rounded-lg">
+    <div className="bg-card rounded-lg">
       <TokenFormDrawer
         isOpen={isDrawerOpen}
         onOpenChange={(open) => setIsDrawerOpen(open)}
@@ -753,7 +753,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         projectId={project?.id}
       />
 
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-semibold">{t("title")}</h2>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>

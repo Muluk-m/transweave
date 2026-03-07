@@ -21,10 +21,10 @@ export function ProjectView() {
   ];
 
   return (
-    <div className="page-container section-spacing animate-fade-in-up">
+    <div className="page-container py-4 animate-fade-in-up">
       {/* Project Header */}
       {nowProject && (
-        <div className="mb-6">
+        <div className="mb-3">
           <h1 className="text-2xl font-bold text-foreground">
             {nowProject.name}
           </h1>
@@ -38,7 +38,7 @@ export function ProjectView() {
 
       <Tabs defaultValue="overview" className="w-full">
         {/* Tab Navigation */}
-        <div className="relative mb-6">
+        <div className="relative mb-3">
           <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -66,7 +66,7 @@ export function ProjectView() {
             <ProjectOverviewTab project={nowProject} />
           </TabsContent>
 
-          <TabsContent value="tokens" className="m-0 p-6 animate-fade-in">
+          <TabsContent value="tokens" className="m-0 p-4 animate-fade-in">
             <ProjectTokensTab project={nowProject} />
           </TabsContent>
 
