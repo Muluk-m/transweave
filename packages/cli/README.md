@@ -20,7 +20,7 @@ npx transweave-cli <command>
 
 ```bash
 # 1. Login with your API key / 使用 API key 登录
-transweave login --server https://your-server.com --api-key qlji_xxxxx
+transweave login --server https://your-server.com --api-key tw_xxxxx
 
 # 2. Initialize project config / 初始化项目配置
 transweave init --project-id <id>
@@ -47,7 +47,7 @@ transweave login --server <url> --api-key <key>
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--server <url>` | Yes | Server URL / 服务器地址 (e.g. `https://your-server.com`) |
-| `--api-key <key>` | Yes | API key (must start with `qlji_`) / API 密钥（必须以 `qlji_` 开头） |
+| `--api-key <key>` | Yes | API key (must start with `tw_`) / API 密钥（必须以 `tw_` 开头） |
 
 The command validates the API key against the server before saving. Config is stored at `~/.config/transweave/config.json`.
 
@@ -139,7 +139,7 @@ Stored at `~/.config/transweave/config.json`. Created by `transweave login`.
 ```json
 {
   "server": "https://your-server.com",
-  "apiKey": "qlji_xxxxx"
+  "apiKey": "tw_xxxxx"
 }
 ```
 

@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { hashPassword, verifyPassword } from '../utils/crypto';
 import { ApiKeyRepository } from '../repository/api-key.repository';
 
-const KEY_PREFIX_LENGTH = 13; // "qlji_" (5) + 8 hex chars
+const KEY_PREFIX_LENGTH = 11; // "tw_" (3) + 8 hex chars
 
 @Injectable()
 export class ApiKeyService {
@@ -19,7 +19,7 @@ export class ApiKeyService {
     expiresAt?: Date,
   ) {
     const randomPart = randomBytes(32).toString('hex');
-    const fullKey = `qlji_${randomPart}`;
+    const fullKey = `tw_${randomPart}`;
     const keyPrefix = fullKey.substring(0, KEY_PREFIX_LENGTH);
     const keyHash = hashPassword(fullKey);
 

@@ -25,12 +25,12 @@ export class McpController {
     try {
       // Authenticate via API key (required for all MCP operations)
       const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer qlji_')) {
+      if (!authHeader?.startsWith('Bearer tw_')) {
         return res.status(401).json({
           jsonrpc: '2.0',
           error: {
             code: -32000,
-            message: 'API key required. Use Authorization: Bearer qlji_...',
+            message: 'API key required. Use Authorization: Bearer tw_...',
           },
         });
       }
@@ -583,7 +583,7 @@ export class McpController {
         </h2>
         <div class="auth-notice">
           <strong>Authentication Required</strong>
-          All MCP requests require a valid API key. Include the header <code>Authorization: Bearer qlji_...</code> with every request. Generate an API key from the web UI at Settings &gt; API Keys.
+          All MCP requests require a valid API key. Include the header <code>Authorization: Bearer tw_...</code> with every request. Generate an API key from the web UI at Settings &gt; API Keys.
         </div>
         <div class="info-grid">
           <div class="info-item">
@@ -608,7 +608,7 @@ export class McpController {
           </div>
           <div class="info-item">
             <span class="info-label">Auth</span>
-            <span class="info-value">API Key (Bearer qlji_...)</span>
+            <span class="info-value">API Key (Bearer tw_...)</span>
           </div>
         </div>
       </div>
@@ -710,7 +710,7 @@ export class McpController {
     "transweave": {
       "url": "http://localhost:3001/api/mcp",
       "headers": {
-        "Authorization": "Bearer qlji_YOUR_API_KEY_HERE"
+        "Authorization": "Bearer tw_YOUR_API_KEY_HERE"
       }
     }
   }

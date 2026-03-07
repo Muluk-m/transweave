@@ -14,7 +14,7 @@ function getEncryptionKey(): Buffer {
       'AI_ENCRYPTION_KEY environment variable is required for storing API keys',
     );
   }
-  return scryptSync(secret, 'qlj-i18n-ai-salt', 32);
+  return scryptSync(secret, 'transweave-ai-salt', 32);
 }
 
 export function encryptApiKey(plaintext: string): string {

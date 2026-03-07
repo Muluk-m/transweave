@@ -399,7 +399,7 @@ describe('Transweave Server (e2e)', () => {
         .expect(201);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.apiKey.key).toMatch(/^qlji_/);
+      expect(res.body.apiKey.key).toMatch(/^tw_/);
       expect(res.body.apiKey.name).toBe('E2E Test Key');
       apiKeyId = res.body.apiKey.id;
       fullApiKey = res.body.apiKey.key;

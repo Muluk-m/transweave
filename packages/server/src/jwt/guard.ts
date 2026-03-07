@@ -6,7 +6,7 @@ import { requireEnv } from '../config/env';
 /**
  * Unified auth guard that accepts both JWT tokens and API keys.
  *
- * - If the Bearer token starts with "qlji_", it's validated as an API key.
+ * - If the Bearer token starts with "tw_", it's validated as an API key.
  * - Otherwise, it's validated as a JWT token.
  *
  * Usage: @UseGuards(AuthGuard) on any route -- same as before.
@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
     const token = parts[1];
 
     // API key authentication
-    if (token.startsWith('qlji_')) {
+    if (token.startsWith('tw_')) {
       const result = await this.apiKeyService.validateKey(token);
       if (!result) {
         return false;

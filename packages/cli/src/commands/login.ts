@@ -5,12 +5,12 @@ import { createApiClient } from '../api-client.js';
 export const loginCommand = new Command('login')
   .description('Save server URL and API key to global config')
   .requiredOption('--server <url>', 'Server URL (e.g. http://localhost:3001)')
-  .requiredOption('--api-key <key>', 'API key (starts with qlji_)')
+  .requiredOption('--api-key <key>', 'API key (starts with tw_)')
   .action(async (options: { server: string; apiKey: string }) => {
     const { server, apiKey } = options;
 
-    if (!apiKey.startsWith('qlji_')) {
-      console.error('Error: API key must start with "qlji_"');
+    if (!apiKey.startsWith('tw_')) {
+      console.error('Error: API key must start with "tw_"');
       process.exit(1);
     }
 

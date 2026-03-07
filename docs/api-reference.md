@@ -50,7 +50,7 @@ curl http://localhost:3001/api/user/me \
 
 ### API Key Authentication
 
-Generate an API key from the web UI at `/settings/api-keys` or via the API key endpoint. API keys use the `qlji_` prefix.
+Generate an API key from the web UI at `/settings/api-keys` or via the API key endpoint. API keys use the `tw_` prefix.
 
 ```bash
 # Step 1: Create an API key (requires JWT auth)
@@ -60,12 +60,12 @@ curl -X POST http://localhost:3001/api/api-keys \
   -d '{"name": "my-cli-key"}'
 
 # Response:
-# { "success": true, "apiKey": { "id": "...", "fullKey": "qlji_abc12345...", ... } }
+# { "success": true, "apiKey": { "id": "...", "fullKey": "tw_abc12345...", ... } }
 # NOTE: The full key is only shown once at creation time. Store it securely.
 
 # Step 2: Use the API key (same header format)
 curl http://localhost:3001/api/user/me \
-  -H "Authorization: Bearer qlji_abc12345..."
+  -H "Authorization: Bearer tw_abc12345..."
 ```
 
 ### Common Error Responses
@@ -591,7 +591,7 @@ Create a new translation token.
 
 ```bash
 curl -X POST http://localhost:3001/api/tokens \
-  -H "Authorization: Bearer qlji_abc12345..." \
+  -H "Authorization: Bearer tw_abc12345..." \
   -H "Content-Type: application/json" \
   -d '{
     "projectId": "uuid",
@@ -694,7 +694,7 @@ Search and filter tokens with pagination.
 
 ```bash
 curl "http://localhost:3001/api/tokens/PROJECT_ID/search?q=save&module=core&page=1&perPage=20" \
-  -H "Authorization: Bearer qlji_abc12345..."
+  -H "Authorization: Bearer tw_abc12345..."
 ```
 
 ---
@@ -736,13 +736,13 @@ Perform bulk operations on multiple tokens.
 ```bash
 # Bulk delete
 curl -X POST http://localhost:3001/api/tokens/bulk \
-  -H "Authorization: Bearer qlji_abc12345..." \
+  -H "Authorization: Bearer tw_abc12345..." \
   -H "Content-Type: application/json" \
   -d '{"tokenIds": ["id1", "id2"], "operation": "delete"}'
 
 # Bulk set tags
 curl -X POST http://localhost:3001/api/tokens/bulk \
-  -H "Authorization: Bearer qlji_abc12345..." \
+  -H "Authorization: Bearer tw_abc12345..." \
   -H "Content-Type: application/json" \
   -d '{"tokenIds": ["id1", "id2"], "operation": "set-tags", "payload": {"tags": ["ui", "v2"]}}'
 ```
@@ -906,8 +906,8 @@ Create a new API key. The full key is returned **only once** at creation time.
   "apiKey": {
     "id": "uuid",
     "name": "my-cli-key",
-    "prefix": "qlji_abc12345",
-    "fullKey": "qlji_abc12345...",
+    "prefix": "tw_abc12345",
+    "fullKey": "tw_abc12345...",
     "createdAt": "2026-01-15T10:00:00.000Z"
   }
 }
@@ -1197,7 +1197,7 @@ The platform includes a built-in [Model Context Protocol (MCP)](https://modelcon
     "transweave": {
       "url": "http://localhost:3001/api/mcp",
       "headers": {
-        "Authorization": "Bearer qlji_your_api_key_here"
+        "Authorization": "Bearer tw_your_api_key_here"
       }
     }
   }
