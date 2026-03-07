@@ -1,8 +1,14 @@
-# Transweave
+<p align="center">
+  <img src="assets/og-image-github.png" alt="Transweave" width="100%" />
+</p>
 
-[English](./README.en.md)
+<p align="center">
+  <b>自托管国际化管理平台</b> &nbsp;|&nbsp; <a href="./README.en.md">English</a>
+</p>
 
-自托管国际化管理平台。
+<p align="center">
+  <img src="packages/web/public/screenshots/hero-preview.png" alt="Transweave Screenshot" width="100%" style="border-radius: 8px;" />
+</p>
 
 - 多语言翻译管理，支持模块和命名空间
 - 团队协作，基于角色的访问控制（所有者 / 管理员 / 成员）
