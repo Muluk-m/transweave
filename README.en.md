@@ -77,14 +77,12 @@ All variables are defined in `.env.example`. Copy it and edit as needed.
 | `JWT_SECRET` | Yes | -- | Secret for signing JWT tokens. Generate with `openssl rand -base64 64`. |
 | `PORT` | No | `3001` | Port the backend API listens on. |
 | `UPLOAD_DIR` | No | `./uploads` | Directory for uploaded files (screenshots, etc.). |
-| `NEXT_PUBLIC_API_URL` | No | `http://localhost:3001` | Backend API URL as seen from the browser. **Build-time** — changing this requires rebuilding the web Docker image. |
 | `NEXT_INTERNAL_API_URL` | No | `http://server:3001` | Backend API URL for server-side rendering inside the Docker network. |
 | `WEB_PORT` | No | `3000` | Host port for the web UI (Docker Compose only). |
 | `AI_PROVIDER` | No | -- | AI translation provider: `openai`, `claude`, `deepl`, or `google`. Leave empty to disable. |
 | `AI_API_KEY` | No | -- | API key for the configured AI provider. |
 | `PGLITE_DATA_DIR` | No | `./data/pglite` | PGlite data directory (used when `DATABASE_URL` is not set). |
 
-> **Note:** `NEXT_PUBLIC_*` variables are baked into the frontend JavaScript bundle at build time. Changing them after the build has no effect. In Docker, rebuild the web image: `docker compose build web`.
 
 ## Architecture
 
@@ -159,12 +157,6 @@ On a fresh install there are no user accounts yet. The app should redirect you t
 
 **Server won't start**
 `JWT_SECRET` is required in all configurations. For Docker, `POSTGRES_PASSWORD` is also required. Check your `.env` (Docker) or `packages/server/.env` (local) and make sure both are set.
-
-**Frontend shows wrong API URL**
-`NEXT_PUBLIC_API_URL` is a build-time variable. Rebuild the web image after changing it:
-```bash
-docker compose build web && docker compose up -d web
-```
 
 **Data lost after restart (Docker)**
 Make sure you are using `docker compose down` (not `docker compose down -v`). The `-v` flag removes named volumes and all data with them.

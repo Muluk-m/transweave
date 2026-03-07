@@ -77,14 +77,12 @@ pnpm dev:web
 | `JWT_SECRET` | 是 | -- | JWT Token 签名密钥。用 `openssl rand -base64 64` 生成。 |
 | `PORT` | 否 | `3001` | 后端 API 监听端口。 |
 | `UPLOAD_DIR` | 否 | `./uploads` | 上传文件存储目录（截图等）。 |
-| `NEXT_PUBLIC_API_URL` | 否 | `http://localhost:3001` | 浏览器访问的后端 API 地址。**构建时变量** —— 修改后需重新构建 web 镜像。 |
 | `NEXT_INTERNAL_API_URL` | 否 | `http://server:3001` | Docker 网络内部服务端渲染使用的后端地址。 |
 | `WEB_PORT` | 否 | `3000` | Web UI 对外暴露的端口（仅 Docker Compose）。 |
 | `AI_PROVIDER` | 否 | -- | AI 翻译服务商：`openai`、`claude`、`deepl` 或 `google`。留空则禁用。 |
 | `AI_API_KEY` | 否 | -- | 对应 AI 服务商的 API key。 |
 | `PGLITE_DATA_DIR` | 否 | `./data/pglite` | PGlite 数据目录（`DATABASE_URL` 未设置时生效）。 |
 
-> **注意：** `NEXT_PUBLIC_*` 变量在构建时嵌入前端 JavaScript bundle，修改后不会生效。Docker 下需重新构建：`docker compose build web`。
 
 ## 架构
 
@@ -159,12 +157,6 @@ docker compose down -v
 
 **服务端无法启动**
 所有配置下 `JWT_SECRET` 都是必填项。Docker 还额外需要 `POSTGRES_PASSWORD`。请检查 `.env`（Docker）或 `packages/server/.env`（本地）是否都已设置。
-
-**前端 API 地址不对**
-`NEXT_PUBLIC_API_URL` 是构建时变量，修改后需重新构建 web 镜像：
-```bash
-docker compose build web && docker compose up -d web
-```
 
 **重启后数据丢失（Docker）**
 请使用 `docker compose down`，而非 `docker compose down -v`。`-v` 参数会删除 named volume 及其中的所有数据。

@@ -11,7 +11,8 @@
     "build:web": "pnpm --filter ./packages/web build",
     "build:server": "pnpm --filter ./packages/server build",
     "dev:cli": "pnpm --filter ./packages/cli dev",
-    "build:cli": "pnpm --filter ./packages/cli build"
+    "build:cli": "pnpm --filter ./packages/cli build",
+    "release": "bumpp --commit 'release: v%s' --tag 'v%s' --push"
   },
   "keywords": [],
   "author": "",

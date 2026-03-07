@@ -12,8 +12,6 @@ RUN pnpm install --frozen-lockfile
 # Stage 3: Build
 FROM deps AS builder
 COPY packages/web ./packages/web
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN pnpm --filter @transweave/web build
 
 # Stage 4: Production runner (standalone mode — no pnpm needed)

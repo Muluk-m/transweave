@@ -1,3 +1,14 @@
+# =============================================================================
+# Transweave — Production Self-Hosting
+# =============================================================================
+# Quick start:
+#   1. Copy .env.example to .env and set JWT_SECRET + POSTGRES_PASSWORD
+#   2. docker compose -f docker-compose.production.yml up -d
+#
+# Images are pulled from ghcr.io/muluk-m/transweave-{server,web}:latest
+# Pin a specific version by replacing :latest with e.g. :1.2.3
+# =============================================================================
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -15,9 +26,7 @@ services:
     restart: unless-stopped
 
   server:
-    build:
-      context: .
-      dockerfile: packages/server/Dockerfile
+    image: ghcr.io/muluk-m/transweave-server:latest
     depends_on:
       postgres:
         condition: service_healthy
@@ -28,9 +37,7 @@ services:
     restart: unless-stopped
 
   web:
-    build:
-      context: .
-      dockerfile: packages/web/Dockerfile
+    image: ghcr.io/muluk-m/transweave-web:latest
     depends_on:
       - server
     environment:
@@ -41,6 +48,4 @@ services:
 
 volumes:
   pgdata:
-    # WARNING: Adding name: creates a new volume. Existing data in the old implicit
-    # volume must be manually migrated. See docs for guidance.
     name: transweave-pgdata
