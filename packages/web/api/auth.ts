@@ -76,20 +76,19 @@ export async function getCurrentUser(): Promise<User> {
 /**
  * Update user profile
  */
-export async function updateUserProfile(userId: string, data: {
+export async function updateUserProfile(data: {
   name?: string;
-  email?: string;
   avatar?: string;
 }): Promise<User> {
-  return apiClient.put<User>(`/api/users/${userId}`, data);
+  return apiClient.put<User>('/api/user/profile', data);
 }
 
 /**
  * Change password
  */
-export async function changePassword(oldPassword: string, newPassword: string): Promise<{success: boolean; message: string}> {
-  return apiClient.post<{success: boolean; message: string}>(`/api/users/change-password`, {
-    oldPassword,
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{success: boolean; message: string}> {
+  return apiClient.post<{success: boolean; message: string}>('/api/user/change-password', {
+    currentPassword,
     newPassword
   });
 }

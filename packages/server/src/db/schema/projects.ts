@@ -2,8 +2,8 @@ import { boolean, index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-o
 import { teams } from './teams';
 
 export interface ProjectModule {
-  name: string;
   code: string;
+  description?: string;
 }
 
 export const projects = pgTable(

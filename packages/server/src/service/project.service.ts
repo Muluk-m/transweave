@@ -104,10 +104,10 @@ export class ProjectService {
       const normalizedMap = new Map<string, ProjectModule>();
       (updateData.modules as any[]).forEach((m: any) => {
         if (typeof m === 'string') {
-          if (!normalizedMap.has(m)) normalizedMap.set(m, { name: m, code: m });
+          if (!normalizedMap.has(m)) normalizedMap.set(m, { code: m });
         } else if (m && typeof m.code === 'string') {
           if (!normalizedMap.has(m.code)) {
-            normalizedMap.set(m.code, { name: m.name || m.code, code: m.code });
+            normalizedMap.set(m.code, { code: m.code, description: m.description });
           }
         }
       });
@@ -274,8 +274,8 @@ export class ProjectService {
     const project = await this.projectRepository.findById(id);
     if (!project) throw new NotFoundException('项目不存在');
 
-    if (!module.name || !module.code) {
-      throw new BadRequestException('模块名称和代码必须齐全');
+    if (!module.code) {
+      throw new BadRequestException('模块代码不能为空');
     }
     if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(module.code)) {
       throw new BadRequestException('模块名只能包含字母、数字和下划线，且必须以字母开头');

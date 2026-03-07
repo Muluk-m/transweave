@@ -10,6 +10,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   error: string | null;
   needsSetup: boolean;
@@ -80,6 +81,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const refreshUser = async () => {
+    const response = await checkAuthStatus();
+    setUser(response.user);
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('authToken');
@@ -97,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         register,
         logout,
+        refreshUser,
         isAuthenticated: !!user,
         error,
         needsSetup,

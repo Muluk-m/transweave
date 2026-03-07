@@ -37,7 +37,7 @@ export async function updateProject(id: string, data: {
   description?: string;
   languages?: string[];
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
-  modules?: Array<{ name: string; code: string }>;
+  modules?: Array<{ code: string; description?: string }>;
   url?: string;
   enableVersioning?: boolean;
 }): Promise<Project> {
@@ -173,7 +173,7 @@ export async function batchUpdateTokenModule(
 }
 
 // Module management
-export async function addModule(projectId: string, data: { name: string; code: string }): Promise<Project> {
+export async function addModule(projectId: string, data: { code: string; description?: string }): Promise<Project> {
   return apiClient.post(`${API_BASE}/module/${projectId}`, data);
 }
 

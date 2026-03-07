@@ -7,12 +7,12 @@ import { nowProjectAtom } from "@/jotai";
 import type { ProjectModule } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Table,
@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Package } from "lucide-react";
+import { Plus, Trash2, Package, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addModule, removeModule, getModuleStats } from "@/api/project";
 
@@ -42,13 +42,21 @@ export function ProjectModulesTab() {
   const [project, setProject] = useAtom(nowProjectAtom);
   const { toast } = useToast();
   const t = useTranslations("modules");
-  const [newModuleName, setNewModuleName] = useState("");
   const [newModuleCode, setNewModuleCode] = useState("");
+  const [newModuleDescription, setNewModuleDescription] = useState("");
   const [moduleError, setModuleError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [moduleTokenCounts, setModuleTokenCounts] = useState<Record<string, number>>({});
 
   const modules: ProjectModule[] = project?.modules || [];
+  const [showAddForm, setShowAddForm] = useState(modules.length === 0);
+
+  // Sync form visibility with module count
+  useEffect(() => {
+    if (modules.length === 0) {
+      setShowAddForm(true);
+    }
+  }, [modules.length]);
 
   // Fetch module token counts from backend
   const fetchModuleStats = useCallback(async () => {
@@ -75,12 +83,11 @@ export function ProjectModulesTab() {
     return moduleTokenCounts[moduleCode] || 0;
   };
 
-  // 添加模块
   const handleAddModule = async () => {
     setModuleError("");
 
-    if (!newModuleName || !newModuleCode) {
-      setModuleError(t("nameCodeRequired"));
+    if (!newModuleCode) {
+      setModuleError(t("codeRequired"));
       return;
     }
 
@@ -99,12 +106,12 @@ export function ProjectModulesTab() {
     setIsLoading(true);
     try {
       const updatedProject = await addModule(project.id, {
-        name: newModuleName,
         code: newModuleCode,
+        description: newModuleDescription || undefined,
       });
       setProject(updatedProject);
-      setNewModuleName("");
       setNewModuleCode("");
+      setNewModuleDescription("");
 
       toast({
         title: t("addSuccess"),
@@ -121,7 +128,6 @@ export function ProjectModulesTab() {
     }
   };
 
-  // 删除模块
   const handleDeleteModule = async (moduleCode: string) => {
     if (!project) return;
 
@@ -148,100 +154,105 @@ export function ProjectModulesTab() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
-        <p className="text-gray-600">
-          {t("description")}
-        </p>
-      </div>
-
+    <div className="p-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            {t("addNew")}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {t("title")}
+                {modules.length > 0 && (
+                  <Badge variant="secondary">{modules.length}</Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {t("description")}
+              </CardDescription>
+            </div>
+            {modules.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddForm(!showAddForm)}
+              >
+                {showAddForm ? (
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-1" />
+                )}
+                {t("addButton")}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex-1">
-              <Label htmlFor="moduleName" className="text-sm mb-1 block">
-                {t("moduleName")}
-              </Label>
-              <Input
-                id="moduleName"
-                value={newModuleName}
-                onChange={(e) => {
-                  setNewModuleName(e.target.value);
-                  setModuleError("");
-                }}
-                placeholder={t("moduleNamePlaceholder")}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddModule();
-                  }
-                }}
-              />
+          {/* Inline add form */}
+          {showAddForm && (
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label htmlFor="moduleCode" className="text-sm font-medium mb-1 block">
+                    {t("moduleCode")}
+                  </label>
+                  <Input
+                    id="moduleCode"
+                    value={newModuleCode}
+                    onChange={(e) => {
+                      setNewModuleCode(e.target.value);
+                      setModuleError("");
+                    }}
+                    placeholder={t("moduleCodePlaceholder")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddModule();
+                    }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="moduleDescription" className="text-sm font-medium mb-1 block">
+                    {t("moduleDescription")}
+                  </label>
+                  <Input
+                    id="moduleDescription"
+                    value={newModuleDescription}
+                    onChange={(e) => setNewModuleDescription(e.target.value)}
+                    placeholder={t("moduleDescriptionPlaceholder")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddModule();
+                    }}
+                  />
+                </div>
+                <Button onClick={handleAddModule} disabled={isLoading}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  {t("addButton")}
+                </Button>
+              </div>
+              {moduleError && (
+                <p className="text-sm text-red-500">{moduleError}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t("codeHint", { example: "smartShield.login.title" })}
+              </p>
             </div>
-            <div className="flex-1">
-              <Label htmlFor="moduleCode" className="text-sm mb-1 block">
-                {t("moduleCode")}
-              </Label>
-              <Input
-                id="moduleCode"
-                value={newModuleCode}
-                onChange={(e) => {
-                  setNewModuleCode(e.target.value);
-                  setModuleError("");
-                }}
-                placeholder={t("moduleCodePlaceholder")}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddModule();
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {moduleError && (
-              <p className="text-sm text-red-500 flex-1">{moduleError}</p>
-            )}
-            <Button onClick={handleAddModule} disabled={isLoading} className="ml-auto">
-              <Plus className="h-4 w-4 mr-1" />
-              {t("addButton")}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {t("codeHint", { example: "smartShield.link" })}
-          </p>
-        </CardContent>
-      </Card>
+          )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {t("currentModules")}
-            <Badge variant="secondary">{modules.length}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          {/* Module list */}
           {modules.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">{t("noModules")}</p>
-              <p className="text-sm">{t("noModulesHint")}</p>
-            </div>
+            !showAddForm && (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">{t("noModules")}</p>
+                <p className="text-xs mt-1">{t("noModulesHint")}</p>
+              </div>
+            )
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">{t("tableModuleName")}</TableHead>
                   <TableHead className="w-[200px]">{t("tableModuleCode")}</TableHead>
-                  <TableHead>{t("tableTokenCount")}</TableHead>
-                  <TableHead className="text-right">{t("tableActions")}</TableHead>
+                  <TableHead>{t("tableDescription")}</TableHead>
+                  <TableHead className="w-[120px]">{t("tableTokenCount")}</TableHead>
+                  <TableHead className="text-right w-[80px]">{t("tableActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -250,16 +261,13 @@ export function ProjectModulesTab() {
 
                   return (
                     <TableRow key={module.code}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-gray-500" />
-                          <span className="text-gray-900">{module.name}</span>
-                        </div>
-                      </TableCell>
                       <TableCell>
                         <code className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
                           {module.code}
                         </code>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {module.description || "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant={tokenCount > 0 ? "default" : "secondary"}>
@@ -288,9 +296,7 @@ export function ProjectModulesTab() {
                                     {t("moveTokensFirst")}
                                   </>
                                 ) : (
-                                  <>
-                                    {t("confirmDeleteDescription", { name: module.name, code: module.code })}
-                                  </>
+                                  t("confirmDeleteDescription", { code: module.code })
                                 )}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -316,7 +322,6 @@ export function ProjectModulesTab() {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, LoggerService } from '@nestjs/common';
+import { INestApplication, LoggerService, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import * as path from 'path';
@@ -37,6 +37,11 @@ describe('Transweave Server (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication({ logger: new SilentLogger() });
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
     await app.init();
   }, 60000);
 
@@ -718,6 +723,102 @@ describe('Transweave Server (e2e)', () => {
           // Should have binary response (ZIP)
           expect(res.headers['content-type']).toContain('application/zip');
         });
+    });
+  });
+
+  // ─── User Profile & Password ─────────────────────────────────────────────
+
+  describe('User Profile & Password', () => {
+    it('GET /api/user/me should return current user info', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/user/me')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(res.body.name).toBeDefined();
+      expect(res.body.email).toBe('admin@e2e.test');
+    });
+
+    it('PUT /api/user/profile should update name', async () => {
+      const res = await request(app.getHttpServer())
+        .put('/api/user/profile')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ name: 'Updated Name' })
+        .expect(200);
+
+      expect(res.body.name).toBe('Updated Name');
+    });
+
+    it('PUT /api/user/profile should update avatar', async () => {
+      const res = await request(app.getHttpServer())
+        .put('/api/user/profile')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ avatar: 'https://example.com/avatar.png' })
+        .expect(200);
+
+      expect(res.body.avatar).toBe('https://example.com/avatar.png');
+    });
+
+    it('GET /api/user/me should reflect updated name and avatar', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/user/me')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(res.body.name).toBe('Updated Name');
+      expect(res.body.avatar).toBe('https://example.com/avatar.png');
+    });
+
+    it('POST /api/user/change-password should reject wrong current password', () => {
+      return request(app.getHttpServer())
+        .post('/api/user/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ currentPassword: 'wrongPassword', newPassword: 'newPassword123' })
+        .expect(401);
+    });
+
+    it('POST /api/user/change-password should reject too-short new password', () => {
+      return request(app.getHttpServer())
+        .post('/api/user/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ currentPassword: 'Password123!', newPassword: 'short' })
+        .expect(400);
+    });
+
+    it('POST /api/user/change-password should succeed with valid passwords', () => {
+      return request(app.getHttpServer())
+        .post('/api/user/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ currentPassword: 'Password123!', newPassword: 'newPassword123' })
+        .expect(201);
+    });
+
+    it('POST /api/auth/login should succeed with new password', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ email: 'admin@e2e.test', password: 'newPassword123' })
+        .expect(201);
+
+      expect(res.body.success).toBe(true);
+      jwtToken = res.body.token;
+    });
+
+    it('POST /api/user/change-password should restore original password', () => {
+      return request(app.getHttpServer())
+        .post('/api/user/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ currentPassword: 'newPassword123', newPassword: 'Password123!' })
+        .expect(201);
+    });
+
+    it('PUT /api/user/profile should restore original name', async () => {
+      const res = await request(app.getHttpServer())
+        .put('/api/user/profile')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ name: 'Admin User' })
+        .expect(200);
+
+      expect(res.body.name).toBe('Admin User');
     });
   });
 

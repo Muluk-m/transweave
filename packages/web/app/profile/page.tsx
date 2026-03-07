@@ -26,7 +26,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { updateUserProfile } from "@/api/auth";
+import { updateUserProfile, changePassword } from "@/api/auth";
 import { useTranslations } from "next-intl";
 
 interface ProfileFormValues {
@@ -41,13 +41,29 @@ const profileFormSchema = (t: (key: string) => string) => z.object({
   avatar: z.string().url({ message: t('profile.form.validation.avatarUrlInvalid') }).optional().or(z.literal(''))
 });
 
+interface PasswordFormValues {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+const passwordFormSchema = (t: (key: string) => string) => z.object({
+  currentPassword: z.string().min(1, { message: t('profile.password.validation.currentRequired') }),
+  newPassword: z.string().min(8, { message: t('profile.password.validation.newMinLength') }),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: t('profile.password.validation.confirmMismatch'),
+  path: ['confirmPassword'],
+});
+
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const t = useTranslations();
 
-  // Initialize form
+  // Initialize profile form
   const resolve = zodResolver as any;
   const form = useForm<ProfileFormValues>({
     resolver: resolve(profileFormSchema(t)),
@@ -55,6 +71,16 @@ export default function ProfilePage() {
       name: "",
       email: "",
       avatar: ""
+    }
+  });
+
+  // Initialize password form
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: resolve(passwordFormSchema(t)),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
     }
   });
 
@@ -69,17 +95,18 @@ export default function ProfilePage() {
     }
   }, [user, form]);
 
-  // Handle submit
+  // Handle profile submit
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
-      await updateUserProfile(user.userId, {
+      await updateUserProfile({
         name: data.name,
-        email: data.email,
         avatar: data.avatar || undefined
       });
+
+      await refreshUser();
 
       toast({
         title: t('profile.notifications.updateSuccess'),
@@ -93,6 +120,29 @@ export default function ProfilePage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle password change
+  const onPasswordSubmit = async (data: PasswordFormValues) => {
+    setIsChangingPassword(true);
+    try {
+      await changePassword(data.currentPassword, data.newPassword);
+
+      toast({
+        title: t('profile.password.success'),
+        description: t('profile.password.successDesc')
+      });
+
+      passwordForm.reset();
+    } catch (error) {
+      toast({
+        title: t('profile.password.failed'),
+        description: error instanceof Error ? error.message : "Unable to change password",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -157,7 +207,7 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -165,13 +215,14 @@ export default function ProfilePage() {
                     <FormItem>
                       <FormLabel>{t('profile.form.email')}</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} disabled />
                       </FormControl>
+                      <p className="text-sm text-muted-foreground">{t('profile.form.emailReadonly')}</p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="avatar"
@@ -185,7 +236,7 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
@@ -194,6 +245,73 @@ export default function ProfilePage() {
                     </>
                   ) : (
                     t('profile.form.saveChanges')
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>{t('profile.password.title')}</CardTitle>
+            <CardDescription>
+              {t('profile.password.description')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('profile.password.currentPassword')}</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('profile.password.newPassword')}</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('profile.password.confirmPassword')}</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" disabled={isChangingPassword}>
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('profile.password.changing')}
+                    </>
+                  ) : (
+                    t('profile.password.changeButton')
                   )}
                 </Button>
               </form>

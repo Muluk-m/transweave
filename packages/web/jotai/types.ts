@@ -33,8 +33,8 @@ export interface Membership {
 }
 
 export interface ProjectModule {
-  name: string;  // 模块名称（中文）
-  code: string;  // 模块代码（英文，用作 key 前缀）
+  code: string;        // 模块代码，用作 key 前缀
+  description?: string; // 可选描述
 }
 
 export interface Project {

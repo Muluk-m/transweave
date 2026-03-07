@@ -48,7 +48,7 @@ export class UpdateProjectDto {
 
   @IsOptional()
   @IsArray()
-  modules?: Array<{ name: string; code: string }>;
+  modules?: Array<{ code: string; description?: string }>;
 
   @IsOptional()
   @IsString()

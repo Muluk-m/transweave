@@ -125,14 +125,14 @@ export class ProjectController {
   @UseGuards(AuthGuard)
   async addModule(
     @Param('id') id: string,
-    @Body() data: { name: string; code: string },
+    @Body() data: { code: string; description?: string },
     @CurrentUser() user: UserPayload,
   ) {
     const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
     if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.addModule(
       id,
-      { name: data.name, code: data.code },
+      { code: data.code, description: data.description },
       user.userId,
     );
   }

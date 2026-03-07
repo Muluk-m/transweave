@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useEffect, useState } from "react";
-import { Project, ActivityLog, ActivityType } from "@/jotai/types";
+import { Project, ProjectModule, ActivityLog, ActivityType } from "@/jotai/types";
 import {
   Card,
   CardContent,
@@ -195,7 +195,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     tags: string[];
     lastUpdated: string;
     teamMembers: number;
-    modules: { name: string; code: string }[];
+    modules: ProjectModule[];
     moduleStats: Map<string, { name: string; code: string; count: number }>;
     tokensWithoutModule: number;
   } = useMemo(() => {
@@ -207,7 +207,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         tags: [] as string[],
         lastUpdated: t("today"),
         teamMembers: 0,
-        modules: [] as { name: string; code: string }[],
+        modules: [] as ProjectModule[],
         moduleStats: new Map<string, { name: string; code: string; count: number }>(),
         tokensWithoutModule: 0,
       };
@@ -244,7 +244,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         const moduleInfo = modules.find(m => m.code === token.module);
         const current = moduleStats.get(token.module);
         moduleStats.set(token.module, {
-          name: moduleInfo?.name || token.module,
+          name: moduleInfo?.description || token.module,
           code: token.module,
           count: (current?.count || 0) + 1
         });

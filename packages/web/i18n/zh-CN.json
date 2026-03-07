@@ -447,6 +447,7 @@
     "form": {
       "username": "用户名",
       "email": "电子邮箱",
+      "emailReadonly": "邮箱地址不可修改",
       "avatar": "头像URL",
       "avatarPlaceholder": "https://example.com/avatar.jpg",
       "saveChanges": "保存更改",
@@ -455,6 +456,23 @@
         "nameRequired": "用户名至少需要 2 个字符",
         "emailInvalid": "请输入有效的电子邮箱地址",
         "avatarUrlInvalid": "请输入有效的图片URL"
+      }
+    },
+    "password": {
+      "title": "修改密码",
+      "description": "更新您的账户密码",
+      "currentPassword": "当前密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码",
+      "changeButton": "修改密码",
+      "changing": "修改中...",
+      "success": "密码修改成功",
+      "successDesc": "您的密码已成功更新",
+      "failed": "密码修改失败",
+      "validation": {
+        "currentRequired": "请输入当前密码",
+        "newMinLength": "新密码至少需要 8 个字符",
+        "confirmMismatch": "两次输入的密码不一致"
       }
     },
     "notifications": {
@@ -1130,15 +1148,14 @@
     }
   },
   "modules": {
-    "title": "模块管理",
-    "description": "管理项目的功能模块，用于组织和规范翻译 key 的命名空间",
-    "addNew": "添加新模块",
-    "moduleName": "模块名称（中文）",
-    "moduleNamePlaceholder": "例如：智能绿盾",
-    "moduleCode": "模块代码（英文）",
+    "title": "模块",
+    "description": "按功能模块组织翻译 key 的命名空间",
+    "moduleCode": "模块代码",
     "moduleCodePlaceholder": "例如：smartShield",
-    "addButton": "添加模块",
-    "nameCodeRequired": "模块名称和代码不能为空",
+    "moduleDescription": "描述（可选）",
+    "moduleDescriptionPlaceholder": "例如：智能绿盾模块",
+    "addButton": "添加",
+    "codeRequired": "模块代码不能为空",
     "codeFormatError": "模块代码只能包含字母、数字和下划线，且必须以字母开头",
     "codeExists": "该模块代码已存在",
     "addSuccess": "添加成功",
@@ -1148,21 +1165,20 @@
     "deleteSuccess": "删除成功",
     "moduleDeleted": "模块已删除",
     "deleteFailed": "删除失败",
-    "currentModules": "当前模块",
     "noModules": "暂无模块",
     "noModulesHint": "添加第一个模块，开始组织你的翻译 key",
-    "tableModuleName": "模块名称",
     "tableModuleCode": "模块代码",
+    "tableDescription": "描述",
     "tableTokenCount": "词条数量",
     "tableActions": "操作",
     "tokenCount": "{count} 个词条",
     "confirmDelete": "确认删除模块？",
     "hasTokensCannotDelete": "该模块下还有 {count} 个词条，无法删除。",
     "moveTokensFirst": "请先删除或移动这些词条到其他模块。",
-    "confirmDeleteDescription": "确定要删除模块 {name} ({code}) 吗？此操作无法撤销。",
+    "confirmDeleteDescription": "确定要删除模块 {code} 吗？此操作无法撤销。",
     "cancelButton": "取消",
     "confirmDeleteButton": "确认删除",
-    "codeHint": "模块名称用于展示，模块代码将作为 key 前缀，例如：{example}"
+    "codeHint": "代码作为 key 前缀，如: {example}"
   },
   "dataTable": {
     "selectedRows": "已选 {selected} 行，共 {total} 行",

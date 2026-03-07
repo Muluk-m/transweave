@@ -887,7 +887,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                   <SelectItem value="__no_module__">{t("noModuleFilter")}</SelectItem>
                   {(project?.modules || []).map((module) => (
                     <SelectItem key={module.code} value={module.code}>
-                      {module.name}
+                      {module.description || module.code}
                     </SelectItem>
                   ))}
                 </SelectContent>

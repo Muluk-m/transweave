@@ -80,7 +80,7 @@ interface TokenFormDrawerProps {
   };
   languages?: string[];
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
-  modules?: Array<{ name: string; code: string }>;
+  modules?: Array<{ code: string; description?: string }>;
   currentToken?: Token;
   onInputChange: (
     e:
@@ -433,8 +433,10 @@ export function TokenFormDrawer({
                   {modules.map((module) => (
                     <SelectItem key={module.code} value={module.code}>
                       <div className="flex items-center gap-2">
-                        <span>{module.name}</span>
-                        <code className="text-xs text-gray-500">({module.code})</code>
+                        <code className="text-sm">{module.code}</code>
+                        {module.description && (
+                          <span className="text-xs text-gray-500">({module.description})</span>
+                        )}
                       </div>
                     </SelectItem>
                   ))}

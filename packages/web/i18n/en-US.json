@@ -447,6 +447,7 @@
     "form": {
       "username": "Username",
       "email": "Email",
+      "emailReadonly": "Email cannot be changed",
       "avatar": "Avatar URL",
       "avatarPlaceholder": "https://example.com/avatar.jpg",
       "saveChanges": "Save Changes",
@@ -455,6 +456,23 @@
         "nameRequired": "Username must be at least 2 characters",
         "emailInvalid": "Please enter a valid email address",
         "avatarUrlInvalid": "Please enter a valid image URL"
+      }
+    },
+    "password": {
+      "title": "Change Password",
+      "description": "Update your account password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "changeButton": "Change Password",
+      "changing": "Changing...",
+      "success": "Password Changed",
+      "successDesc": "Your password has been updated successfully",
+      "failed": "Password Change Failed",
+      "validation": {
+        "currentRequired": "Current password is required",
+        "newMinLength": "New password must be at least 8 characters",
+        "confirmMismatch": "Passwords do not match"
       }
     },
     "notifications": {
@@ -1130,15 +1148,14 @@
     }
   },
   "modules": {
-    "title": "Module Management",
-    "description": "Manage project modules to organize and standardize translation key namespaces",
-    "addNew": "Add New Module",
-    "moduleName": "Module Name",
-    "moduleNamePlaceholder": "e.g., Smart Shield",
+    "title": "Modules",
+    "description": "Organize translation keys by functional modules",
     "moduleCode": "Module Code",
     "moduleCodePlaceholder": "e.g., smartShield",
-    "addButton": "Add Module",
-    "nameCodeRequired": "Module name and code are required",
+    "moduleDescription": "Description (optional)",
+    "moduleDescriptionPlaceholder": "e.g., Smart Shield module",
+    "addButton": "Add",
+    "codeRequired": "Module code is required",
     "codeFormatError": "Module code can only contain letters, numbers, and underscores, and must start with a letter",
     "codeExists": "This module code already exists",
     "addSuccess": "Added successfully",
@@ -1148,21 +1165,20 @@
     "deleteSuccess": "Deleted successfully",
     "moduleDeleted": "Module deleted",
     "deleteFailed": "Failed to delete",
-    "currentModules": "Current Modules",
     "noModules": "No modules",
     "noModulesHint": "Add the first module to start organizing your translation keys",
-    "tableModuleName": "Module Name",
     "tableModuleCode": "Module Code",
+    "tableDescription": "Description",
     "tableTokenCount": "Token Count",
     "tableActions": "Actions",
     "tokenCount": "{count} tokens",
     "confirmDelete": "Confirm delete module?",
     "hasTokensCannotDelete": "This module still has {count} tokens and cannot be deleted.",
     "moveTokensFirst": "Please delete or move these tokens to another module first.",
-    "confirmDeleteDescription": "Are you sure you want to delete module {name} ({code})? This action cannot be undone.",
+    "confirmDeleteDescription": "Are you sure you want to delete module {code}? This action cannot be undone.",
     "cancelButton": "Cancel",
     "confirmDeleteButton": "Confirm Delete",
-    "codeHint": "Module name is for display, module code will be used as key prefix, e.g.: {example}"
+    "codeHint": "Code is used as key prefix, e.g.: {example}"
   },
   "dataTable": {
     "selectedRows": "{selected} of {total} row(s) selected",

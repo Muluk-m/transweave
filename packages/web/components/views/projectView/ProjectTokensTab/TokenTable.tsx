@@ -61,7 +61,7 @@ interface TokenTableProps {
   totalCount: number;
   languages: string[];
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
-  modules?: Array<{ name: string; code: string }>;
+  modules?: Array<{ code: string; description?: string }>;
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
   onDeleteSelected: (selected: string[]) => void;
@@ -251,7 +251,7 @@ export function TokenTable({
         }
 
         const moduleInfo = modules.find((m) => m.code === moduleCode);
-        const label = moduleInfo ? moduleInfo.name : moduleCode;
+        const label = moduleInfo?.description || moduleCode;
 
         return (
           <TooltipProvider>
@@ -503,10 +503,12 @@ export function TokenTable({
                 {modules.map((module) => (
                   <SelectItem key={module.code} value={module.code}>
                     <div className="flex items-center gap-2">
-                      <span>{module.name}</span>
-                      <code className="text-xs text-muted-foreground">
-                        ({module.code})
-                      </code>
+                      <code className="text-sm">{module.code}</code>
+                      {module.description && (
+                        <span className="text-xs text-muted-foreground">
+                          ({module.description})
+                        </span>
+                      )}
                     </div>
                   </SelectItem>
                 ))}
