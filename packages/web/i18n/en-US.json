@@ -919,14 +919,7 @@
           "title": "Version Control",
           "description": "Track content revision history and allow rollbacks"
         },
-        "comments": {
-          "title": "Enable Comments",
-          "description": "Allow team members to comment and discuss translation content"
-        },
-        "public": {
-          "title": "Public Project",
-          "description": "Allow unauthenticated users to access translation data (read-only)"
-        }
+        "comingSoon": "Coming Soon"
       },
       "danger": {
         "title": "Danger Zone",

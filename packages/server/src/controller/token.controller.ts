@@ -179,6 +179,21 @@ export class TokenController {
     return this.tokenService.delete(tokenId, user.userId);
   }
 
+  /**
+   * POST /api/tokens/:tokenId/restore/:historyId
+   */
+  @Post(':tokenId/restore/:historyId')
+  @UseGuards(AuthGuard)
+  async restoreToken(
+    @Param('tokenId') tokenId: string,
+    @Param('historyId') historyId: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const token = await this.tokenService.findById(tokenId);
+    await this.checkPermission(token.projectId, user.userId);
+    return this.tokenService.restore(tokenId, historyId, user.userId);
+  }
+
   // ============= Parameterized sub-path routes =============
 
   /**

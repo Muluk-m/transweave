@@ -39,6 +39,7 @@ export async function updateProject(id: string, data: {
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: Array<{ name: string; code: string }>;
   url?: string;
+  enableVersioning?: boolean;
 }): Promise<Project> {
   return apiClient.put(`${API_BASE}/update/${id}`, data);
 }
@@ -147,6 +148,11 @@ export async function updateToken(tokenId: string, data: {
 // Delete token
 export async function deleteToken(tokenId: string): Promise<void> {
   return apiClient.delete(`${TOKEN_API_BASE}/${tokenId}`);
+}
+
+// Restore token to a specific history version
+export async function restoreTokenVersion(tokenId: string, historyId: string): Promise<Token> {
+  return apiClient.post(`${TOKEN_API_BASE}/${tokenId}/restore/${historyId}`, {});
 }
 
 // Bulk operation (delete, set-tags, set-module)

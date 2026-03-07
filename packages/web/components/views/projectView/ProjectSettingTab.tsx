@@ -49,10 +49,9 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
     const [newLanguageLabel, setNewLanguageLabel] = useState<string>("");
 
     // Project advanced settings
-    const [autoTranslate, setAutoTranslate] = useState<boolean>(false);
-    const [enableVersioning, setEnableVersioning] = useState<boolean>(true);
-    const [enableComments, setEnableComments] = useState<boolean>(true);
-    const [publicProject, setPublicProject] = useState<boolean>(false);
+    const [enableVersioning, setEnableVersioning] = useState<boolean>(
+        project?.enableVersioning ?? true
+    );
 
     // Add language
     const handleAddLanguage = () => {
@@ -125,22 +124,13 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
 
         // Simulate API request
         try {
-            console.log("Saving project settings:", {
-                // 暂未启用
-                settings: {
-                    autoTranslate,
-                    enableVersioning,
-                    enableComments,
-                    publicProject
-                }
-            });
-
             const projectInfo = await updateProject(project?.id, {
                 name: projectName,
                 url: projectUrl,
                 description: projectDescription,
                 languages: projectLanguages,
                 languageLabels: projectLanguageLabels,
+                enableVersioning,
             })
 
             setNowProject(projectInfo)
@@ -374,16 +364,17 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="autoTranslate" className="font-medium">{t('project.settings.advanced.autoTranslate.title')}</Label>
-                                    <p className="text-sm text-gray-500">{t('project.settings.advanced.autoTranslate.description')}</p>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="autoTranslate" className="font-medium text-muted-foreground">{t('project.settings.advanced.autoTranslate.title')}</Label>
+                                    <Badge variant="secondary" className="text-xs">{t('project.settings.advanced.comingSoon')}</Badge>
                                 </div>
                                 <Switch
                                     id="autoTranslate"
-                                    checked={autoTranslate}
-                                    onCheckedChange={setAutoTranslate}
+                                    checked={false}
+                                    disabled
                                 />
                             </div>
+                            <p className="text-sm text-gray-500">{t('project.settings.advanced.autoTranslate.description')}</p>
 
                             <Separator />
 
@@ -396,34 +387,6 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     id="enableVersioning"
                                     checked={enableVersioning}
                                     onCheckedChange={setEnableVersioning}
-                                />
-                            </div>
-
-                            <Separator />
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="enableComments" className="font-medium">{t('project.settings.advanced.comments.title')}</Label>
-                                    <p className="text-sm text-gray-500">{t('project.settings.advanced.comments.description')}</p>
-                                </div>
-                                <Switch
-                                    id="enableComments"
-                                    checked={enableComments}
-                                    onCheckedChange={setEnableComments}
-                                />
-                            </div>
-
-                            <Separator />
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="publicProject" className="font-medium">{t('project.settings.advanced.public.title')}</Label>
-                                    <p className="text-sm text-gray-500">{t('project.settings.advanced.public.description')}</p>
-                                </div>
-                                <Switch
-                                    id="publicProject"
-                                    checked={publicProject}
-                                    onCheckedChange={setPublicProject}
                                 />
                             </div>
                         </CardContent>

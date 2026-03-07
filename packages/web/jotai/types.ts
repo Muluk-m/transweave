@@ -50,11 +50,13 @@ export interface Project {
   languages: string[];
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: ProjectModule[];
+  enableVersioning?: boolean;
   createdAt?: number;
   updatedAt?: number;
 }
 
 export interface TokenHistory {
+  id: string;
   user?: User;
   translations: Record<string, any>;
   createdAt: string;

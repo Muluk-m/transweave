@@ -136,12 +136,13 @@ export class TokenService {
       throw error;
     }
 
-    // Insert initial history record
-    await this.tokenHistoryRepository.create({
-      tokenId: token.id,
-      userId: data.userId,
-      translations: data.translations || {},
-    });
+    // Insert initial history record if versioning is enabled
+    await this.maybeRecordHistory(
+      data.projectId,
+      token.id,
+      data.userId,
+      data.translations || {},
+    );
 
     // Log activity
     await this.activityLogService.create({
@@ -238,12 +239,13 @@ export class TokenService {
         JSON.stringify(currentTranslations);
 
       if (translationsChanged) {
-        // Create history record with the new translations delta
-        await this.tokenHistoryRepository.create({
+        // Create history record if versioning is enabled
+        await this.maybeRecordHistory(
+          token.projectId,
           tokenId,
-          userId: data.userId,
-          translations: data.translations,
-        });
+          data.userId,
+          data.translations,
+        );
       }
     }
 
@@ -353,6 +355,78 @@ export class TokenService {
     });
 
     return token;
+  }
+
+  /**
+   * Restore a token's translations to a specific historical version.
+   */
+  async restore(tokenId: string, historyId: string, userId: string) {
+    const [token, historyRecord] = await Promise.all([
+      this.tokenRepository.findById(tokenId),
+      this.tokenHistoryRepository.findById(historyId),
+    ]);
+
+    if (!token) {
+      throw new NotFoundException(`Token ${tokenId} not found`);
+    }
+    if (!historyRecord || historyRecord.tokenId !== tokenId) {
+      throw new NotFoundException(
+        `History record ${historyId} not found for token ${tokenId}`,
+      );
+    }
+
+    const restoredTranslations =
+      (historyRecord.translations as Record<string, string>) || {};
+
+    await Promise.all([
+      this.maybeRecordHistory(
+        token.projectId,
+        tokenId,
+        userId,
+        restoredTranslations,
+      ),
+      this.tokenRepository.update(tokenId, {
+        translations: restoredTranslations,
+      } as any),
+      this.activityLogService.create({
+        type: ActivityType.TOKEN_UPDATE,
+        projectId: token.projectId,
+        userId,
+        details: {
+          entityId: tokenId,
+          entityType: 'token',
+          entityName: token.key,
+          changes: [
+            {
+              field: 'translations',
+              oldValue: token.translations,
+              newValue: restoredTranslations,
+            },
+          ],
+          metadata: { operation: 'restore', historyId },
+        },
+      }),
+    ]);
+
+    return this.findById(tokenId);
+  }
+
+  // ============= Private Helpers =============
+
+  private async maybeRecordHistory(
+    projectId: string,
+    tokenId: string,
+    userId: string,
+    translations: Record<string, any>,
+  ): Promise<void> {
+    const project = await this.projectRepository.findById(projectId);
+    if (project?.enableVersioning) {
+      await this.tokenHistoryRepository.create({
+        tokenId,
+        userId,
+        translations,
+      });
+    }
   }
 
   // ============= Search & Filter (Plan 05-02) =============

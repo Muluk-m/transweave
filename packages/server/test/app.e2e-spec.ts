@@ -590,6 +590,96 @@ describe('Transweave Server (e2e)', () => {
     });
   });
 
+  // ─── Version Control ─────────────────────────────────────────────────────
+
+  describe('Version Control', () => {
+    let vcTokenId: string;
+    let historyId: string;
+
+    it('PUT /api/project/update/:id should persist enableVersioning', async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/api/project/update/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ enableVersioning: false })
+        .expect(200);
+
+      expect(res.body.enableVersioning).toBe(false);
+    });
+
+    it('should not create history when versioning is disabled', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/api/tokens')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          projectId,
+          key: 'vc.test',
+          translations: { en: 'Version 1' },
+        })
+        .expect(201);
+
+      vcTokenId = createRes.body.id;
+
+      const historyRes = await request(app.getHttpServer())
+        .get(`/api/tokens/${vcTokenId}/history`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(historyRes.body.length).toBe(0);
+    });
+
+    it('should create history when versioning is re-enabled', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/project/update/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ enableVersioning: true })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .put(`/api/tokens/${vcTokenId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ translations: { en: 'Version 2' } })
+        .expect(200);
+
+      const historyRes = await request(app.getHttpServer())
+        .get(`/api/tokens/${vcTokenId}/history`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(historyRes.body.length).toBe(1);
+      historyId = historyRes.body[0].id;
+    });
+
+    it('POST /api/tokens/:tokenId/restore/:historyId should restore version', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/tokens/${vcTokenId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ translations: { en: 'Version 3', 'zh-CN': '版本3' } })
+        .expect(200);
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/tokens/${vcTokenId}/restore/${historyId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(201);
+
+      expect(res.body.translations['en']).toBe('Version 2');
+      expect(res.body.translations['zh-CN']).toBeUndefined();
+    });
+
+    it('POST /api/tokens/:tokenId/restore/:historyId should 404 for mismatched history', () => {
+      return request(app.getHttpServer())
+        .post(`/api/tokens/${vcTokenId}/restore/00000000-0000-0000-0000-000000000000`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(404);
+    });
+
+    it('cleanup: delete version control test token', () => {
+      return request(app.getHttpServer())
+        .delete(`/api/tokens/${vcTokenId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+    });
+  });
+
   // ─── Import / Export ──────────────────────────────────────────────────────
 
   describe('Project Import/Export', () => {

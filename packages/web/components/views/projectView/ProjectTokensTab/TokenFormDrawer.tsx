@@ -52,6 +52,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TokenFormDrawerProps {
   isOpen: boolean;
@@ -82,6 +93,7 @@ interface TokenFormDrawerProps {
   onSubmit: () => void;
   onAddNew: () => void;
   onTranslate: () => void;
+  onRestoreVersion?: (historyId: string) => Promise<void>;
   aiConfigured?: boolean;
   projectId?: string;
 }
@@ -116,6 +128,7 @@ export function TokenFormDrawer({
   onSubmit,
   onAddNew,
   onTranslate,
+  onRestoreVersion,
   aiConfigured = false,
   projectId,
 }: TokenFormDrawerProps) {
@@ -537,6 +550,7 @@ export function TokenFormDrawer({
                     onRollback={(translation) => {
                       onTranslationChange(lang, translation);
                     }}
+                    onRestoreVersion={onRestoreVersion}
                   />
                 </div>
                 <Input
@@ -592,11 +606,25 @@ function TokenHistorySheet({
   history,
   lang,
   onRollback,
+  onRestoreVersion,
 }: {
   history: TokenHistory[];
   lang: string;
   onRollback: (translation: string) => void;
+  onRestoreVersion?: (historyId: string) => Promise<void>;
 }) {
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const handleRestore = async (historyId: string) => {
+    if (!onRestoreVersion) return;
+    setRestoringId(historyId);
+    try {
+      await onRestoreVersion(historyId);
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   return (
     <Sheet>
       <SheetTrigger>
@@ -629,14 +657,46 @@ function TokenHistorySheet({
                 >
                   <div className="flex justify-between items-center gap-2">
                     <span>{item.translations[lang] || ""}</span>
-                    <SheetClose asChild>
-                      <RotateCcw
-                        className="w-4 h-4 cursor-pointer"
-                        onClick={() => {
-                          onRollback(item.translations[lang]);
-                        }}
-                      />
-                    </SheetClose>
+                    <div className="flex items-center gap-2">
+                      {onRestoreVersion && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs px-2"
+                              disabled={restoringId === item.id}
+                            >
+                              {restoringId === item.id ? "恢复中..." : "恢复此版本"}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>确认恢复版本</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                此操作将使用该历史记录的翻译内容<strong>全量覆盖</strong>当前所有语言的翻译。已有的最新翻译可能会丢失。
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>取消</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRestore(item.id)}
+                              >
+                                确认恢复
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                      <SheetClose asChild>
+                        <RotateCcw
+                          className="w-4 h-4 cursor-pointer"
+                          onClick={() => {
+                            onRollback(item.translations[lang]);
+                          }}
+                        />
+                      </SheetClose>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-[12px] text-gray-500">
                     <Avatar className="h-4 w-4">

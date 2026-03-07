@@ -17,6 +17,7 @@ import {
   deleteToken,
   bulkTokenOperation,
   getProjectTags,
+  restoreTokenVersion,
 } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
@@ -780,6 +781,13 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onSubmit={handleSubmit}
         onAddNew={handleOpenAddDrawer}
         onTranslate={handleTranslate}
+        onRestoreVersion={async (historyId: string) => {
+          if (!currentToken) return;
+          await restoreTokenVersion(currentToken.id, historyId);
+          await fetchTokens();
+          toast({ title: "版本已恢复" });
+          setIsDrawerOpen(false);
+        }}
         aiConfigured={aiConfigured}
         projectId={project?.id}
       />

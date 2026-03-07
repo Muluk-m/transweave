@@ -919,14 +919,7 @@
           "title": "版本控制",
           "description": "追踪文案的修改历史并允许回滚"
         },
-        "comments": {
-          "title": "启用评论",
-          "description": "允许团队成员对翻译内容进行评论和讨论"
-        },
-        "public": {
-          "title": "公开项目",
-          "description": "允许未登录用户访问翻译数据（只读）"
-        }
+        "comingSoon": "即将推出"
       },
       "danger": {
         "title": "危险区域",

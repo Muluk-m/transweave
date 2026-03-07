@@ -54,6 +54,10 @@ export class UpdateProjectDto {
   @IsString()
   @MaxLength(500)
   url?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  enableVersioning?: boolean;
 }
 
 export class ExportProjectDto {
