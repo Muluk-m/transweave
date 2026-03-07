@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash, Save, AlertTriangle, Settings, Globe, FileText, Bot, ChevronDown, ChevronRight } from "lucide-react";
+import { Trash, Save, AlertTriangle, Settings, Globe, FileText, Bot, ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Languages, formatLanguageDisplay, isBuiltInLanguage } from "@/constants";
+import { formatLanguageDisplay } from "@/constants";
+import { LanguageCommandList } from "./LanguageCommandList";
 import { deleteProject, updateProject } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
@@ -38,75 +39,34 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
     const { toast } = useToast();
 
     // Project language management
-    const availableLanguages = Languages.keys;
     const [projectLanguages, setProjectLanguages] = useState<string[]>(
         project?.languages || ["en"]
     );
     const [projectLanguageLabels, setProjectLanguageLabels] = useState<Record<string, string>>(
         project?.languageLabels || {}
     );
-    const [newLanguageCode, setNewLanguageCode] = useState<string>("");
-    const [newLanguageLabel, setNewLanguageLabel] = useState<string>("");
 
     // Project advanced settings
     const [enableVersioning, setEnableVersioning] = useState<boolean>(
         project?.enableVersioning ?? true
     );
 
-    // Add language
-    const handleAddLanguage = () => {
-        if (!newLanguageCode) {
-            toast({
-                title: t('project.settings.languages.error.codeRequired'),
-                variant: 'destructive'
-            });
-            return;
-        }
-
-        if (projectLanguages.includes(newLanguageCode)) {
-            toast({
-                title: t('project.settings.languages.error.languageExists'),
-                variant: 'destructive'
-            });
-            return;
-        }
-
-        // 如果不是内置语言且没有填写中文备注，提示用户
-        if (!isBuiltInLanguage(newLanguageCode) && !newLanguageLabel) {
-            toast({
-                title: t('project.settings.languages.error.labelRequired'),
-                description: t('project.settings.languages.error.labelRequiredDescription'),
-                variant: 'destructive'
-            });
-            return;
-        }
-
-        // 如果是自定义语言，更新 languageLabels
-        if (!isBuiltInLanguage(newLanguageCode) && newLanguageLabel) {
-            setProjectLanguageLabels({
-                ...projectLanguageLabels,
-                [newLanguageCode]: newLanguageLabel
-            });
-            
-            toast({
-                title: t('project.settings.languages.customLanguageAdded'),
-                description: t('project.settings.languages.customLanguageAddedDescription', {
-                    code: newLanguageCode,
-                    label: newLanguageLabel
-                }),
-            });
-        }
-
-        setProjectLanguages([...projectLanguages, newLanguageCode]);
-        setNewLanguageCode("");
-        setNewLanguageLabel("");
-    };
-
     const router = useRouter()
 
-    // Remove language
-    const handleRemoveLanguage = (language: string) => {
-        setProjectLanguages(projectLanguages.filter(lang => lang !== language));
+    // Toggle language (add or remove)
+    const handleToggleLanguage = (code: string) => {
+        if (code === "en") return;
+        if (projectLanguages.includes(code)) {
+            setProjectLanguages(projectLanguages.filter(lang => lang !== code));
+        } else {
+            setProjectLanguages([...projectLanguages, code]);
+        }
+    };
+
+    // Add custom language
+    const handleAddCustomLanguage = (code: string, label: string) => {
+        setProjectLanguageLabels({ ...projectLanguageLabels, [code]: label });
+        setProjectLanguages([...projectLanguages, code]);
     };
 
     // Save project settings
@@ -266,21 +226,21 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             <CardDescription>{t('project.settings.languages.description')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {/* Current languages as badges */}
                             <div className="space-y-2">
                                 <Label>{t('project.settings.languages.current')}</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {sortedLanguages.map(lang => (
                                         <Badge key={lang} variant="outline" className="flex items-center gap-1 py-1.5">
                                             {formatLanguageDisplay(lang, projectLanguageLabels)}
-                                            {
-                                                lang !== "en" && (
-                                                    <button
-                                                        onClick={() => handleRemoveLanguage(lang)}
-                                                        className="ml-1 text-gray-500 hover:text-red-500"
-                                                    >
-                                                        <Trash className="h-3 w-3" />
-                                                    </button>)
-                                            }
+                                            {lang !== "en" && (
+                                                <button
+                                                    onClick={() => handleToggleLanguage(lang)}
+                                                    className="ml-1 text-gray-500 hover:text-red-500"
+                                                >
+                                                    <Trash className="h-3 w-3" />
+                                                </button>
+                                            )}
                                         </Badge>
                                     ))}
                                 </div>
@@ -289,55 +249,13 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label>{t('project.settings.languages.add')}</Label>
-                                <div className="flex gap-2">
-                                    <div className="flex-1 space-y-2">
-                                        <Input
-                                            value={newLanguageCode}
-                                            onChange={(e) => setNewLanguageCode(e.target.value)}
-                                            placeholder={t('project.settings.languages.codePlaceholder')}
-                                        />
-                                        <Input
-                                            value={newLanguageLabel}
-                                            onChange={(e) => setNewLanguageLabel(e.target.value)}
-                                            placeholder={t('project.settings.languages.labelPlaceholder')}
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            {t('project.settings.languages.addHelpText')}
-                                        </p>
-                                    </div>
-                                    <Button
-                                        onClick={handleAddLanguage}
-                                        className="flex items-center gap-1 self-start"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                        {t('common.add')}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>{t('project.settings.languages.common')}</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {availableLanguages.map(lang => (
-                                        <Badge
-                                            key={lang}
-                                            variant={projectLanguages.includes(lang) ? "default" : "outline"}
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                if (projectLanguages.includes(lang)) {
-                                                    handleRemoveLanguage(lang);
-                                                } else {
-                                                    setProjectLanguages([...projectLanguages, lang]);
-                                                }
-                                            }}
-                                        >
-                                            {formatLanguageDisplay(lang, projectLanguageLabels)}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Searchable language command list */}
+                            <LanguageCommandList
+                                selectedLanguages={projectLanguages}
+                                languageLabels={projectLanguageLabels}
+                                onToggle={handleToggleLanguage}
+                                onAddCustom={handleAddCustomLanguage}
+                            />
                         </CardContent>
                         <CardFooter className="flex justify-between">
                             <p className="text-sm text-gray-500">
