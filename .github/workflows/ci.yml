@@ -31,7 +31,7 @@ jobs:
       - name: Run e2e tests
         run: pnpm --filter @transweave/server run test:e2e
         env:
-          JWT_SECRET: ci-test-secret
+          JWT_SECRET: e2e-test-jwt-secret-12345
           NODE_OPTIONS: '--experimental-vm-modules'
 
   docker-build:
