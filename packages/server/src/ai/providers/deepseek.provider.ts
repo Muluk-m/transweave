@@ -1,13 +1,13 @@
 import { BaseOpenAICompatibleProvider } from './base-openai-compatible.provider';
 
-export class OpenAIProvider extends BaseOpenAICompatibleProvider {
-  readonly name = 'openai';
+export class DeepseekProvider extends BaseOpenAICompatibleProvider {
+  readonly name = 'deepseek';
   protected readonly supportsJsonResponseFormat = true;
 
   constructor(
     apiKey: string,
-    model: string = 'gpt-4o-mini',
-    baseUrl?: string,
+    model: string = 'deepseek-chat',
+    baseUrl: string = 'https://api.deepseek.com',
   ) {
     super(apiKey, model, baseUrl);
   }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -81,5 +82,17 @@ export class AiConfigController {
   async removeProjectConfig(@Param('projectId') projectId: string) {
     await this.aiConfigService.removeProjectConfig(projectId);
     return { success: true };
+  }
+
+  @Post('models')
+  async listModels(
+    @Body() body: { provider: string; apiKey: string; baseUrl?: string },
+  ) {
+    const models = await this.aiConfigService.listModels(
+      body.provider,
+      body.apiKey,
+      body.baseUrl,
+    );
+    return { models };
   }
 }

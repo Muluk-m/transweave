@@ -1,4 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 import { AppController } from './controller/index.controller';
 import { AppService } from './service/index.service';
@@ -35,6 +37,7 @@ import { requireEnv } from './config/env';
   imports: [
     PassportModule,
     DrizzleModule,
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     HttpModule,
     FileStorageModule,
     AiModule,
@@ -70,6 +73,7 @@ import { requireEnv } from './config/env';
     McpService,
     TokenService,
     SeedService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

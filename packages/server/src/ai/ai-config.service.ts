@@ -11,7 +11,10 @@ import type {
   AiConfigStored,
 } from './providers/translation-provider.interface';
 import { encryptApiKey, maskApiKey } from './encryption.util';
-import { createTranslationProvider } from './providers/provider-factory';
+import {
+  createTranslationProvider,
+  isLLMProvider,
+} from './providers/provider-factory';
 
 @Injectable()
 export class AiConfigService {
@@ -27,8 +30,9 @@ export class AiConfigService {
     return (team?.aiConfig as AiConfigStored) ?? null;
   }
 
-  async setTeamConfig(teamId: string, config: AiConfigDto): Promise<void> {
-    // Validate the API key by creating a provider and testing it
+  private async validateAndEncrypt(
+    config: AiConfigDto,
+  ): Promise<AiConfigStored> {
     const provider = createTranslationProvider({
       provider: config.provider,
       apiKey: config.apiKey,
@@ -61,13 +65,16 @@ export class AiConfigService {
       );
     }
 
-    const stored: AiConfigStored = {
+    return {
       provider: config.provider,
       apiKey: encryptedKey,
       model: config.model,
       baseUrl: config.baseUrl,
     };
+  }
 
+  async setTeamConfig(teamId: string, config: AiConfigDto): Promise<void> {
+    const stored = await this.validateAndEncrypt(config);
     await this.teamRepository.update(teamId, { aiConfig: stored } as any);
     this.logger.log(
       `AI config set for team ${teamId}: provider=${config.provider}`,
@@ -83,46 +90,7 @@ export class AiConfigService {
     projectId: string,
     config: AiConfigDto,
   ): Promise<void> {
-    // Validate the API key by creating a provider and testing it
-    const provider = createTranslationProvider({
-      provider: config.provider,
-      apiKey: config.apiKey,
-      model: config.model,
-      baseUrl: config.baseUrl,
-    });
-
-    try {
-      const isValid = await provider.validateApiKey();
-      if (!isValid) {
-        throw new BadRequestException(
-          'Invalid API key for the selected provider',
-        );
-      }
-    } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      this.logger.error(`API key validation failed: ${error.message}`);
-      throw new BadRequestException(
-        'Failed to validate API key. Please check your key and try again.',
-      );
-    }
-
-    let encryptedKey: string;
-    try {
-      encryptedKey = encryptApiKey(config.apiKey);
-    } catch (error) {
-      this.logger.error(`API key encryption failed: ${error.message}`);
-      throw new InternalServerErrorException(
-        'AI_ENCRYPTION_KEY is not configured on the server. Please contact your administrator.',
-      );
-    }
-
-    const stored: AiConfigStored = {
-      provider: config.provider,
-      apiKey: encryptedKey,
-      model: config.model,
-      baseUrl: config.baseUrl,
-    };
-
+    const stored = await this.validateAndEncrypt(config);
     await this.projectRepository.update(projectId, {
       aiConfig: stored,
     } as any);
@@ -139,6 +107,28 @@ export class AiConfigService {
   async removeProjectConfig(projectId: string): Promise<void> {
     await this.projectRepository.update(projectId, { aiConfig: null } as any);
     this.logger.log(`AI config removed for project ${projectId}`);
+  }
+
+  async listModels(
+    provider: string,
+    apiKey: string,
+    baseUrl?: string,
+  ): Promise<string[]> {
+    if (!isLLMProvider(provider)) {
+      return [];
+    }
+
+    const instance = createTranslationProvider({
+      provider: provider as any,
+      apiKey,
+      baseUrl,
+    });
+
+    if (!instance.listModels) {
+      return [];
+    }
+
+    return instance.listModels();
   }
 
   async getConfigStatus(projectId: string): Promise<{

@@ -287,7 +287,8 @@
       "tabs": {
         "general": "General Settings",
         "billing": "Billing & Usage",
-        "members": "Member Management"
+        "members": "Member Management",
+        "ai": "AI Translation"
       },
       "general": {
         "title": "Team Information",
@@ -1008,7 +1009,17 @@
     "projectSettings": "Project AI Settings",
     "teamDefault": "Team Default",
     "teamDefaultHint": "Project-level configuration overrides team default. If not set here, the team default is used.",
-    "enableAiHint": "Configure an AI provider in project settings to enable AI translation"
+    "enableAiHint": "Configure an AI provider in project settings to enable AI translation",
+    "fetchModels": "Fetch Models",
+    "fetchModelsNeedKey": "Please enter an API key first",
+    "fetchModelsSuccess": "Fetched {count} models",
+    "fetchModelsFailed": "Failed to fetch models",
+    "modelSearchPlaceholder": "Search or type model name...",
+    "fetchModelsHint": "Enter API key and click refresh to load available models, or type a model name directly",
+    "noModelsFound": "No models found",
+    "customModel": "Use custom model",
+    "availableModels": "Available Models",
+    "baseUrlPlaceholder": "Leave empty to use default endpoint"
   },
   "sidebar": {
     "teams": "Teams",

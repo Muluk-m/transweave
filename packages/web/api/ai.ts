@@ -104,3 +104,18 @@ export async function removeAiConfig(
 ): Promise<void> {
   await apiClient.delete(`${API_BASE}/config/${scope}/${id}`);
 }
+
+/**
+ * List available models for an AI provider
+ */
+export async function listAiModels(
+  provider: string,
+  apiKey: string,
+  baseUrl?: string
+): Promise<string[]> {
+  const res = await apiClient.post<{ models: string[] }>(
+    `${API_BASE}/config/models`,
+    { provider, apiKey, baseUrl }
+  );
+  return res.models;
+}

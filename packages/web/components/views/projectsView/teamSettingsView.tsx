@@ -50,6 +50,7 @@ import {
 } from "@/api/team";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/use-toast";
+import { AiProviderSettings } from "@/components/views/settings/AiProviderSettings";
 
 interface TeamSettingsViewProps {
   teamId?: string;
@@ -205,10 +206,11 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold mb-6">{t("title")}</h1>
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="mb-4 grid grid-cols-3 gap-2">
+        <TabsList className="mb-4 grid grid-cols-4 gap-2">
           <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
-          <TabsTrigger value="billing">{t("tabs.billing")}</TabsTrigger>
           <TabsTrigger value="members">{t("tabs.members")}</TabsTrigger>
+          <TabsTrigger value="ai">{t("tabs.ai")}</TabsTrigger>
+          <TabsTrigger value="billing">{t("tabs.billing")}</TabsTrigger>
         </TabsList>
 
         {/* 基本设置 */}
@@ -428,6 +430,10 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AiProviderSettings scope="team" scopeId={currentTeam.id} />
         </TabsContent>
 
         <TabsContent value="billing">

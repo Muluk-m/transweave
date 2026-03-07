@@ -14,6 +14,7 @@ import { AuthService } from '../service/auth.service';
 import { UserService } from '../service/user.service';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { RegisterDto, LoginDto, SetupDto } from '../dto/auth.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('api/auth')
 export class AuthController {
@@ -32,6 +33,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async register(@Body() data: RegisterDto) {
     try {
       const result = await this.authService.register(data);
@@ -55,6 +57,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async login(@Body() data: LoginDto) {
     try {
       const { token, user } = await this.authService.login(data);

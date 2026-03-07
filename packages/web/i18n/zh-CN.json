@@ -287,7 +287,8 @@
       "tabs": {
         "general": "基本设置",
         "billing": "用量与计划",
-        "members": "成员管理"
+        "members": "成员管理",
+        "ai": "AI 翻译"
       },
       "general": {
         "title": "团队信息",
@@ -1008,7 +1009,17 @@
     "projectSettings": "项目 AI 设置",
     "teamDefault": "团队默认配置",
     "teamDefaultHint": "项目级别配置会覆盖团队默认配置。未在此处设置时，使用团队默认配置。",
-    "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译"
+    "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译",
+    "fetchModels": "获取模型列表",
+    "fetchModelsNeedKey": "请先输入 API 密钥",
+    "fetchModelsSuccess": "已获取 {count} 个模型",
+    "fetchModelsFailed": "获取模型列表失败",
+    "modelSearchPlaceholder": "搜索或输入模型名称...",
+    "fetchModelsHint": "输入 API 密钥后点击刷新加载可用模型，或直接输入模型名称",
+    "noModelsFound": "未找到模型",
+    "customModel": "使用自定义模型",
+    "availableModels": "可用模型",
+    "baseUrlPlaceholder": "留空使用默认端点"
   },
   "sidebar": {
     "teams": "团队",

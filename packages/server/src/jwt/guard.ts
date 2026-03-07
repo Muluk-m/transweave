@@ -39,12 +39,19 @@ export class AuthGuard implements CanActivate {
       if (!result) {
         return false;
       }
+      // Check scope: GET→read, everything else→write
+      const method = request.method.toUpperCase();
+      const requiredScope = method === 'GET' ? 'read' : 'write';
+      if (!result.scopes.includes(requiredScope)) {
+        return false;
+      }
       request.user = {
         userId: result.userId,
         email: result.userEmail,
         name: result.userName,
         avatar: result.userAvatar ?? '',
         authType: 'api_key',
+        scopes: result.scopes,
       };
       return true;
     }

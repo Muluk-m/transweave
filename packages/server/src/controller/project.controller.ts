@@ -80,6 +80,8 @@ export class ProjectController {
     @Param('id') id: string,
     @Body() data: UpdateProjectDto,
   ) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.updateProject(id, {
       ...data,
       userId: user.userId,
@@ -89,24 +91,32 @@ export class ProjectController {
   @Delete('delete/:id')
   @UseGuards(AuthGuard)
   async deleteProject(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.deleteProject(id, user.userId);
   }
 
   @Get('team/:teamId')
   @UseGuards(AuthGuard)
-  async findProjectsByTeamId(@Param('teamId') teamId: string) {
+  async findProjectsByTeamId(@Param('teamId') teamId: string, @CurrentUser() user: UserPayload) {
+    const userTeams = await this.teamService.findTeamsByUserId(user.userId);
+    if (!userTeams.some(t => t.id === teamId)) throw new ForbiddenException('No permission');
     return this.projectService.findProjectsByTeamId(teamId);
   }
 
   @Post('language/:id')
   @UseGuards(AuthGuard)
   async addLanguage(@Param('id') id: string, @Body() data: { language: string }, @CurrentUser() user: UserPayload) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.addLanguage(id, data.language, user.userId);
   }
 
   @Delete('language/:id/:language')
   @UseGuards(AuthGuard)
   async removeLanguage(@Param('id') id: string, @Param('language') language: string, @CurrentUser() user: UserPayload) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.removeLanguage(id, language, user.userId);
   }
 
@@ -118,6 +128,8 @@ export class ProjectController {
     @Body() data: { name: string; code: string },
     @CurrentUser() user: UserPayload,
   ) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.addModule(
       id,
       { name: data.name, code: data.code },
@@ -128,6 +140,8 @@ export class ProjectController {
   @Delete('module/:id/:module')
   @UseGuards(AuthGuard)
   async removeModule(@Param('id') id: string, @Param('module') module: string, @CurrentUser() user: UserPayload) {
+    const hasPermission = await this.projectService.checkUserProjectPermission(id, user.userId);
+    if (!hasPermission) throw new ForbiddenException('No permission');
     return this.projectService.removeModule(id, module, user.userId);
   }
 

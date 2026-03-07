@@ -38,7 +38,7 @@ export const DrizzleProvider: Provider = {
       await migrate(migrationDb, { migrationsFolder });
       await migrationClient.end();
       logger.log('Migrations applied');
-      const client = postgres(databaseUrl);
+      const client = postgres(databaseUrl, { max: 20 });
       return drizzle(client, { schema });
     }
 

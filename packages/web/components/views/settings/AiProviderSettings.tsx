@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,36 +31,86 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Save, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Save,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  ChevronsUpDown,
+  Check,
+  RefreshCw,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   getAiConfigStatus,
   getAiConfig,
   setAiConfig,
   removeAiConfig,
+  listAiModels,
   type AiConfigResponse,
   type AiConfigStatus,
 } from "@/api/ai";
 
 // Provider definitions
 const PROVIDERS = [
-  { value: "openai", label: "OpenAI (GPT-4o, GPT-4o-mini)", keyHint: "sk-..." },
-  { value: "claude", label: "Claude (Sonnet, Haiku)", keyHint: "sk-ant-..." },
-  { value: "deepl", label: "DeepL", keyHint: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" },
-  { value: "google-translate", label: "Google Translate", keyHint: "AIza..." },
+  {
+    value: "openai",
+    label: "OpenAI",
+    keyHint: "sk-...",
+    isLLM: true,
+    defaultModel: "gpt-4o-mini",
+  },
+  {
+    value: "claude",
+    label: "Claude",
+    keyHint: "sk-ant-...",
+    isLLM: true,
+    defaultModel: "claude-sonnet-4-20250514",
+  },
+  {
+    value: "deepseek",
+    label: "Deepseek",
+    keyHint: "sk-...",
+    isLLM: true,
+    defaultModel: "deepseek-chat",
+  },
+  {
+    value: "gemini",
+    label: "Google Gemini",
+    keyHint: "AIza...",
+    isLLM: true,
+    defaultModel: "gemini-2.0-flash",
+  },
+  {
+    value: "deepl",
+    label: "DeepL",
+    keyHint: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx",
+    isLLM: false,
+    defaultModel: "",
+  },
+  {
+    value: "google-translate",
+    label: "Google Translate",
+    keyHint: "AIza...",
+    isLLM: false,
+    defaultModel: "",
+  },
 ] as const;
-
-const OPENAI_MODELS = [
-  { value: "gpt-4o-mini", label: "GPT-4o mini (default)" },
-  { value: "gpt-4o", label: "GPT-4o" },
-  { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
-];
-
-const CLAUDE_MODELS = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4 (default)" },
-  { value: "claude-haiku-4-20250514", label: "Claude Haiku 4" },
-];
 
 interface AiProviderSettingsProps {
   scope: "team" | "project";
@@ -78,7 +128,8 @@ export function AiProviderSettings({
 
   // Status
   const [status, setStatus] = useState<AiConfigStatus | null>(null);
-  const [existingConfig, setExistingConfig] = useState<AiConfigResponse | null>(null);
+  const [existingConfig, setExistingConfig] =
+    useState<AiConfigResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -88,19 +139,25 @@ export function AiProviderSettings({
   const [model, setModel] = useState<string>("");
   const [baseUrl, setBaseUrl] = useState<string>("");
 
-  const hasExistingConfig = existingConfig !== null && existingConfig.provider !== undefined;
+  // Model list state
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+  const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+
+  const hasExistingConfig =
+    existingConfig !== null && existingConfig.provider !== undefined;
+  const currentProvider = PROVIDERS.find((p) => p.value === provider);
 
   // Load status and existing config
   const loadConfig = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Load resolved status if projectId is available
       if (projectId) {
         const statusResult = await getAiConfigStatus(projectId);
         setStatus(statusResult);
       }
 
-      // Load scope-specific config
       const config = await getAiConfig(scope, scopeId);
       setExistingConfig(config);
 
@@ -110,7 +167,6 @@ export function AiProviderSettings({
         setBaseUrl(config.baseUrl || "");
       }
     } catch {
-      // Config not found is not an error
       setExistingConfig(null);
     } finally {
       setIsLoading(false);
@@ -123,37 +179,43 @@ export function AiProviderSettings({
     }
   }, [loadConfig, scopeId]);
 
-  // Get the key placeholder hint based on selected provider
+  // Filter models based on search
+  const filteredModels = useMemo(() => {
+    if (!modelSearch) return availableModels;
+    const search = modelSearch.toLowerCase();
+    return availableModels.filter((m) => m.toLowerCase().includes(search));
+  }, [availableModels, modelSearch]);
+
   const getKeyHint = (): string => {
-    const found = PROVIDERS.find((p) => p.value === provider);
-    return found?.keyHint || "Enter API key";
-  };
-
-  // Whether model selector should be shown
-  const showModelSelector = provider === "openai" || provider === "claude";
-
-  // Whether base URL should be shown
-  const showBaseUrl = provider === "openai";
-
-  // Get models for selected provider
-  const getModels = () => {
-    if (provider === "openai") return OPENAI_MODELS;
-    if (provider === "claude") return CLAUDE_MODELS;
-    return [];
-  };
-
-  // Get default model for provider
-  const getDefaultModel = (prov: string) => {
-    if (prov === "openai") return "gpt-4o-mini";
-    if (prov === "claude") return "claude-sonnet-4-20250514";
-    return "";
+    return currentProvider?.keyHint || "Enter API key";
   };
 
   const handleProviderChange = (value: string) => {
     setProvider(value);
     setApiKey("");
-    setModel(getDefaultModel(value));
+    setAvailableModels([]);
+    setModelSearch("");
+    const prov = PROVIDERS.find((p) => p.value === value);
+    setModel(prov?.defaultModel || "");
     setBaseUrl("");
+  };
+
+  const handleFetchModels = async () => {
+    if (!provider || !apiKey) {
+      toast({ title: t("fetchModelsNeedKey"), variant: "destructive" });
+      return;
+    }
+
+    setIsFetchingModels(true);
+    try {
+      const models = await listAiModels(provider, apiKey, baseUrl || undefined);
+      setAvailableModels(models);
+      toast({ title: t("fetchModelsSuccess", { count: models.length }) });
+    } catch {
+      toast({ title: t("fetchModelsFailed"), variant: "destructive" });
+    } finally {
+      setIsFetchingModels(false);
+    }
   };
 
   const handleSave = async () => {
@@ -178,7 +240,10 @@ export function AiProviderSettings({
       setApiKey("");
       await loadConfig();
     } catch (error: any) {
-      if (error?.message?.includes("400") || error?.message?.includes("Invalid")) {
+      if (
+        error?.message?.includes("400") ||
+        error?.message?.includes("Invalid")
+      ) {
         toast({ title: t("invalidKey"), variant: "destructive" });
       } else {
         toast({
@@ -195,16 +260,12 @@ export function AiProviderSettings({
     try {
       await removeAiConfig(scope, scopeId);
       toast({ title: t("removeSuccess") });
+      await loadConfig();
       setProvider("");
       setApiKey("");
       setModel("");
       setBaseUrl("");
-      setExistingConfig(null);
-      // Reload status
-      if (projectId) {
-        const statusResult = await getAiConfigStatus(projectId);
-        setStatus(statusResult);
-      }
+      setAvailableModels([]);
     } catch (error: any) {
       toast({
         title: error?.message || "Failed to remove configuration",
@@ -305,36 +366,106 @@ export function AiProviderSettings({
           </div>
         )}
 
-        {/* Model selector */}
-        {provider && showModelSelector && (
+        {/* Model selector (Combobox for LLM providers) */}
+        {provider && currentProvider?.isLLM && (
           <div className="space-y-2">
             <Label>{t("model")}</Label>
-            <Select
-              value={model || getDefaultModel(provider)}
-              onValueChange={setModel}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {getModels().map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Popover
+                open={modelPopoverOpen}
+                onOpenChange={setModelPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={modelPopoverOpen}
+                    className="flex-1 justify-between font-normal"
+                  >
+                    {model || currentProvider.defaultModel}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder={t("modelSearchPlaceholder")}
+                      value={modelSearch}
+                      onValueChange={setModelSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        {modelSearch ? (
+                          <button
+                            className="w-full px-2 py-1.5 text-sm text-left hover:bg-accent rounded cursor-pointer"
+                            onClick={() => {
+                              setModel(modelSearch);
+                              setModelPopoverOpen(false);
+                              setModelSearch("");
+                            }}
+                          >
+                            {t("customModel")}: {modelSearch}
+                          </button>
+                        ) : (
+                          <span>{t("noModelsFound")}</span>
+                        )}
+                      </CommandEmpty>
+                      {filteredModels.length > 0 && (
+                        <CommandGroup heading={t("availableModels")}>
+                          {filteredModels.map((m) => (
+                            <CommandItem
+                              key={m}
+                              value={m}
+                              onSelect={() => {
+                                setModel(m);
+                                setModelPopoverOpen(false);
+                                setModelSearch("");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  model === m ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {m}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleFetchModels}
+                disabled={isFetchingModels || !apiKey}
+                title={t("fetchModels")}
+              >
+                <RefreshCw
+                  className={cn(
+                    "h-4 w-4",
+                    isFetchingModels && "animate-spin"
+                  )}
+                />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("fetchModelsHint")}
+            </p>
           </div>
         )}
 
-        {/* Base URL input */}
-        {provider && showBaseUrl && (
+        {/* Base URL input (for all LLM providers) */}
+        {provider && currentProvider?.isLLM && (
           <div className="space-y-2">
             <Label>{t("baseUrl")}</Label>
             <Input
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="https://api.openai.com/v1 (default)"
+              placeholder={t("baseUrlPlaceholder")}
             />
           </div>
         )}

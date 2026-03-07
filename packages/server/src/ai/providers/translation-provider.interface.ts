@@ -1,11 +1,16 @@
 export const SUPPORTED_PROVIDERS = [
   'openai',
   'claude',
+  'deepseek',
+  'gemini',
   'deepl',
   'google-translate',
 ] as const;
 
 export type ProviderType = (typeof SUPPORTED_PROVIDERS)[number];
+
+export const LLM_PROVIDERS = ['openai', 'claude', 'deepseek', 'gemini'] as const satisfies readonly ProviderType[];
+export type LLMProviderType = (typeof LLM_PROVIDERS)[number];
 
 export interface TranslationProvider {
   readonly name: string;
@@ -17,6 +22,8 @@ export interface TranslationProvider {
   }): Promise<Record<string, string>>;
 
   validateApiKey(): Promise<boolean>;
+
+  listModels?(): Promise<string[]>;
 }
 
 /** Config with decrypted API key, used at runtime */
