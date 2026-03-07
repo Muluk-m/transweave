@@ -269,6 +269,49 @@ describe('Transweave Server (e2e)', () => {
     });
   });
 
+  // ─── Module Management ──────────────────────────────────────────────────
+
+  describe('Module Management', () => {
+    it('POST /api/project/module/:id should add a module', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/api/project/module/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ name: 'Navigation', code: 'nav' })
+        .expect(201);
+
+      expect(res.body.modules).toBeDefined();
+      expect(res.body.modules.some((m: any) => m.code === 'nav')).toBe(true);
+    });
+
+    it('POST /api/project/module/:id should allow underscores in code', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/api/project/module/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ name: 'Smart Shield', code: 'smart_shield' })
+        .expect(201);
+
+      expect(res.body.modules.some((m: any) => m.code === 'smart_shield')).toBe(true);
+    });
+
+    it('POST /api/project/module/:id should reject duplicate module code', () => {
+      return request(app.getHttpServer())
+        .post(`/api/project/module/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ name: 'Navigation Dup', code: 'nav' })
+        .expect(400);
+    });
+
+    it('DELETE /api/project/module/:id/:module should remove a module without tokens', () => {
+      return request(app.getHttpServer())
+        .delete(`/api/project/module/${projectId}/smart_shield`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.modules.some((m: any) => m.code === 'smart_shield')).toBe(false);
+        });
+    });
+  });
+
   // ─── Token ───────────────────────────────────────────────────────────────
 
   describe('Token', () => {
@@ -384,6 +427,42 @@ describe('Transweave Server (e2e)', () => {
           expect(Array.isArray(res.body)).toBe(true);
         });
     });
+
+    it('GET /api/tokens/:projectId/tags should return unique tags', () => {
+      return request(app.getHttpServer())
+        .get(`/api/tokens/${projectId}/tags`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(Array.isArray(res.body)).toBe(true);
+          expect(res.body).toContain('common');
+          expect(res.body).toContain('ui');
+        });
+    });
+
+    it('GET /api/tokens/:projectId/module-stats should return module counts', () => {
+      return request(app.getHttpServer())
+        .get(`/api/tokens/${projectId}/module-stats`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(Array.isArray(res.body)).toBe(true);
+        });
+    });
+
+    it('GET /api/tokens/:projectId/search should support server-side pagination', () => {
+      return request(app.getHttpServer())
+        .get(`/api/tokens/${projectId}/search?page=1&perPage=1`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.tokens.length).toBeLessThanOrEqual(1);
+          expect(res.body.total).toBeGreaterThanOrEqual(2);
+          expect(res.body.totalPages).toBeGreaterThanOrEqual(2);
+          expect(res.body.page).toBe(1);
+          expect(res.body.perPage).toBe(1);
+        });
+    });
   });
 
   // ─── API Keys ────────────────────────────────────────────────────────────
@@ -484,9 +563,19 @@ describe('Transweave Server (e2e)', () => {
         .send({
           tokenIds: [tokenId2],
           operation: 'set-module',
-          payload: { module: 'navigation' },
+          payload: { module: 'nav' },
         })
         .expect(201);
+    });
+
+    it('DELETE /api/project/module/:id/:module should reject removal when tokens exist', () => {
+      return request(app.getHttpServer())
+        .delete(`/api/project/module/${projectId}/nav`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(400)
+        .expect((res) => {
+          expect(res.body.message).toContain('词条');
+        });
     });
 
     it('POST /api/tokens/bulk delete should delete tokens', () => {
