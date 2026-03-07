@@ -16,6 +16,7 @@ import {
   updateToken,
   deleteToken,
   bulkTokenOperation,
+  getProjectTags,
 } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { TokenFormDrawer } from "./TokenFormDrawer";
@@ -25,6 +26,7 @@ import { Plus, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { translateWithAi, getAiConfigStatus } from "@/api/ai";
 import { useQueryState } from "nuqs";
+import { parseAsInteger } from "nuqs";
 import { getSortingStateParser } from "@/lib/parsers";
 import { Progress } from "@/components/ui/progress";
 import { isValidTokenKey } from "@/lib/validation";
@@ -42,8 +44,14 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [totalTokens, setTotalTokens] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const { toast } = useToast();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Server-side pagination: read page/perPage from URL query state
+  // These are shared with useDataTable in TokenTable (same query keys)
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
 
   const [sorting] = useQueryState(
     "sort",
@@ -82,6 +90,9 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   // AI configuration status
   const [aiConfigured, setAiConfigured] = useState<boolean>(false);
 
+  // All tags fetched from backend (not just current page)
+  const [allTags, setAllTags] = useState<string[]>([]);
+
   useEffect(() => {
     if (project?.id) {
       getAiConfigStatus(project.id)
@@ -93,6 +104,21 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         });
     }
   }, [project?.id]);
+
+  // Fetch all project tags from backend
+  const fetchTags = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const tags = await getProjectTags(project.id);
+      setAllTags(tags);
+    } catch {
+      // Silently fail
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
 
   // Debounced search: delays 300ms after user stops typing
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -110,7 +136,12 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     };
   }, [searchTerm]);
 
-  // Fetch tokens from server-side search API
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, selectedModule, selectedStatus, selectedTag, setPage]);
+
+  // Fetch tokens from server-side search API with real pagination
   const fetchTokens = useCallback(async () => {
     if (!project?.id) return;
     try {
@@ -122,16 +153,18 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         tags: selectedTag || undefined,
         sortBy: sortField?.id || 'createdAt',
         sortOrder: sortField?.desc ? 'desc' : 'asc',
-        perPage: 200,
+        page,
+        perPage,
       });
       setTokens(result.tokens);
       setTotalTokens(result.total);
+      setTotalPages(result.totalPages);
     } catch (error) {
       console.error("Error fetching tokens:", error);
     }
-  }, [project?.id, debouncedSearch, selectedModule, selectedStatus, selectedTag, sorting]);
+  }, [project?.id, debouncedSearch, selectedModule, selectedStatus, selectedTag, sorting, page, perPage]);
 
-  // Fetch tokens on mount and when filter/sort params change
+  // Fetch tokens on mount and when filter/sort/pagination params change
   useEffect(() => {
     fetchTokens();
   }, [fetchTokens]);
@@ -150,14 +183,6 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       }));
     }
   }, [project?.languages]);
-
-  const allTags = useMemo(() => {
-    let tags: string[] = [];
-    tokens?.forEach((token) => {
-      tags = [...tags, ...token.tags];
-    });
-    return Array.from(new Set(tags));
-  }, [tokens]);
 
   // Tokens are now fetched server-side with filtering/sorting applied.
   // No client-side filteredAndSortedTokens needed.
@@ -277,6 +302,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       const tokenIds = selectedTokens.map((t) => t.id);
       await bulkTokenOperation(tokenIds, 'set-tags', { tags });
       await fetchTokens();
+      await fetchTags();
       toast({
         title: "批量更新标签成功",
       });
@@ -354,6 +380,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
         // Refresh token list from server
         await fetchTokens();
+        await fetchTags();
 
         toast({
           title: t("success.tokenUpdated"),
@@ -371,6 +398,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
         // Refresh token list from server
         await fetchTokens();
+        await fetchTags();
 
         toast({
           title: t("success.tokenCreated"),
@@ -475,6 +503,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     try {
       await deleteToken(tokenId);
       await fetchTokens();
+      await fetchTags();
       toast({
         title: t("success.tokenDeleted"),
       });
@@ -524,6 +553,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     try {
       await bulkTokenOperation(selected, 'delete');
       await fetchTokens();
+      await fetchTags();
       toast({
         title: t("success.tokensDeleted"),
       });
@@ -629,6 +659,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
       // Refresh token list from server
       await fetchTokens();
+      await fetchTags();
 
       toast({
         title: t("success.batchTokensCreated", { count: createdTokens.length }),
@@ -800,6 +831,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
       <TokenTable
         tokens={tokens}
+        totalPages={totalPages}
+        totalCount={totalTokens}
         languages={project?.languages || []}
         languageLabels={project?.languageLabels}
         modules={project?.modules || []}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,6 @@ import type { Column, ColumnDef } from "@tanstack/react-table";
 import { Text } from "lucide-react";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { formatDate } from "@/lib/format";
-import { useQueryState } from "nuqs";
-import { parseAsInteger } from "nuqs";
 import { getImageUrl } from "@/api/upload";
 import { ImageIcon as ImageIconLucide } from "lucide-react";
 import {
@@ -59,6 +57,8 @@ import { Badge } from "@/components/ui/badge";
 
 interface TokenTableProps {
   tokens: Token[];
+  totalPages: number;
+  totalCount: number;
   languages: string[];
   languageLabels?: Record<string, string>; // 自定义语言的中文备注
   modules?: Array<{ name: string; code: string }>;
@@ -116,6 +116,8 @@ function TipsCopyableCell({
 
 export function TokenTable({
   tokens,
+  totalPages,
+  totalCount,
   languages,
   languageLabels = {},
   modules = [],
@@ -129,8 +131,6 @@ export function TokenTable({
   isBatchTranslating = false,
 }: TokenTableProps) {
   const t = useTranslations("tokenTable");
-  const [page] = useQueryState("page", parseAsInteger.withDefault(1));
-  const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
   const [previewImages, setPreviewImages] = useState<{
     urls: string[];
     currentIndex: number;
@@ -189,17 +189,6 @@ export function TokenTable({
       setPreviewImages({ ...previewImages, currentIndex: newIndex });
     }
   };
-
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * perPage;
-    const end = start + perPage;
-    return data.slice(start, end);
-  }, [data, page, perPage]);
-
-  const pageCount = useMemo(
-    () => Math.ceil(data.length / perPage),
-    [data.length, perPage]
-  );
 
   const columns = [
     {
@@ -458,10 +447,10 @@ export function TokenTable({
   ] as ColumnDef<Token>[];
 
   const { table } = useDataTable({
-    data: paginatedData as unknown as Token[],
+    data: data as unknown as Token[],
     columns,
-    pageCount: pageCount,
-    rowCount: tokens.length,
+    pageCount: totalPages,
+    rowCount: totalCount,
     initialState: {
       columnPinning: { left: ["select", "key"], right: ["actions"] },
       sorting: [
