@@ -3,16 +3,14 @@
     "network": "网络连接失败，请检查网络后重试"
   },
   "welcome": {
-    "title": "用 <highlight>Transweave</highlight> 简化翻译流程",
-    "tagline": "本地化管理解决方案",
-    "description": "专为开发团队设计的本地化管理平台，帮助您高效管理多语言项目，无缝协作翻译。",
-    "getStarted": "开始使用",
-    "learnMore": "了解更多",
-    "stats": {
-      "languages": "支持语言",
-      "uptime": "可用性",
-      "support": "技术支持"
-    }
+    "title": "开源 i18n 管理平台，<highlight>自托管，AI 驱动。</highlight>",
+    "tagline": "开源项目",
+    "description": "管理翻译、团队协作、AI 辅助翻译 — 部署在你自己的服务器上，数据完全归你所有。",
+    "tryDemo": "在线 Demo",
+    "viewDocs": "文档",
+    "dockerCommand": "docker compose up -d",
+    "copied": "已复制!",
+    "aiPowered": "支持 OpenAI、Claude、DeepL、Google Translate AI 翻译"
   },
   "header": {
     "title": "Transweave",
@@ -30,105 +28,87 @@
   },
   "features": {
     "badge": "功能特性",
-    "title": "强大特性",
-    "description": "Transweave 提供专业的本地化工具，帮助团队更高效地管理多语言内容",
+    "title": "为开发者打造",
+    "description": "管理 i18n 所需的一切，工具适配你的工作流",
     "items": {
       "0": {
-        "title": "多语言支持",
-        "description": "支持多种语言，满足全球化需求，实现无缝本地化体验。"
+        "title": "AI 翻译",
+        "description": "支持 OpenAI、Claude、DeepL、Google Translate，使用你自己的 API Key。"
       },
       "1": {
-        "title": "协作翻译",
-        "description": "团队成员可同时参与翻译工作，提高效率，保证质量。"
+        "title": "CLI & API",
+        "description": "在终端拉取和推送翻译，集成任意 CI/CD 流水线。"
       },
       "2": {
-        "title": "项目管理",
-        "description": "在一个平台上管理多个项目，清晰组织不同项目的翻译资源。"
+        "title": "MCP 集成",
+        "description": "通过 Model Context Protocol 让 AI 助手直接管理翻译数据。"
       },
       "3": {
-        "title": "开发友好",
-        "description": "支持多种格式导入导出，与现代开发工具链无缝集成。"
+        "title": "多格式支持",
+        "description": "JSON、XLIFF、Gettext (.po) 等格式，按项目需要导入导出。"
       },
       "4": {
-        "title": "安全可靠",
-        "description": "精细的权限控制，确保翻译内容的安全和数据隐私。"
+        "title": "团队协作",
+        "description": "邀请成员、分配翻译任务、实时审查变更。"
       },
       "5": {
-        "title": "开源项目",
-        "description": "完全开源，社区驱动，持续改进优化功能和体验。"
+        "title": "自托管 & 开源",
+        "description": "部署在你的服务器上，MIT 协议，无供应商锁定，数据完全自主。"
       }
     }
   },
-  "workflow": {
-    "badge": "工作流程",
-    "title": "简化的工作流程",
-    "description": "从导入项目到导出翻译，Transweave 提供端到端的本地化管理解决方案",
-    "tabs": {
-      "import": "导入项目",
-      "translate": "翻译管理",
-      "export": "导出与集成"
-    },
+  "quickstart": {
+    "badge": "快速开始",
+    "title": "5 分钟启动",
+    "description": "三步从零开始管理翻译",
     "steps": {
-      "import": {
-        "title": "导入项目",
-        "description": "简单几步，高效完成导入项目流程",
-        "steps": {
-          "0": "创建团队和项目",
-          "1": "导入现有翻译文件",
-          "2": "自动识别语言和结构"
-        }
+      "0": {
+        "title": "部署",
+        "description": "使用 Docker Compose 启动",
+        "command": "docker compose up -d"
       },
-      "translate": {
-        "title": "翻译管理",
-        "description": "简单几步，高效完成翻译管理流程",
-        "steps": {
-          "0": "邀请团队成员",
-          "1": "分配翻译任务",
-          "2": "实时协作编辑",
-          "3": "审核翻译质量"
-        }
+      "1": {
+        "title": "配置",
+        "description": "打开 localhost:3000，创建团队和项目"
       },
-      "export": {
-        "title": "导出与集成",
-        "description": "简单几步，高效完成导出与集成流程",
-        "steps": {
-          "0": "导出多种格式文件",
-          "1": "与CI/CD流程集成",
-          "2": "自动化部署更新"
-        }
+      "2": {
+        "title": "集成",
+        "description": "使用 CLI 同步翻译到你的代码库",
+        "command": "npx transweave pull --project=my-app"
       }
-    },
-    "viewDocs": "查看详细文档"
+    }
   },
-  "cases": {
-    "title": "用户案例",
-    "description": "看看其他团队如何使用 Transweave 提升本地化效率",
-    "case1": {
-      "title": "TechGlobal 科技公司",
-      "subtitle": "全球化应用的本地化挑战",
-      "quote": "\"使用 Transweave 后，我们将翻译效率提高了60%，现在可以同时支持20种语言而不增加团队规模。\"",
-      "readMore": "阅读完整案例"
+  "integrations": {
+    "title": "集成生态",
+    "description": "无缝融入你现有的开发流程",
+    "cli": {
+      "title": "CLI",
+      "description": "在终端推送和拉取翻译"
     },
-    "case2": {
-      "title": "CreativeStudio 创意工作室",
-      "subtitle": "多平台内容的一致性管理",
-      "quote": "\"Transweave 帮助我们在多个平台上保持品牌信息的一致性，翻译错误减少了90%。\"",
-      "readMore": "阅读完整案例"
+    "api": {
+      "title": "REST API",
+      "description": "API Key 认证，完整 API 访问"
     },
-    "tags": {
-      "multilingual": "多语言",
-      "ecommerce": "电商",
-      "i18n": "国际化"
+    "mcp": {
+      "title": "MCP",
+      "description": "AI 助手直接管理翻译"
+    },
+    "cicd": {
+      "title": "CI/CD",
+      "description": "在流水线中自动同步翻译"
+    },
+    "codeExamples": {
+      "pull": "# 拉取翻译到你的项目\nnpx transweave pull --project=my-app",
+      "push": "# 推送本地更改\nnpx transweave push ./locales"
     }
   },
   "cta": {
-    "title": "准备好开始使用了吗？",
-    "description": "立即加入 Transweave，体验高效的本地化管理，让您的产品说出全世界的语言。",
-    "register": "免费注册",
-    "demo": "预约演示",
-    "tryDemo": "免费试用",
-    "badge": "立即开始",
-    "note": "免费版本包含基本功能，可随时升级"
+    "title": "掌控你的 i18n",
+    "description": "在你的服务器上部署 Transweave，完全掌控翻译流程。",
+    "github": "在 GitHub 上查看",
+    "tryDemo": "在线 Demo",
+    "badge": "开始使用",
+    "license": "MIT 协议 · 自托管 · 社区驱动"
   },
   "language": "语言",
   "login": {
@@ -1099,8 +1079,5 @@
       "revokeFailed": "撤销 API 密钥失败",
       "unknownError": "未知错误"
     }
-  },
-  "demo": {
-    "banner": "演示模式 — 数据每日 12:00（北京时间）重置"
   }
 }

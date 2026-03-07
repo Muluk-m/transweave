@@ -3,16 +3,14 @@
     "network": "Network connection failed, please check and try again"
   },
   "welcome": {
-    "title": "Simplify Translation with <highlight>Transweave</highlight>",
-    "tagline": "Localization Management Solution",
-    "description": "A localization management platform designed for development teams, helping you efficiently manage multilingual projects and collaborate seamlessly on translations.",
-    "getStarted": "Get Started",
-    "learnMore": "Learn More",
-    "stats": {
-      "languages": "Languages",
-      "uptime": "Uptime",
-      "support": "Support"
-    }
+    "title": "Open-source i18n management. <highlight>Self-hosted. AI-powered.</highlight>",
+    "tagline": "Open Source",
+    "description": "Manage translations, collaborate with your team, and leverage AI — all on your own server. Your data, your rules.",
+    "tryDemo": "Try Demo",
+    "viewDocs": "Documentation",
+    "dockerCommand": "docker compose up -d",
+    "copied": "Copied!",
+    "aiPowered": "AI-powered translations with OpenAI, Claude, DeepL & Google Translate"
   },
   "header": {
     "title": "Transweave",
@@ -30,105 +28,87 @@
   },
   "features": {
     "badge": "Features",
-    "title": "Powerful Features",
-    "description": "Transweave provides professional localization tools to help teams manage multilingual content more efficiently",
+    "title": "Built for developers",
+    "description": "Everything you need to manage i18n, with tools that fit your workflow",
     "items": {
       "0": {
-        "title": "Multilingual Support",
-        "description": "Support multiple languages to meet global needs and achieve seamless localization experience."
+        "title": "AI Translation",
+        "description": "Translate with OpenAI, Claude, DeepL, or Google Translate. Bring your own API keys."
       },
       "1": {
-        "title": "Collaborative Translation",
-        "description": "Team members can participate in translation work simultaneously, improving efficiency and ensuring quality."
+        "title": "CLI & API",
+        "description": "Pull and push translations from your terminal. Integrate with any CI/CD pipeline."
       },
       "2": {
-        "title": "Project Management",
-        "description": "Manage multiple projects on one platform, clearly organizing translation resources for different projects."
+        "title": "MCP Integration",
+        "description": "Connect AI assistants to your translation data via Model Context Protocol."
       },
       "3": {
-        "title": "Developer Friendly",
-        "description": "Support various formats for import and export, seamlessly integrating with modern development toolchains."
+        "title": "Multi-format Support",
+        "description": "JSON, XLIFF, Gettext (.po) and more. Import and export in the format your project needs."
       },
       "4": {
-        "title": "Secure and Reliable",
-        "description": "Fine-grained permission control ensures the security of translated content and data privacy."
+        "title": "Team Collaboration",
+        "description": "Invite teammates, assign translations, and review changes in real-time."
       },
       "5": {
-        "title": "Open Source",
-        "description": "Completely open source, community-driven, continuously improving functions and experience."
+        "title": "Self-hosted & Open Source",
+        "description": "Deploy on your infrastructure. MIT licensed, no vendor lock-in, full data ownership."
       }
     }
   },
-  "workflow": {
-    "badge": "Workflow",
-    "title": "Simplified Workflow",
-    "description": "From importing projects to exporting translations, Transweave provides an end-to-end localization management solution",
-    "tabs": {
-      "import": "Import Project",
-      "translate": "Translation Management",
-      "export": "Export & Integration"
-    },
+  "quickstart": {
+    "badge": "Quick Start",
+    "title": "Up and running in 5 minutes",
+    "description": "From zero to managing translations in three steps",
     "steps": {
-      "import": {
-        "title": "Import Project",
-        "description": "Complete the project import process efficiently in a few simple steps",
-        "steps": {
-          "0": "Create team and project",
-          "1": "Import existing translation files",
-          "2": "Automatically identify languages and structures"
-        }
+      "0": {
+        "title": "Deploy",
+        "description": "Start with Docker Compose",
+        "command": "docker compose up -d"
       },
-      "translate": {
-        "title": "Translation Management",
-        "description": "Complete the translation management process efficiently in a few simple steps",
-        "steps": {
-          "0": "Invite team members",
-          "1": "Assign translation tasks",
-          "2": "Real-time collaborative editing",
-          "3": "Review translation quality"
-        }
+      "1": {
+        "title": "Set up",
+        "description": "Open localhost:3000, create your team and first project"
       },
-      "export": {
-        "title": "Export & Integration",
-        "description": "Complete the export and integration process efficiently in a few simple steps",
-        "steps": {
-          "0": "Export files in various formats",
-          "1": "Integrate with CI/CD process",
-          "2": "Automated deployment updates"
-        }
+      "2": {
+        "title": "Integrate",
+        "description": "Sync translations with your codebase using the CLI",
+        "command": "npx transweave pull --project=my-app"
       }
-    },
-    "viewDocs": "View detailed documentation"
+    }
   },
-  "cases": {
-    "title": "User Cases",
-    "description": "See how other teams use Transweave to improve localization efficiency",
-    "case1": {
-      "title": "TechGlobal",
-      "subtitle": "Localization Challenges for Global Applications",
-      "quote": "\"After using Transweave, we increased our translation efficiency by 60%, now we can support 20 languages simultaneously without expanding the team.\"",
-      "readMore": "Read full case"
+  "integrations": {
+    "title": "Integrations",
+    "description": "Fits into your existing development workflow",
+    "cli": {
+      "title": "CLI",
+      "description": "Push and pull translations from your terminal"
     },
-    "case2": {
-      "title": "CreativeStudio",
-      "subtitle": "Consistent Management of Multi-platform Content",
-      "quote": "\"Transweave helps us maintain the consistency of brand information across multiple platforms, reducing translation errors by 90%.\"",
-      "readMore": "Read full case"
+    "api": {
+      "title": "REST API",
+      "description": "Full API access with API key authentication"
     },
-    "tags": {
-      "multilingual": "Multilingual",
-      "ecommerce": "E-commerce",
-      "i18n": "i18n"
+    "mcp": {
+      "title": "MCP",
+      "description": "AI assistants manage your translations"
+    },
+    "cicd": {
+      "title": "CI/CD",
+      "description": "Automate translation sync in your pipeline"
+    },
+    "codeExamples": {
+      "pull": "# Pull translations to your project\nnpx transweave pull --project=my-app",
+      "push": "# Push local changes back\nnpx transweave push ./locales"
     }
   },
   "cta": {
-    "title": "Ready to get started?",
-    "description": "Join Transweave now to experience efficient localization management and make your product speak the languages of the world.",
-    "register": "Register for Free",
-    "demo": "Schedule a Demo",
-    "tryDemo": "Try Demo",
+    "title": "Ready to own your i18n?",
+    "description": "Deploy Transweave on your server and take full control of your translations.",
+    "github": "View on GitHub",
+    "tryDemo": "Try Online Demo",
     "badge": "Get Started",
-    "note": "Free version includes basic features, upgradable anytime"
+    "license": "MIT License · Self-hosted · Community-driven"
   },
   "language": "Language",
   "login": {
@@ -1099,8 +1079,5 @@
       "revokeFailed": "Failed to revoke API key",
       "unknownError": "Unknown error"
     }
-  },
-  "demo": {
-    "banner": "Demo mode \u2014 data resets daily at 12:00 PM (UTC+8)"
   }
 }

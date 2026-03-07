@@ -4,18 +4,13 @@ import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle
 } from "@/components/ui/card";
-import { LanguageSelector } from "@/components/ui/language-selector";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Book, Code, Github, Globe2, Layers, Loader2, Lock, Users, Languages, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Bot, Check, Code, Copy, FileCode, Github, Loader2, Rocket, Server, Sparkles, Terminal, Users, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { toast } from "@/hooks/use-toast";
 
@@ -23,17 +18,8 @@ export default function WelcomeView() {
     const router = useRouter();
     const { login } = useAuth();
     const [isDemoLoading, setIsDemoLoading] = useState(false);
+    const [copied, setCopied] = useState(false);
     const t = useTranslations();
-
-    const featuresRef = useRef<HTMLElement>(null);
-
-    const handleGetStarted = () => {
-        router.push('/login');
-    };
-
-    const handleTutorial = () => {
-        router.push('/tutorial');
-    };
 
     const handleDemoLogin = async () => {
         setIsDemoLoading(true);
@@ -51,77 +37,74 @@ export default function WelcomeView() {
         }
     };
 
-    // 使用i18n获取功能列表
+    const handleCopy = useCallback(async (text: string) => {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, []);
+
     const features = [
         {
-            icon: <Globe2 className="h-6 w-6" />,
+            icon: <Sparkles className="h-6 w-6" />,
             title: t('features.items.0.title'),
             description: t('features.items.0.description'),
-            gradient: "from-blue-500 to-cyan-500"
-        },
-        {
-            icon: <Users className="h-6 w-6" />,
-            title: t('features.items.1.title'),
-            description: t('features.items.1.description'),
             gradient: "from-violet-500 to-purple-500"
         },
         {
-            icon: <Layers className="h-6 w-6" />,
-            title: t('features.items.2.title'),
-            description: t('features.items.2.description'),
-            gradient: "from-amber-500 to-orange-500"
-        },
-        {
-            icon: <Code className="h-6 w-6" />,
-            title: t('features.items.3.title'),
-            description: t('features.items.3.description'),
+            icon: <Terminal className="h-6 w-6" />,
+            title: t('features.items.1.title'),
+            description: t('features.items.1.description'),
             gradient: "from-emerald-500 to-teal-500"
         },
         {
-            icon: <Lock className="h-6 w-6" />,
+            icon: <Bot className="h-6 w-6" />,
+            title: t('features.items.2.title'),
+            description: t('features.items.2.description'),
+            gradient: "from-blue-500 to-cyan-500"
+        },
+        {
+            icon: <FileCode className="h-6 w-6" />,
+            title: t('features.items.3.title'),
+            description: t('features.items.3.description'),
+            gradient: "from-amber-500 to-orange-500"
+        },
+        {
+            icon: <Users className="h-6 w-6" />,
             title: t('features.items.4.title'),
             description: t('features.items.4.description'),
             gradient: "from-rose-500 to-pink-500"
         },
         {
-            icon: <Github className="h-6 w-6" />,
+            icon: <Server className="h-6 w-6" />,
             title: t('features.items.5.title'),
             description: t('features.items.5.description'),
-            gradient: "from-slate-600 to-slate-800"
+            gradient: "from-slate-500 to-slate-700"
         }
     ];
 
-    // 工作流程数据从i18n获取 - 修改获取嵌套翻译的方式
-    const workflows = [
+    const quickstartSteps = [
         {
-            title: t('workflow.steps.import.title'),
-            description: t('workflow.steps.import.description'),
-            steps: [
-                t('workflow.steps.import.steps.0'),
-                t('workflow.steps.import.steps.1'),
-                t('workflow.steps.import.steps.2')
-            ]
+            title: t('quickstart.steps.0.title'),
+            description: t('quickstart.steps.0.description'),
+            command: t('quickstart.steps.0.command'),
         },
         {
-            title: t('workflow.steps.translate.title'),
-            description: t('workflow.steps.translate.description'),
-            steps: [
-                t('workflow.steps.translate.steps.0'),
-                t('workflow.steps.translate.steps.1'),
-                t('workflow.steps.translate.steps.2'),
-                t('workflow.steps.translate.steps.3')
-            ]
+            title: t('quickstart.steps.1.title'),
+            description: t('quickstart.steps.1.description'),
         },
         {
-            title: t('workflow.steps.export.title'),
-            description: t('workflow.steps.export.description'),
-            steps: [
-                t('workflow.steps.export.steps.0'),
-                t('workflow.steps.export.steps.1'),
-                t('workflow.steps.export.steps.2')
-            ]
+            title: t('quickstart.steps.2.title'),
+            description: t('quickstart.steps.2.description'),
+            command: t('quickstart.steps.2.command'),
         }
     ];
+
+    const integrations = [
+        { key: 'cli', icon: <Terminal className="h-5 w-5" /> },
+        { key: 'api', icon: <Code className="h-5 w-5" /> },
+        { key: 'mcp', icon: <Bot className="h-5 w-5" /> },
+        { key: 'cicd', icon: <Rocket className="h-5 w-5" /> },
+    ] as const;
 
     return (
         <div className="relative overflow-hidden">
@@ -129,7 +112,6 @@ export default function WelcomeView() {
             <div className="absolute inset-0 -z-10 overflow-hidden">
                 <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
                 <div className="absolute top-1/3 -left-32 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
             </div>
 
             <div className="page-container">
@@ -138,10 +120,10 @@ export default function WelcomeView() {
                     <div className="flex-1 space-y-8 text-center lg:text-left">
                         {/* Badge */}
                         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20">
-                            <Sparkles className="h-4 w-4" />
+                            <Github className="h-4 w-4" />
                             {t('welcome.tagline')}
                         </div>
-                        
+
                         {/* Title */}
                         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                             {t.rich('welcome.title', {
@@ -152,72 +134,85 @@ export default function WelcomeView() {
                                 )
                             })}
                         </h1>
-                        
+
                         {/* Description */}
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0">
                             {t('welcome.description')}
                         </p>
-                        
-                        {/* CTA Buttons */}
-                        <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                            <Button 
-                                size="lg" 
-                                onClick={handleGetStarted}
-                                className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg"
+
+                        {/* Docker Command */}
+                        <div className="flex items-center gap-2 max-w-lg mx-auto lg:mx-0">
+                            <div className="flex-1 flex items-center gap-3 rounded-xl bg-muted/50 border border-border/50 px-4 py-3 font-mono text-sm">
+                                <span className="text-muted-foreground select-none">$</span>
+                                <span className="text-foreground">{t('welcome.dockerCommand')}</span>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="rounded-xl h-[46px] w-[46px] border-border/50 shrink-0"
+                                onClick={() => handleCopy(t('welcome.dockerCommand'))}
                             >
-                                {t('welcome.getStarted')}
-                                <ArrowRight className="ml-2 h-5 w-5" />
+                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                             </Button>
+                        </div>
+
+                        {/* AI Powered note */}
+                        <p className="text-sm text-muted-foreground max-w-lg mx-auto lg:mx-0">
+                            <Sparkles className="h-3.5 w-3.5 inline mr-1.5 text-primary" />
+                            {t('welcome.aiPowered')}
+                        </p>
+
+                        {/* CTA Buttons */}
+                        <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                            <a
+                                href="https://github.com/Muluk-m/transweave"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Button
+                                    size="lg"
+                                    className="btn-gradient rounded-xl px-6 h-11 text-base shadow-lg"
+                                >
+                                    <Github className="mr-2 h-5 w-5" />
+                                    GitHub
+                                </Button>
+                            </a>
                             <Button
                                 variant="outline"
                                 size="lg"
                                 onClick={handleDemoLogin}
                                 disabled={isDemoLoading}
-                                className="rounded-xl px-8 h-12 text-base border-primary/30 text-primary hover:bg-primary/5"
+                                className="rounded-xl px-6 h-11 text-base border-primary/30 text-primary hover:bg-primary/5"
                             >
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                 ) : (
-                                    <Sparkles className="mr-2 h-5 w-5" />
+                                    <Zap className="mr-2 h-5 w-5" />
                                 )}
-                                {t('cta.tryDemo')}
+                                {t('welcome.tryDemo')}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="lg"
+                                onClick={() => router.push('/tutorial')}
+                                className="rounded-xl px-6 h-11 text-base"
+                            >
+                                {t('welcome.viewDocs')}
+                                <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
-                        
-                        {/* Stats */}
-                        <div className="flex gap-8 pt-4 justify-center lg:justify-start">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-foreground">10+</div>
-                                <div className="text-sm text-muted-foreground">{t('welcome.stats.languages')}</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-foreground">99.9%</div>
-                                <div className="text-sm text-muted-foreground">{t('welcome.stats.uptime')}</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-foreground">24/7</div>
-                                <div className="text-sm text-muted-foreground">{t('welcome.stats.support')}</div>
-                            </div>
-                        </div>
                     </div>
-                    
+
                     {/* Hero Image */}
                     <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
                         <div className="relative w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
                             <img src="/screenshots/hero-preview.png" alt="Transweave" className="w-full h-auto" />
                         </div>
-                        {/* Floating elements */}
-                        <div className="absolute -top-4 -left-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                            <Languages className="h-8 w-8 text-primary" />
-                        </div>
-                        <div className="absolute -bottom-4 -right-4 flex h-14 w-14 items-center justify-center rounded-xl bg-card shadow-soft-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                            <Zap className="h-7 w-7 text-accent" />
-                        </div>
                     </div>
                 </section>
 
                 {/* Features Section */}
-                <section ref={featuresRef} className="py-20" id="features">
+                <section className="py-20" id="features">
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-4">
                             <Zap className="h-4 w-4" />
@@ -231,10 +226,9 @@ export default function WelcomeView() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {features.map((feature, index) => (
-                            <Card 
-                                key={index} 
+                            <Card
+                                key={index}
                                 className="group border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
-                                style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 <CardHeader>
                                     <div className={`rounded-xl bg-gradient-to-br ${feature.gradient} w-12 h-12 flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -250,151 +244,93 @@ export default function WelcomeView() {
                     </div>
                 </section>
 
-                {/* Workflow Section */}
+                {/* Quick Start Section */}
                 <section className="py-20">
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent border border-accent/20 mb-4">
-                            <Book className="h-4 w-4" />
-                            {t('workflow.badge')}
+                            <Rocket className="h-4 w-4" />
+                            {t('quickstart.badge')}
                         </div>
-                        <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('workflow.title')}</h2>
+                        <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('quickstart.title')}</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                            {t('workflow.description')}
+                            {t('quickstart.description')}
                         </p>
                     </div>
 
-                    <Tabs defaultValue="import" className="max-w-3xl mx-auto">
-                        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1 w-full mb-8">
-                            <TabsTrigger 
-                                value="import"
-                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
-                                    text-muted-foreground hover:text-foreground
-                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
-                                    data-[state=active]:shadow-sm transition-all duration-200"
-                            >
-                                {t('workflow.tabs.import')}
-                            </TabsTrigger>
-                            <TabsTrigger 
-                                value="translate"
-                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
-                                    text-muted-foreground hover:text-foreground
-                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
-                                    data-[state=active]:shadow-sm transition-all duration-200"
-                            >
-                                {t('workflow.tabs.translate')}
-                            </TabsTrigger>
-                            <TabsTrigger 
-                                value="export"
-                                className="flex-1 px-4 py-3 text-sm font-medium rounded-lg
-                                    text-muted-foreground hover:text-foreground
-                                    data-[state=active]:bg-background data-[state=active]:text-foreground 
-                                    data-[state=active]:shadow-sm transition-all duration-200"
-                            >
-                                {t('workflow.tabs.export')}
-                            </TabsTrigger>
-                        </TabsList>
-                        {workflows.map((workflow, i) => (
-                            <TabsContent key={i} value={["import", "translate", "export"][i]} className="animate-fade-in">
-                                <Card className="border-border/50 shadow-soft">
-                                    <CardHeader>
-                                        <CardTitle className="text-xl">{workflow.title}</CardTitle>
-                                        <CardDescription className="text-base">
-                                            {workflow.description}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ul className="space-y-4">
-                                            {workflow.steps.map((step, j) => (
-                                                <li key={j} className="flex items-start gap-4">
-                                                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-white text-sm font-medium flex-shrink-0">
-                                                        {j+1}
-                                                    </span>
-                                                    <span className="text-foreground pt-1">{step}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button 
-                                            onClick={handleTutorial} 
-                                            variant="outline" 
-                                            className="w-full rounded-xl border-border/50 hover:bg-primary/5 hover:border-primary/30"
-                                        >
-                                            {t('workflow.viewDocs')}
-                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            </TabsContent>
+                    <div className="max-w-3xl mx-auto space-y-6">
+                        {quickstartSteps.map((step, i) => (
+                            <div key={i} className="flex items-start gap-6">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-white text-lg font-bold flex-shrink-0">
+                                    {i + 1}
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <h3 className="text-lg font-semibold">{step.title}</h3>
+                                    <p className="text-muted-foreground text-sm">{step.description}</p>
+                                    {step.command && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <code className="flex-1 rounded-lg bg-muted/50 border border-border/50 px-4 py-2.5 font-mono text-sm text-foreground">
+                                                <span className="text-muted-foreground mr-2 select-none">$</span>
+                                                {step.command}
+                                            </code>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="rounded-lg h-9 w-9 shrink-0"
+                                                onClick={() => handleCopy(step.command!)}
+                                            >
+                                                <Copy className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         ))}
-                    </Tabs>
+                    </div>
                 </section>
 
-                {/* Case Studies Section */}
+                {/* Integrations Section */}
                 <section className="py-20 relative">
                     <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-muted/50 to-muted/30 rounded-3xl -z-10" />
                     <div className="px-6 py-12">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('cases.title')}</h2>
+                            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('integrations.title')}</h2>
                             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                                {t('cases.description')}
+                                {t('integrations.description')}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                            <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
-                                <div className="h-48 bg-gradient-to-br from-primary via-violet-500 to-accent relative overflow-hidden">
-                                    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
-                                    <div className="absolute bottom-4 left-4 right-4">
-                                        <div className="flex gap-2">
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">SaaS</span>
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.multilingual')}</span>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10">
+                            {integrations.map((item) => (
+                                <Card key={item.key} className="border-border/50 bg-card/80 text-center hover:border-primary/30 transition-colors">
+                                    <CardContent className="pt-6 pb-4 px-4">
+                                        <div className="flex justify-center mb-3 text-primary">
+                                            {item.icon}
                                         </div>
-                                    </div>
-                                </div>
-                                <CardHeader>
-                                    <CardTitle className="group-hover:text-primary transition-colors">{t('cases.case1.title')}</CardTitle>
-                                    <CardDescription>{t('cases.case1.subtitle')}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-muted-foreground text-sm leading-relaxed">
-                                        {t('cases.case1.quote')}
-                                    </p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button variant="ghost" className="px-0 text-primary hover:text-primary/80">
-                                        {t('cases.case1.readMore')}
-                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                                    </Button>
-                                </CardFooter>
-                            </Card>
+                                        <h3 className="font-semibold text-sm mb-1">{t(`integrations.${item.key}.title`)}</h3>
+                                        <p className="text-muted-foreground text-xs leading-relaxed">{t(`integrations.${item.key}.description`)}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
 
-                            <Card className="group overflow-hidden border-border/50 hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300">
-                                <div className="h-48 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 relative overflow-hidden">
-                                    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
-                                    <div className="absolute bottom-4 left-4 right-4">
-                                        <div className="flex gap-2">
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.ecommerce')}</span>
-                                            <span className="px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm text-white text-xs">{t('cases.tags.i18n')}</span>
-                                        </div>
-                                    </div>
+                        {/* Code examples */}
+                        <div className="max-w-2xl mx-auto rounded-xl bg-background border border-border/50 overflow-hidden">
+                            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-muted/30">
+                                <div className="flex gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                                    <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                                    <div className="w-3 h-3 rounded-full bg-green-500/60" />
                                 </div>
-                                <CardHeader>
-                                    <CardTitle className="group-hover:text-primary transition-colors">{t('cases.case2.title')}</CardTitle>
-                                    <CardDescription>{t('cases.case2.subtitle')}</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-muted-foreground text-sm leading-relaxed">
-                                        {t('cases.case2.quote')}
-                                    </p>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button variant="ghost" className="px-0 text-primary hover:text-primary/80">
-                                        {t('cases.case2.readMore')}
-                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                                    </Button>
-                                </CardFooter>
-                            </Card>
+                                <span className="text-xs text-muted-foreground ml-2 font-mono">terminal</span>
+                            </div>
+                            <pre className="p-4 font-mono text-sm leading-relaxed overflow-x-auto">
+                                <code>
+                                    <span className="text-muted-foreground">{t('integrations.codeExamples.pull').split('\n')[0]}</span>{'\n'}
+                                    <span className="text-green-500">$ </span><span className="text-foreground">{t('integrations.codeExamples.pull').split('\n')[1]}</span>{'\n'}{'\n'}
+                                    <span className="text-muted-foreground">{t('integrations.codeExamples.push').split('\n')[0]}</span>{'\n'}
+                                    <span className="text-green-500">$ </span><span className="text-foreground">{t('integrations.codeExamples.push').split('\n')[1]}</span>
+                                </code>
+                            </pre>
                         </div>
                     </div>
                 </section>
@@ -406,7 +342,7 @@ export default function WelcomeView() {
                     </div>
                     <div className="max-w-3xl mx-auto px-4">
                         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-6">
-                            <Sparkles className="h-4 w-4" />
+                            <Rocket className="h-4 w-4" />
                             {t('cta.badge')}
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-6">{t('cta.title')}</h2>
@@ -414,14 +350,19 @@ export default function WelcomeView() {
                             {t('cta.description')}
                         </p>
                         <div className="flex flex-wrap justify-center gap-4">
-                            <Button 
-                                size="lg" 
-                                className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg" 
-                                onClick={handleGetStarted}
+                            <a
+                                href="https://github.com/Muluk-m/transweave"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                                {t('cta.register')}
-                                <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
+                                <Button
+                                    size="lg"
+                                    className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg"
+                                >
+                                    <Github className="mr-2 h-5 w-5" />
+                                    {t('cta.github')}
+                                </Button>
+                            </a>
                             <Button
                                 onClick={handleDemoLogin}
                                 disabled={isDemoLoading}
@@ -432,13 +373,13 @@ export default function WelcomeView() {
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                 ) : (
-                                    <Sparkles className="mr-2 h-5 w-5" />
+                                    <Zap className="mr-2 h-5 w-5" />
                                 )}
                                 {t('cta.tryDemo')}
                             </Button>
                         </div>
                         <p className="text-sm text-muted-foreground mt-6">
-                            {t('cta.note')}
+                            {t('cta.license')}
                         </p>
                     </div>
                 </section>
