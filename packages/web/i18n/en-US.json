@@ -31,27 +31,27 @@
     "title": "Built for developers",
     "description": "Everything you need to manage i18n, with tools that fit your workflow",
     "items": {
-      "0": {
+      "aiTranslation": {
         "title": "AI Translation",
         "description": "Translate with OpenAI, Claude, DeepL, or Google Translate. Bring your own API keys."
       },
-      "1": {
+      "cliApi": {
         "title": "CLI & API",
         "description": "Pull and push translations from your terminal. Integrate with any CI/CD pipeline."
       },
-      "2": {
+      "mcpIntegration": {
         "title": "MCP Integration",
         "description": "Connect AI assistants to your translation data via Model Context Protocol."
       },
-      "3": {
+      "multiFormat": {
         "title": "Multi-format Support",
         "description": "JSON, XLIFF, Gettext (.po) and more. Import and export in the format your project needs."
       },
-      "4": {
+      "teamwork": {
         "title": "Team Collaboration",
         "description": "Invite teammates, assign translations, and review changes in real-time."
       },
-      "5": {
+      "selfHosted": {
         "title": "Self-hosted & Open Source",
         "description": "Deploy on your infrastructure. MIT licensed, no vendor lock-in, full data ownership."
       }
@@ -62,16 +62,16 @@
     "title": "Up and running in 5 minutes",
     "description": "From zero to managing translations in three steps",
     "steps": {
-      "0": {
+      "deploy": {
         "title": "Deploy",
         "description": "Start with Docker Compose",
         "command": "docker compose up -d"
       },
-      "1": {
+      "configure": {
         "title": "Set up",
         "description": "Open localhost:3000, create your team and first project"
       },
-      "2": {
+      "integrate": {
         "title": "Integrate",
         "description": "Sync translations with your codebase using the CLI",
         "command": "npx transweave pull --project=my-app"
@@ -479,20 +479,20 @@
           "title": "System Overview",
           "description": "Transweave is a localization management platform that helps teams collaborate on translations and manage multilingual content.",
           "steps": {
-            "0": "Register an account and log in to the system",
-            "1": "Create or join a team",
-            "2": "Create a translation project",
-            "3": "Invite team members to collaborate"
+            "step1": "Register an account and log in to the system",
+            "step2": "Create or join a team",
+            "step3": "Create a translation project",
+            "step4": "Invite team members to collaborate"
           }
         },
         "quickstart": {
           "title": "Quick Start",
           "description": "Basic steps from creating your first project to exporting translations.",
           "steps": {
-            "0": "Create a new project in your team",
-            "1": "Import existing translation files",
-            "2": "Assign translation tasks",
-            "3": "Complete translations and export"
+            "step1": "Create a new project in your team",
+            "step2": "Import existing translation files",
+            "step3": "Assign translation tasks",
+            "step4": "Complete translations and export"
           }
         }
       },
@@ -502,20 +502,20 @@
           "title": "Creating and Managing Teams",
           "description": "Learn how to create and manage teams, set roles and permissions.",
           "steps": {
-            "0": "Create a new team and set team information",
-            "1": "Invite members to join the team",
-            "2": "Set member roles (owner, admin, translator)",
-            "3": "Manage team permissions and access control"
+            "step1": "Create a new team and set team information",
+            "step2": "Invite members to join the team",
+            "step3": "Set member roles (owner, admin, translator)",
+            "step4": "Manage team permissions and access control"
           }
         },
         "collaboration": {
           "title": "Team Collaboration",
           "description": "Understand how to efficiently organize team members to work together.",
           "steps": {
-            "0": "Set up team workflow",
-            "1": "Assign translation and review tasks",
-            "2": "Track work progress",
-            "3": "Manage team workload and efficiency"
+            "step1": "Set up team workflow",
+            "step2": "Assign translation and review tasks",
+            "step3": "Track work progress",
+            "step4": "Manage team workload and efficiency"
           }
         }
       },
@@ -525,20 +525,20 @@
           "title": "Creating and Configuring Projects",
           "description": "Learn how to create projects and configure them in detail.",
           "steps": {
-            "0": "Create a new project and set basic information",
-            "1": "Configure source and target languages",
-            "2": "Set up project glossary and style guide",
-            "3": "Configure project workflow and review process"
+            "step1": "Create a new project and set basic information",
+            "step2": "Configure source and target languages",
+            "step3": "Set up project glossary and style guide",
+            "step4": "Configure project workflow and review process"
           }
         },
         "importExport": {
           "title": "Importing and Exporting Files",
           "description": "Learn about supported file formats and data exchange methods.",
           "steps": {
-            "0": "Supported import file formats (JSON, YAML, CSV, etc.)",
-            "1": "How to properly import existing translations",
-            "2": "Export translations in multiple formats",
-            "3": "Integrate with development workflow"
+            "step1": "Supported import file formats (JSON, YAML, CSV, etc.)",
+            "step2": "How to properly import existing translations",
+            "step3": "Export translations in multiple formats",
+            "step4": "Integrate with development workflow"
           }
         }
       },
@@ -548,20 +548,20 @@
           "title": "Translation Interface",
           "description": "Learn how to use the translation editor to efficiently complete translations.",
           "steps": {
-            "0": "Translation editor interface overview",
-            "1": "Translation suggestions and auto-fill features",
-            "2": "Translation history and version comparison",
-            "3": "Bulk operations and filtering functions"
+            "step1": "Translation editor interface overview",
+            "step2": "Translation suggestions and auto-fill features",
+            "step3": "Translation history and version comparison",
+            "step4": "Bulk operations and filtering functions"
           }
         },
         "quality": {
           "title": "Translation Quality Management",
           "description": "Learn how to ensure translation quality and consistency.",
           "steps": {
-            "0": "Set up and use quality check rules",
-            "1": "Implement translation review process",
-            "2": "Manage terminology and style consistency",
-            "3": "Generate quality reports and analysis"
+            "step1": "Set up and use quality check rules",
+            "step2": "Implement translation review process",
+            "step3": "Manage terminology and style consistency",
+            "step4": "Generate quality reports and analysis"
           }
         }
       },
@@ -571,20 +571,20 @@
           "title": "API Integration",
           "description": "How to use Transweave API to implement automated workflows.",
           "steps": {
-            "0": "API overview and authentication",
-            "1": "Common API endpoints and use cases",
-            "2": "Automating translation processes",
-            "3": "Integrating with CI/CD systems"
+            "step1": "API overview and authentication",
+            "step2": "Common API endpoints and use cases",
+            "step3": "Automating translation processes",
+            "step4": "Integrating with CI/CD systems"
           }
         },
         "customize": {
           "title": "Customization and Extension",
           "description": "Customize the Transweave platform according to your needs.",
           "steps": {
-            "0": "Custom workflows and statuses",
-            "1": "Extension features and plugins",
-            "2": "Advanced data import and export options",
-            "3": "Integration with other tools"
+            "step1": "Custom workflows and statuses",
+            "step2": "Extension features and plugins",
+            "step3": "Advanced data import and export options",
+            "step4": "Integration with other tools"
           }
         }
       }

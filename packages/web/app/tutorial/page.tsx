@@ -26,10 +26,10 @@ export default function TutorialPage() {
                     description: t('sections.gettingStarted.overview.description'),
                     image: "/tutorial/overview.png",
                     steps: [
-                        t('sections.gettingStarted.overview.steps.0'),
-                        t('sections.gettingStarted.overview.steps.1'),
-                        t('sections.gettingStarted.overview.steps.2'),
-                        t('sections.gettingStarted.overview.steps.3')
+                        t('sections.gettingStarted.overview.steps.step1'),
+                        t('sections.gettingStarted.overview.steps.step2'),
+                        t('sections.gettingStarted.overview.steps.step3'),
+                        t('sections.gettingStarted.overview.steps.step4')
                     ],
                 },
                 {
@@ -37,10 +37,10 @@ export default function TutorialPage() {
                     description: t('sections.gettingStarted.quickstart.description'),
                     image: "/tutorial/quickstart.png",
                     steps: [
-                        t('sections.gettingStarted.quickstart.steps.0'),
-                        t('sections.gettingStarted.quickstart.steps.1'),
-                        t('sections.gettingStarted.quickstart.steps.2'),
-                        t('sections.gettingStarted.quickstart.steps.3')
+                        t('sections.gettingStarted.quickstart.steps.step1'),
+                        t('sections.gettingStarted.quickstart.steps.step2'),
+                        t('sections.gettingStarted.quickstart.steps.step3'),
+                        t('sections.gettingStarted.quickstart.steps.step4')
                     ],
                 }
             ]
@@ -55,10 +55,10 @@ export default function TutorialPage() {
                     description: t('sections.teamManagement.create.description'),
                     image: "/tutorial/teams.png",
                     steps: [
-                        t('sections.teamManagement.create.steps.0'),
-                        t('sections.teamManagement.create.steps.1'),
-                        t('sections.teamManagement.create.steps.2'),
-                        t('sections.teamManagement.create.steps.3')
+                        t('sections.teamManagement.create.steps.step1'),
+                        t('sections.teamManagement.create.steps.step2'),
+                        t('sections.teamManagement.create.steps.step3'),
+                        t('sections.teamManagement.create.steps.step4')
                     ],
                 },
                 {
@@ -66,10 +66,10 @@ export default function TutorialPage() {
                     description: t('sections.teamManagement.collaboration.description'),
                     image: "/tutorial/collaboration.png",
                     steps: [
-                        t('sections.teamManagement.collaboration.steps.0'),
-                        t('sections.teamManagement.collaboration.steps.1'),
-                        t('sections.teamManagement.collaboration.steps.2'),
-                        t('sections.teamManagement.collaboration.steps.3')
+                        t('sections.teamManagement.collaboration.steps.step1'),
+                        t('sections.teamManagement.collaboration.steps.step2'),
+                        t('sections.teamManagement.collaboration.steps.step3'),
+                        t('sections.teamManagement.collaboration.steps.step4')
                     ],
                 }
             ]
@@ -84,10 +84,10 @@ export default function TutorialPage() {
                     description: t('sections.projects.setup.description'),
                     image: "/tutorial/project-setup.png",
                     steps: [
-                        t('sections.projects.setup.steps.0'),
-                        t('sections.projects.setup.steps.1'),
-                        t('sections.projects.setup.steps.2'),
-                        t('sections.projects.setup.steps.3')
+                        t('sections.projects.setup.steps.step1'),
+                        t('sections.projects.setup.steps.step2'),
+                        t('sections.projects.setup.steps.step3'),
+                        t('sections.projects.setup.steps.step4')
                     ],
                 },
                 {
@@ -95,10 +95,10 @@ export default function TutorialPage() {
                     description: t('sections.projects.importExport.description'),
                     image: "/tutorial/import-export.png",
                     steps: [
-                        t('sections.projects.importExport.steps.0'),
-                        t('sections.projects.importExport.steps.1'),
-                        t('sections.projects.importExport.steps.2'),
-                        t('sections.projects.importExport.steps.3')
+                        t('sections.projects.importExport.steps.step1'),
+                        t('sections.projects.importExport.steps.step2'),
+                        t('sections.projects.importExport.steps.step3'),
+                        t('sections.projects.importExport.steps.step4')
                     ],
                 }
             ]
@@ -113,10 +113,10 @@ export default function TutorialPage() {
                     description: t('sections.translation.interface.description'),
                     image: "/tutorial/translation-editor.png",
                     steps: [
-                        t('sections.translation.interface.steps.0'),
-                        t('sections.translation.interface.steps.1'),
-                        t('sections.translation.interface.steps.2'),
-                        t('sections.translation.interface.steps.3')
+                        t('sections.translation.interface.steps.step1'),
+                        t('sections.translation.interface.steps.step2'),
+                        t('sections.translation.interface.steps.step3'),
+                        t('sections.translation.interface.steps.step4')
                     ],
                 },
                 {
@@ -124,10 +124,10 @@ export default function TutorialPage() {
                     description: t('sections.translation.quality.description'),
                     image: "/tutorial/quality.png",
                     steps: [
-                        t('sections.translation.quality.steps.0'),
-                        t('sections.translation.quality.steps.1'),
-                        t('sections.translation.quality.steps.2'),
-                        t('sections.translation.quality.steps.3')
+                        t('sections.translation.quality.steps.step1'),
+                        t('sections.translation.quality.steps.step2'),
+                        t('sections.translation.quality.steps.step3'),
+                        t('sections.translation.quality.steps.step4')
                     ],
                 }
             ]
@@ -142,10 +142,10 @@ export default function TutorialPage() {
                     description: t('sections.advanced.api.description'),
                     image: "/tutorial/api.png",
                     steps: [
-                        t('sections.advanced.api.steps.0'),
-                        t('sections.advanced.api.steps.1'),
-                        t('sections.advanced.api.steps.2'),
-                        t('sections.advanced.api.steps.3')
+                        t('sections.advanced.api.steps.step1'),
+                        t('sections.advanced.api.steps.step2'),
+                        t('sections.advanced.api.steps.step3'),
+                        t('sections.advanced.api.steps.step4')
                     ],
                 },
                 {
@@ -153,10 +153,10 @@ export default function TutorialPage() {
                     description: t('sections.advanced.customize.description'),
                     image: "/tutorial/customize.png",
                     steps: [
-                        t('sections.advanced.customize.steps.0'),
-                        t('sections.advanced.customize.steps.1'),
-                        t('sections.advanced.customize.steps.2'),
-                        t('sections.advanced.customize.steps.3')
+                        t('sections.advanced.customize.steps.step1'),
+                        t('sections.advanced.customize.steps.step2'),
+                        t('sections.advanced.customize.steps.step3'),
+                        t('sections.advanced.customize.steps.step4')
                     ],
                 }
             ]

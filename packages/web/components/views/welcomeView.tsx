@@ -46,56 +46,56 @@ export default function WelcomeView() {
     const features = [
         {
             icon: <Sparkles className="h-6 w-6" />,
-            title: t('features.items.0.title'),
-            description: t('features.items.0.description'),
+            title: t('features.items.aiTranslation.title'),
+            description: t('features.items.aiTranslation.description'),
             gradient: "from-violet-500 to-purple-500"
         },
         {
             icon: <Terminal className="h-6 w-6" />,
-            title: t('features.items.1.title'),
-            description: t('features.items.1.description'),
+            title: t('features.items.cliApi.title'),
+            description: t('features.items.cliApi.description'),
             gradient: "from-emerald-500 to-teal-500"
         },
         {
             icon: <Bot className="h-6 w-6" />,
-            title: t('features.items.2.title'),
-            description: t('features.items.2.description'),
+            title: t('features.items.mcpIntegration.title'),
+            description: t('features.items.mcpIntegration.description'),
             gradient: "from-blue-500 to-cyan-500"
         },
         {
             icon: <FileCode className="h-6 w-6" />,
-            title: t('features.items.3.title'),
-            description: t('features.items.3.description'),
+            title: t('features.items.multiFormat.title'),
+            description: t('features.items.multiFormat.description'),
             gradient: "from-amber-500 to-orange-500"
         },
         {
             icon: <Users className="h-6 w-6" />,
-            title: t('features.items.4.title'),
-            description: t('features.items.4.description'),
+            title: t('features.items.teamwork.title'),
+            description: t('features.items.teamwork.description'),
             gradient: "from-rose-500 to-pink-500"
         },
         {
             icon: <Server className="h-6 w-6" />,
-            title: t('features.items.5.title'),
-            description: t('features.items.5.description'),
+            title: t('features.items.selfHosted.title'),
+            description: t('features.items.selfHosted.description'),
             gradient: "from-slate-500 to-slate-700"
         }
     ];
 
     const quickstartSteps = [
         {
-            title: t('quickstart.steps.0.title'),
-            description: t('quickstart.steps.0.description'),
-            command: t('quickstart.steps.0.command'),
+            title: t('quickstart.steps.deploy.title'),
+            description: t('quickstart.steps.deploy.description'),
+            command: t('quickstart.steps.deploy.command'),
         },
         {
-            title: t('quickstart.steps.1.title'),
-            description: t('quickstart.steps.1.description'),
+            title: t('quickstart.steps.configure.title'),
+            description: t('quickstart.steps.configure.description'),
         },
         {
-            title: t('quickstart.steps.2.title'),
-            description: t('quickstart.steps.2.description'),
-            command: t('quickstart.steps.2.command'),
+            title: t('quickstart.steps.integrate.title'),
+            description: t('quickstart.steps.integrate.description'),
+            command: t('quickstart.steps.integrate.command'),
         }
     ];
 
