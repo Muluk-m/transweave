@@ -6,9 +6,10 @@ export class CreateTeamDto {
   @MaxLength(100)
   name: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(100)
-  url: string;
+  url?: string;
 
   @IsOptional()
   @IsString()

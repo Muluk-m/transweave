@@ -14,7 +14,7 @@ export class TeamService {
     @Inject(DRIZZLE) private db: DrizzleDB,
   ) {}
 
-  async createTeam(data: { name: string; url: string; userId: string }) {
+  async createTeam(data: { name: string; url?: string; userId: string }) {
     const name = (data.name ?? '').trim();
     const url =
       (data.url ?? '').trim() || Math.random().toString(36).slice(2, 10);
