@@ -26,6 +26,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -39,6 +45,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/transweave-server:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/transweave-server:latest
+            docker.io/mulukma/transweave-server:${{ steps.version.outputs.VERSION }}
+            docker.io/mulukma/transweave-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -52,6 +60,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/transweave-web:${{ steps.version.outputs.VERSION }}
             ghcr.io/${{ github.repository_owner }}/transweave-web:latest
+            docker.io/mulukma/transweave-web:${{ steps.version.outputs.VERSION }}
+            docker.io/mulukma/transweave-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

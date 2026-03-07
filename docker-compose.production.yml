@@ -5,7 +5,8 @@
 #   1. Copy .env.example to .env and set JWT_SECRET + POSTGRES_PASSWORD
 #   2. docker compose -f docker-compose.production.yml up -d
 #
-# Images are pulled from ghcr.io/muluk-m/transweave-{server,web}:latest
+# Images are pulled from Docker Hub: mulukma/transweave-{server,web}:latest
+# GHCR mirrors also available: ghcr.io/muluk-m/transweave-{server,web}:latest
 # Pin a specific version by replacing :latest with e.g. :1.2.3
 # =============================================================================
 
@@ -26,7 +27,7 @@ services:
     restart: unless-stopped
 
   server:
-    image: ghcr.io/muluk-m/transweave-server:latest
+    image: mulukma/transweave-server:latest
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,7 +38,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/muluk-m/transweave-web:latest
+    image: mulukma/transweave-web:latest
     depends_on:
       - server
     environment:
