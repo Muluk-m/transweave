@@ -9,6 +9,15 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
 
+  // CORS: required when frontend (Vercel) and backend (Fly.io) are on different domains
+  const corsOrigin = process.env.CORS_ORIGIN;
+  app.enableCors({
+    origin: corsOrigin
+      ? corsOrigin.split(',').map((o) => o.trim())
+      : '*',
+    credentials: true,
+  });
+
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
@@ -16,6 +25,6 @@ async function bootstrap() {
   }));
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  await app.listen(process.env.PORT ?? 3001);
+  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
 }
 bootstrap();
