@@ -80,7 +80,7 @@ export function ProjectsList({ projects, onProjectClick, onCreateProject, teamId
               className="rounded-xl"
             >
               <Plus className="h-4 w-4 mr-2" />
-              创建新项目
+              {t("createNewProject")}
             </Button>
           </div>
         )}

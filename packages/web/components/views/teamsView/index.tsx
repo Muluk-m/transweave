@@ -54,7 +54,7 @@ export default function TeamsView() {
                             {t("teams.title")}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {teams.length > 0 ? `${teams.length} 个团队` : '开始创建您的第一个团队'}
+                            {teams.length > 0 ? t("teamsSubtitle.teamCount", { count: teams.length }) : t("teamsSubtitle.createFirst")}
                         </p>
                     </div>
                 </div>

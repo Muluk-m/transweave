@@ -5,6 +5,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ export function DataTablePagination<TData>({
   className,
   ...props
 }: DataTablePaginationProps<TData>) {
+  const t = useTranslations("dataTable");
   return (
     <div
       className={cn(
@@ -36,12 +38,11 @@ export function DataTablePagination<TData>({
       {...props}
     >
       <div className="flex-1 whitespace-nowrap text-muted-foreground text-sm">
-        已选 {table.getFilteredSelectedRowModel().rows.length} 行，共{" "}
-        {table.getFilteredRowModel().rows.length} 行
+        {t("selectedRows", { selected: table.getFilteredSelectedRowModel().rows.length, total: table.getFilteredRowModel().rows.length })}
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
-          <p className="whitespace-nowrap font-medium text-sm">每页行数</p>
+          <p className="whitespace-nowrap font-medium text-sm">{t("rowsPerPage")}</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -61,12 +62,11 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center font-medium text-sm">
-          第 {table.getState().pagination.pageIndex + 1} 页 / 共{" "}
-          {table.getPageCount()} 页
+          {t("pageInfo", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            aria-label="首页"
+            aria-label={t("firstPage")}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"
@@ -76,7 +76,7 @@ export function DataTablePagination<TData>({
             <ChevronsLeft />
           </Button>
           <Button
-            aria-label="上一页"
+            aria-label={t("previousPage")}
             variant="outline"
             size="icon"
             className="size-8"
@@ -86,7 +86,7 @@ export function DataTablePagination<TData>({
             <ChevronLeft />
           </Button>
           <Button
-            aria-label="下一页"
+            aria-label={t("nextPage")}
             variant="outline"
             size="icon"
             className="size-8"
@@ -96,7 +96,7 @@ export function DataTablePagination<TData>({
             <ChevronRight />
           </Button>
           <Button
-            aria-label="末页"
+            aria-label={t("lastPage")}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"

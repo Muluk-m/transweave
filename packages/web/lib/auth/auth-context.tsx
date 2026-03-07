@@ -1,5 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSetAtom } from 'jotai';
+import { nowTeamAtom, teamsAtom, nowProjectAtom, projectsAtom } from '@/jotai';
 import { User, login as apiLogin, register as apiRegister, checkAuthStatus, checkSetupStatus } from '@/api/auth';
 
 type AuthContextType = {
@@ -20,6 +22,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const setNowTeam = useSetAtom(nowTeamAtom);
+  const setTeams = useSetAtom(teamsAtom);
+  const setNowProject = useSetAtom(nowProjectAtom);
+  const setProjects = useSetAtom(projectsAtom);
 
   const checkAuth = async () => {
     try {
@@ -77,6 +83,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('authToken');
+    setNowTeam(null);
+    setTeams([]);
+    setNowProject(null);
+    setProjects([]);
   };
 
   return (

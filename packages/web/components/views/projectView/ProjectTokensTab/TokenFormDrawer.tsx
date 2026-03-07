@@ -148,7 +148,7 @@ export function TokenFormDrawer({
   const handleGenerateKey = async () => {
     if (!formData.comment) {
       toast({
-        title: "请输入备注，以便 AI 生成多语言 key",
+        title: t("enterCommentForAi"),
       });
       return;
     }
@@ -169,21 +169,19 @@ export function TokenFormDrawer({
 
   // 通用的文件上传函数
   const uploadFile = async (file: File) => {
-    // 检查文件类型
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "错误",
-        description: "请上传图片文件",
+        title: t("error"),
+        description: t("pleaseUploadImage"),
         variant: "destructive",
       });
       return;
     }
 
-    // 检查文件大小（限制 5MB）
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "错误",
-        description: "图片大小不能超过 5MB",
+        title: t("error"),
+        description: t("imageSizeLimit"),
         variant: "destructive",
       });
       return;
@@ -196,14 +194,14 @@ export function TokenFormDrawer({
       // 使用 CDN 返回的 URL
       onScreenshotsChange([...currentScreenshots, result.url]);
       toast({
-        title: "上传成功",
-        description: `图片已成功上传到 CDN`,
+        title: t("uploadSuccess"),
+        description: t("uploadedToCdn"),
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
-        title: "上传失败",
-        description: error instanceof Error ? error.message : "图片上传失败，请重试",
+        title: t("uploadFailed"),
+        description: error instanceof Error ? error.message : t("uploadFailedRetry"),
         variant: "destructive",
       });
     } finally {
@@ -281,7 +279,7 @@ export function TokenFormDrawer({
         <DialogContent className="max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>
-              截图预览 {previewImage && `(${previewImage.index + 1} / ${formData.screenshots?.length || 0})`}
+              {t("screenshotPreview")} {previewImage && `(${previewImage.index + 1} / ${formData.screenshots?.length || 0})`}
             </DialogTitle>
           </DialogHeader>
           {previewImage && (
@@ -350,47 +348,47 @@ export function TokenFormDrawer({
                         <div className="text-sm text-gray-100 space-y-2">
                           <p>
                             <span className="font-medium text-white">Key</span>{" "}
-                            是 token 的唯一标识，不能重复。
+                            {t("keyTooltip.description")}
                           </p>
 
-                          <p className="font-medium text-white">规则：</p>
+                          <p className="font-medium text-white">{t("keyTooltip.rules")}</p>
                           <ul className="list-disc list-inside pl-4 space-y-1">
                             <li>
-                              只能包含字母、
+                              {t("keyTooltip.ruleLetters")}
                               <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
                                 .
                               </code>
-                              、数字
+                              {t("keyTooltip.ruleNumbers")}
                             </li>
-                            <li>必须以小写字母开头</li>
+                            <li>{t("keyTooltip.ruleLowercase")}</li>
                             <li>
-                              使用{" "}
+                              {t("keyTooltip.ruleUse")}{" "}
                               <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
                                 .
                               </code>{" "}
-                              分隔多级（子级）命名
+                              {t("keyTooltip.ruleSeparator")}
                             </li>
                           </ul>
 
-                          <p className="font-medium text-white">例如：</p>
+                          <p className="font-medium text-white">{t("keyTooltip.examples")}</p>
                           <ul className="list-decimal list-inside pl-4 space-y-1">
                             <li>
                               <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 login
                               </code>
-                              （用途）
+                              {t("keyTooltip.exUsage")}
                             </li>
                             <li>
                               <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 userCenter.loginSuccess
                               </code>
-                              （模块.用途）
+                              {t("keyTooltip.exModuleUsage")}
                             </li>
                             <li>
                               <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
                                 userCenter.login.success
                               </code>
-                              （模块.用途.状态）
+                              {t("keyTooltip.exModuleUsageState")}
                             </li>
                           </ul>
                         </div>
@@ -422,16 +420,16 @@ export function TokenFormDrawer({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="module">所属模块（可选）</Label>
+              <Label htmlFor="module">{t("moduleLabel")}</Label>
               <Select
                 value={formData.module || "__none__"}
                 onValueChange={(value) => onModuleChange(value === "__none__" ? "" : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择模块" />
+                  <SelectValue placeholder={t("modulePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">无模块</SelectItem>
+                  <SelectItem value="__none__">{t("noModule")}</SelectItem>
                   {modules.map((module) => (
                     <SelectItem key={module.code} value={module.code}>
                       <div className="flex items-center gap-2">
@@ -443,7 +441,7 @@ export function TokenFormDrawer({
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500">
-                💡 选择模块后，AI 生成的 key 会自动带上模块代码前缀
+                {t("moduleHint")}
               </p>
             </div>
 
@@ -470,7 +468,7 @@ export function TokenFormDrawer({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="screenshots">上下文截图</Label>
+              <Label htmlFor="screenshots">{t("contextScreenshots")}</Label>
               <div 
                 className="space-y-2" 
                 ref={screenshotAreaRef}
@@ -509,11 +507,11 @@ export function TokenFormDrawer({
                     className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
                   >
                     {isUploadingImage ? (
-                      <div className="text-xs text-muted-foreground">上传中...</div>
+                      <div className="text-xs text-muted-foreground">{t("uploading")}</div>
                     ) : (
                       <>
                         <Upload className="w-6 h-6 text-muted-foreground/60 mb-1" />
-                        <span className="text-xs text-muted-foreground">上传图片</span>
+                        <span className="text-xs text-muted-foreground">{t("uploadImage")}</span>
                       </>
                     )}
                   </label>
@@ -527,10 +525,10 @@ export function TokenFormDrawer({
                   />
                 </div>
                 <p className="text-xs text-gray-500">
-                  💡 支持 JPG、PNG、GIF、WebP 格式，单个文件不超过 5MB
+                  {t("imageFormatHint")}
                 </p>
                 <p className="text-xs text-blue-600 font-medium">
-                  ⌨️ 提示：可以直接使用 Ctrl/Cmd + V 粘贴截图
+                  {t("pasteHint")}
                 </p>
               </div>
             </div>
@@ -613,6 +611,7 @@ function TokenHistorySheet({
   onRollback: (translation: string) => void;
   onRestoreVersion?: (historyId: string) => Promise<void>;
 }) {
+  const t = useTranslations("tokenForm");
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const handleRestore = async (historyId: string) => {
@@ -633,7 +632,7 @@ function TokenHistorySheet({
 
       <SheetContent className="sm:max-w-[700px]">
         <SheetHeader>
-          <SheetTitle>翻译历史</SheetTitle>
+          <SheetTitle>{t("translationHistory")}</SheetTitle>
         </SheetHeader>
 
         <ScrollArea className="h-[calc(100vh-220px)] mt-6 pr-4">
@@ -667,22 +666,22 @@ function TokenHistorySheet({
                               className="h-6 text-xs px-2"
                               disabled={restoringId === item.id}
                             >
-                              {restoringId === item.id ? "恢复中..." : "恢复此版本"}
+                              {restoringId === item.id ? t("restoring") : t("restoreVersion")}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>确认恢复版本</AlertDialogTitle>
+                              <AlertDialogTitle>{t("confirmRestore")}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                此操作将使用该历史记录的翻译内容<strong>全量覆盖</strong>当前所有语言的翻译。已有的最新翻译可能会丢失。
+                                {t("restoreWarning")}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
+                              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleRestore(item.id)}
                               >
-                                确认恢复
+                                {t("confirmRestoreButton")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

@@ -2,6 +2,8 @@
  * Encapsulated fetch API, automatically adding authentication token and error handling
  */
 
+const DEBUG = process.env.NODE_ENV === 'development';
+
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean; // Whether authentication is needed, default is true
   baseUrl?: string; // API base URL, default is empty
@@ -54,36 +56,45 @@ export async function apiFetch<T = any>(
   const url = `${baseUrl}${endpoint}`;
 
   // Log request information
-  console.group(`API Request: ${restOptions.method || 'GET'} ${url}`);
-  console.log('Headers:', { ...headerRecord });
-  if (options.body) {
-    try {
-      const bodyContent = options.body instanceof FormData
-        ? 'Form data'
-        : typeof options.body === 'string'
-          ? JSON.parse(options.body)
-          : options.body;
-      console.log('Request Body:', bodyContent);
-    } catch (e) {
-      console.log('Request Body:', options.body);
+  if (DEBUG) {
+    console.group(`API Request: ${restOptions.method || 'GET'} ${url}`);
+    console.log('Headers:', { ...headerRecord });
+    if (options.body) {
+      try {
+        const bodyContent = options.body instanceof FormData
+          ? 'Form data'
+          : typeof options.body === 'string'
+            ? JSON.parse(options.body)
+            : options.body;
+        console.log('Request Body:', bodyContent);
+      } catch (e) {
+        console.log('Request Body:', options.body);
+      }
     }
   }
+
+  // AbortController-based timeout (30 seconds)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     // Send request
     const response = await fetch(url, {
       ...restOptions,
       headers: requestHeaders,
+      signal: controller.signal,
     });
 
     // Log response status
-    console.log(`Response Status: ${response.status} ${response.statusText}`);
+    if (DEBUG) {
+      console.log(`Response Status: ${response.status} ${response.statusText}`);
+    }
 
     // Handle non-2xx responses
     if (!response.ok) {
       // Auto-redirect on 401 (token expired/invalid)
       if (response.status === 401 && requireAuth) {
-        console.groupEnd();
+        if (DEBUG) { console.groupEnd(); }
         localStorage.removeItem('authToken');
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
           window.location.href = '/login';
@@ -94,15 +105,19 @@ export async function apiFetch<T = any>(
       // Try to parse error information
       try {
         const errorData = await response.json();
-        console.log('Response Error:', errorData);
-        console.groupEnd();
+        if (DEBUG) {
+          console.log('Response Error:', errorData);
+          console.groupEnd();
+        }
         return {
           error: errorData.message || `Request failed, status code: ${response.status}`,
           status: response.status
         };
       } catch (parseError) {
-        console.log('Response Parse Error:', parseError);
-        console.groupEnd();
+        if (DEBUG) {
+          console.log('Response Parse Error:', parseError);
+          console.groupEnd();
+        }
         return {
           error: `Request failed, status code: ${response.status}`,
           status: response.status
@@ -112,39 +127,43 @@ export async function apiFetch<T = any>(
 
     // Handle empty response
     if (response.status === 204) {
-      console.log('Empty Response (204 No Content)');
-      console.groupEnd();
+      if (DEBUG) {
+        console.log('Empty Response (204 No Content)');
+        console.groupEnd();
+      }
       return { status: 204 };
     }
 
     // Handle different types of responses based on responseType
     let data: any;
-    
+
     switch(responseType) {
       case 'blob':
         data = await response.blob();
-        console.log('Response Data: [Blob data]');
+        if (DEBUG) { console.log('Response Data: [Blob data]'); }
         break;
       case 'text':
         data = await response.text();
-        console.log('Response Data:', data);
+        if (DEBUG) { console.log('Response Data:', data); }
         break;
       case 'json':
       default:
         data = await response.json();
-        console.log('Response Data:', data);
+        if (DEBUG) { console.log('Response Data:', data); }
         break;
     }
-    
-    console.groupEnd();
+
+    if (DEBUG) { console.groupEnd(); }
     return {
       data,
       status: response.status
     };
   } catch (error) {
     // Handle network errors
-    console.error('Network Error:', error);
-    console.groupEnd();
+    if (DEBUG) {
+      console.error('Network Error:', error);
+      console.groupEnd();
+    }
 
     // Show global toast for network errors
     if (typeof window !== 'undefined') {
@@ -157,6 +176,8 @@ export async function apiFetch<T = any>(
       error: error instanceof Error ? error.message : 'Network request failed',
       status: 0 // 0 indicates network error
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

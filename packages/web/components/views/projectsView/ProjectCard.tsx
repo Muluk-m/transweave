@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { Globe, FileText, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
+
 interface ProjectCardProps {
   project: Project;
   onClick: (project: Project) => void;
@@ -10,6 +11,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const t = useTranslations("projects");
+  const tc = useTranslations("projectCard");
   const tokensCount = project.tokens?.length || 0;
   const progressValue = Math.min(tokensCount, 100);
   
@@ -47,7 +49,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
             <span className="font-medium text-foreground">
               {project.languages?.length || 0}
             </span>
-            <span className="text-muted-foreground text-xs">语言</span>
+            <span className="text-muted-foreground text-xs">{tc("languages")}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -56,7 +58,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
             <span className="font-medium text-foreground">
               {tokensCount}
             </span>
-            <span className="text-muted-foreground text-xs">词条</span>
+            <span className="text-muted-foreground text-xs">{tc("tokens")}</span>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
+import { useTranslations } from "next-intl";
 import { nowProjectAtom } from "@/jotai";
 import type { ProjectModule } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import { addModule, removeModule, getModuleStats } from "@/api/project";
 export function ProjectModulesTab() {
   const [project, setProject] = useAtom(nowProjectAtom);
   const { toast } = useToast();
+  const t = useTranslations("modules");
   const [newModuleName, setNewModuleName] = useState("");
   const [newModuleCode, setNewModuleCode] = useState("");
   const [moduleError, setModuleError] = useState("");
@@ -78,18 +80,17 @@ export function ProjectModulesTab() {
     setModuleError("");
 
     if (!newModuleName || !newModuleCode) {
-      setModuleError("模块名称和代码不能为空");
+      setModuleError(t("nameCodeRequired"));
       return;
     }
 
-    // 验证模块代码格式：只允许字母、数字、下划线，必须以字母开头
     if (!/^[a-z][a-z0-9_]*$/i.test(newModuleCode)) {
-      setModuleError("模块代码只能包含字母、数字和下划线，且必须以字母开头");
+      setModuleError(t("codeFormatError"));
       return;
     }
 
     if (modules.some(m => m.code === newModuleCode)) {
-      setModuleError("该模块代码已存在");
+      setModuleError(t("codeExists"));
       return;
     }
 
@@ -106,13 +107,13 @@ export function ProjectModulesTab() {
       setNewModuleCode("");
 
       toast({
-        title: "添加成功",
-        description: "模块已添加",
+        title: t("addSuccess"),
+        description: t("moduleAdded"),
       });
     } catch (error) {
       toast({
-        title: "添加失败",
-        description: error instanceof Error ? error.message : "请重试",
+        title: t("addFailed"),
+        description: error instanceof Error ? error.message : t("retryHint"),
         variant: "destructive",
       });
     } finally {
@@ -131,13 +132,13 @@ export function ProjectModulesTab() {
       await fetchModuleStats();
 
       toast({
-        title: "删除成功",
-        description: "模块已删除",
+        title: t("deleteSuccess"),
+        description: t("moduleDeleted"),
       });
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || "请重试";
+      const message = error?.response?.data?.message || error?.message || t("retryHint");
       toast({
-        title: "删除失败",
+        title: t("deleteFailed"),
         description: message,
         variant: "destructive",
       });
@@ -148,27 +149,25 @@ export function ProjectModulesTab() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* 头部说明 */}
       <div>
-        <h1 className="text-2xl font-bold mb-2">模块管理</h1>
+        <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
         <p className="text-gray-600">
-          管理项目的功能模块，用于组织和规范翻译 key 的命名空间
+          {t("description")}
         </p>
       </div>
 
-      {/* 添加新模块 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            添加新模块
+            {t("addNew")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
             <div className="flex-1">
               <Label htmlFor="moduleName" className="text-sm mb-1 block">
-                模块名称（中文）
+                {t("moduleName")}
               </Label>
               <Input
                 id="moduleName"
@@ -177,7 +176,7 @@ export function ProjectModulesTab() {
                   setNewModuleName(e.target.value);
                   setModuleError("");
                 }}
-                placeholder="例如：智能绿盾"
+                placeholder={t("moduleNamePlaceholder")}
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     handleAddModule();
@@ -187,7 +186,7 @@ export function ProjectModulesTab() {
             </div>
             <div className="flex-1">
               <Label htmlFor="moduleCode" className="text-sm mb-1 block">
-                模块代码（英文）
+                {t("moduleCode")}
               </Label>
               <Input
                 id="moduleCode"
@@ -196,7 +195,7 @@ export function ProjectModulesTab() {
                   setNewModuleCode(e.target.value);
                   setModuleError("");
                 }}
-                placeholder="例如：smartShield"
+                placeholder={t("moduleCodePlaceholder")}
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     handleAddModule();
@@ -211,21 +210,20 @@ export function ProjectModulesTab() {
             )}
             <Button onClick={handleAddModule} disabled={isLoading} className="ml-auto">
               <Plus className="h-4 w-4 mr-1" />
-              添加模块
+              {t("addButton")}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            模块名称用于展示，模块代码将作为 key 前缀，例如：<code className="bg-muted px-1 rounded">smartShield.link</code>
+            {t("codeHint", { example: "smartShield.link" })}
           </p>
         </CardContent>
       </Card>
 
-      {/* 模块列表 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            当前模块
+            {t("currentModules")}
             <Badge variant="secondary">{modules.length}</Badge>
           </CardTitle>
         </CardHeader>
@@ -233,17 +231,17 @@ export function ProjectModulesTab() {
           {modules.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">暂无模块</p>
-              <p className="text-sm">添加第一个模块，开始组织你的翻译 key</p>
+              <p className="text-lg mb-2">{t("noModules")}</p>
+              <p className="text-sm">{t("noModulesHint")}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">模块名称</TableHead>
-                  <TableHead className="w-[200px]">模块代码</TableHead>
-                  <TableHead>词条数量</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  <TableHead className="w-[250px]">{t("tableModuleName")}</TableHead>
+                  <TableHead className="w-[200px]">{t("tableModuleCode")}</TableHead>
+                  <TableHead>{t("tableTokenCount")}</TableHead>
+                  <TableHead className="text-right">{t("tableActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -265,7 +263,7 @@ export function ProjectModulesTab() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={tokenCount > 0 ? "default" : "secondary"}>
-                          {tokenCount} 个词条
+                          {t("tokenCount", { count: tokenCount })}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -281,32 +279,29 @@ export function ProjectModulesTab() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>确认删除模块？</AlertDialogTitle>
+                              <AlertDialogTitle>{t("confirmDelete")}</AlertDialogTitle>
                               <AlertDialogDescription>
                                 {tokenCount > 0 ? (
                                   <>
-                                    该模块下还有 <strong>{tokenCount}</strong>{" "}
-                                    个词条，无法删除。
+                                    {t("hasTokensCannotDelete", { count: tokenCount })}
                                     <br />
-                                    请先删除或移动这些词条到其他模块。
+                                    {t("moveTokensFirst")}
                                   </>
                                 ) : (
                                   <>
-                                    确定要删除模块{" "}
-                                    <strong className="text-red-500">{module.name} ({module.code})</strong>{" "}
-                                    吗？此操作无法撤销。
+                                    {t("confirmDeleteDescription", { name: module.name, code: module.code })}
                                   </>
                                 )}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
+                              <AlertDialogCancel>{t("cancelButton")}</AlertDialogCancel>
                               {tokenCount === 0 && (
                                 <AlertDialogAction
                                   onClick={() => handleDeleteModule(module.code)}
                                   className="bg-red-500 hover:bg-red-600"
                                 >
-                                  确认删除
+                                  {t("confirmDeleteButton")}
                                 </AlertDialogAction>
                               )}
                             </AlertDialogFooter>

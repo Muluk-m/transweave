@@ -287,8 +287,7 @@
       "tabs": {
         "general": "基本设置",
         "billing": "用量与计划",
-        "members": "成员管理",
-        "ai": "AI 翻译"
+        "members": "成员管理"
       },
       "general": {
         "title": "团队信息",
@@ -393,6 +392,7 @@
   "projects": {
     "searchPlaceholder": "搜索项目",
     "newProject": "新项目",
+    "createNewProject": "创建新项目",
     "noMatchingProjects": "未找到匹配的项目",
     "noLanguages": "无语言",
     "tokensCount": "共{count}条文案",
@@ -625,8 +625,25 @@
       "invalidKey": "key 格式不正确，请输入有效的 key",
       "noLanguageToTranslate": "没有可翻译的语言",
       "translateFailed": "翻译失败",
-      "batchCreateFailed": "批量创建文案失败"
-    }
+      "batchCreateFailed": "批量创建文案失败",
+      "keyFormatInvalid": "Key \"{key}\" 格式无效",
+      "keyConflictParent": "无法添加 key \"{key}\"，因为已存在父级 key \"{conflictKey}\"",
+      "keyConflictChild": "无法添加 key \"{key}\"，因为已存在子级 key \"{conflictKey}\"",
+      "batchDuplicateKey": "批量添加中存在重复的 key: \"{key}\"",
+      "batchKeyConflict": "批量添加中 key 冲突: \"{key1}\" 与 \"{key2}\""
+    },
+    "batchModuleSuccess": "批量更新模块成功",
+    "batchModuleFailed": "批量更新模块失败",
+    "batchTagsSuccess": "批量更新标签成功",
+    "batchTagsFailed": "批量更新标签失败",
+    "versionRestored": "版本已恢复",
+    "batchTranslating": "批量翻译进行中...",
+    "batchModuleUpdating": "批量更新模块进行中...",
+    "statusAll": "全部",
+    "statusCompleted": "已完成",
+    "statusIncomplete": "未完成",
+    "allModules": "所有模块",
+    "noModuleFilter": "无模块"
   },
   "tokenForm": {
     "addTitle": "添加翻译文案",
@@ -641,7 +658,44 @@
     "submit": "提交",
     "update": "更新",
     "cancel": "取消",
-    "submitting": "提交中..."
+    "submitting": "提交中...",
+    "enterCommentForAi": "请输入备注，以便 AI 生成多语言 key",
+    "error": "错误",
+    "pleaseUploadImage": "请上传图片文件",
+    "imageSizeLimit": "图片大小不能超过 5MB",
+    "uploadSuccess": "上传成功",
+    "uploadedToCdn": "图片已成功上传到 CDN",
+    "uploadFailed": "上传失败",
+    "uploadFailedRetry": "图片上传失败，请重试",
+    "screenshotPreview": "截图预览",
+    "moduleLabel": "所属模块（可选）",
+    "modulePlaceholder": "选择模块",
+    "noModule": "无模块",
+    "moduleHint": "选择模块后，AI 生成的 key 会自动带上模块代码前缀",
+    "contextScreenshots": "上下文截图",
+    "uploading": "上传中...",
+    "uploadImage": "上传图片",
+    "imageFormatHint": "支持 JPG、PNG、GIF、WebP 格式，单个文件不超过 5MB",
+    "pasteHint": "提示：可以直接使用 Ctrl/Cmd + V 粘贴截图",
+    "translationHistory": "翻译历史",
+    "restoring": "恢复中...",
+    "restoreVersion": "恢复此版本",
+    "confirmRestore": "确认恢复版本",
+    "restoreWarning": "此操作将使用该历史记录的翻译内容全量覆盖当前所有语言的翻译。已有的最新翻译可能会丢失。",
+    "confirmRestoreButton": "确认恢复",
+    "keyTooltip": {
+      "description": "是 token 的唯一标识，不能重复。",
+      "rules": "规则：",
+      "ruleLetters": "只能包含字母、",
+      "ruleNumbers": "、数字",
+      "ruleLowercase": "必须以小写字母开头",
+      "ruleUse": "使用",
+      "ruleSeparator": "分隔多级（子级）命名",
+      "examples": "例如：",
+      "exUsage": "（用途）",
+      "exModuleUsage": "（模块.用途）",
+      "exModuleUsageState": "（模块.用途.状态）"
+    }
   },
   "tokenTable": {
     "tags": "标签",
@@ -896,11 +950,6 @@
         "labelPlaceholder": "中文备注（如 泰语）",
         "addHelpText": "内置语言只需填写代码，自定义语言需同时填写代码和中文备注",
         "common": "常用语种",
-        "searchPlaceholder": "搜索语言... 输入代码或名称",
-        "commonGroup": "常用",
-        "allGroup": "全部",
-        "addCustom": "添加自定义语言 \"{code}\"",
-        "customLabelPlaceholder": "输入中文备注（如 泰语）",
         "saveSuccess": "语种设置已保存",
         "saveButton": "保存语种设置",
         "customLanguageAdded": "自定义语言已添加",
@@ -1014,17 +1063,7 @@
     "projectSettings": "项目 AI 设置",
     "teamDefault": "团队默认配置",
     "teamDefaultHint": "项目级别配置会覆盖团队默认配置。未在此处设置时，使用团队默认配置。",
-    "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译",
-    "fetchModels": "获取模型列表",
-    "fetchModelsNeedKey": "请先输入 API 密钥",
-    "fetchModelsSuccess": "已获取 {count} 个模型",
-    "fetchModelsFailed": "获取模型列表失败",
-    "modelSearchPlaceholder": "搜索或输入模型名称...",
-    "fetchModelsHint": "输入 API 密钥后点击刷新加载可用模型，或直接输入模型名称",
-    "noModelsFound": "未找到模型",
-    "customModel": "使用自定义模型",
-    "availableModels": "可用模型",
-    "baseUrlPlaceholder": "留空使用默认端点"
+    "enableAiHint": "在项目设置中配置 AI 服务商以启用 AI 翻译"
   },
   "sidebar": {
     "teams": "团队",
@@ -1089,5 +1128,62 @@
       "revokeFailed": "撤销 API 密钥失败",
       "unknownError": "未知错误"
     }
+  },
+  "modules": {
+    "title": "模块管理",
+    "description": "管理项目的功能模块，用于组织和规范翻译 key 的命名空间",
+    "addNew": "添加新模块",
+    "moduleName": "模块名称（中文）",
+    "moduleNamePlaceholder": "例如：智能绿盾",
+    "moduleCode": "模块代码（英文）",
+    "moduleCodePlaceholder": "例如：smartShield",
+    "addButton": "添加模块",
+    "nameCodeRequired": "模块名称和代码不能为空",
+    "codeFormatError": "模块代码只能包含字母、数字和下划线，且必须以字母开头",
+    "codeExists": "该模块代码已存在",
+    "addSuccess": "添加成功",
+    "moduleAdded": "模块已添加",
+    "addFailed": "添加失败",
+    "retryHint": "请重试",
+    "deleteSuccess": "删除成功",
+    "moduleDeleted": "模块已删除",
+    "deleteFailed": "删除失败",
+    "currentModules": "当前模块",
+    "noModules": "暂无模块",
+    "noModulesHint": "添加第一个模块，开始组织你的翻译 key",
+    "tableModuleName": "模块名称",
+    "tableModuleCode": "模块代码",
+    "tableTokenCount": "词条数量",
+    "tableActions": "操作",
+    "tokenCount": "{count} 个词条",
+    "confirmDelete": "确认删除模块？",
+    "hasTokensCannotDelete": "该模块下还有 {count} 个词条，无法删除。",
+    "moveTokensFirst": "请先删除或移动这些词条到其他模块。",
+    "confirmDeleteDescription": "确定要删除模块 {name} ({code}) 吗？此操作无法撤销。",
+    "cancelButton": "取消",
+    "confirmDeleteButton": "确认删除",
+    "codeHint": "模块名称用于展示，模块代码将作为 key 前缀，例如：{example}"
+  },
+  "dataTable": {
+    "selectedRows": "已选 {selected} 行，共 {total} 行",
+    "rowsPerPage": "每页行数",
+    "pageInfo": "第 {current} 页 / 共 {total} 页",
+    "firstPage": "首页",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "lastPage": "末页",
+    "selected": "{count} 已选中",
+    "clearSelection": "清空选中"
+  },
+  "loading": {
+    "message": "正在加载，请稍候..."
+  },
+  "projectCard": {
+    "languages": "语言",
+    "tokens": "词条"
+  },
+  "teamsSubtitle": {
+    "teamCount": "{count} 个团队",
+    "createFirst": "开始创建您的第一个团队"
   }
 }

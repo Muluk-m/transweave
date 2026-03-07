@@ -287,8 +287,7 @@
       "tabs": {
         "general": "General Settings",
         "billing": "Billing & Usage",
-        "members": "Member Management",
-        "ai": "AI Translation"
+        "members": "Member Management"
       },
       "general": {
         "title": "Team Information",
@@ -393,6 +392,7 @@
   "projects": {
     "searchPlaceholder": "Search projects",
     "newProject": "New Project",
+    "createNewProject": "Create New Project",
     "noMatchingProjects": "No matching projects found",
     "noLanguages": "No languages",
     "tokensCount": "{count} translations",
@@ -625,8 +625,25 @@
       "invalidKey": "Invalid key format, please enter a valid key",
       "batchCreateFailed": "Failed to batch create translations",
       "noLanguageToTranslate": "Please fill in at least one language to translate",
-      "translateFailed": "Translation failed"
-    }
+      "translateFailed": "Translation failed",
+      "keyFormatInvalid": "Key \"{key}\" has invalid format",
+      "keyConflictParent": "Cannot add key \"{key}\", parent key \"{conflictKey}\" already exists",
+      "keyConflictChild": "Cannot add key \"{key}\", child key \"{conflictKey}\" already exists",
+      "batchDuplicateKey": "Duplicate key in batch: \"{key}\"",
+      "batchKeyConflict": "Key conflict in batch: \"{key1}\" and \"{key2}\""
+    },
+    "batchModuleSuccess": "Batch module update successful",
+    "batchModuleFailed": "Batch module update failed",
+    "batchTagsSuccess": "Batch tags update successful",
+    "batchTagsFailed": "Batch tags update failed",
+    "versionRestored": "Version restored",
+    "batchTranslating": "Batch translation in progress...",
+    "batchModuleUpdating": "Batch module update in progress...",
+    "statusAll": "All",
+    "statusCompleted": "Completed",
+    "statusIncomplete": "Incomplete",
+    "allModules": "All modules",
+    "noModuleFilter": "No module"
   },
   "tokenForm": {
     "addTitle": "Add Translation",
@@ -641,7 +658,44 @@
     "submit": "Submit",
     "update": "Update",
     "cancel": "Cancel",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "enterCommentForAi": "Please enter a comment so AI can generate a multilingual key",
+    "error": "Error",
+    "pleaseUploadImage": "Please upload an image file",
+    "imageSizeLimit": "Image size cannot exceed 5MB",
+    "uploadSuccess": "Upload successful",
+    "uploadedToCdn": "Image has been uploaded to CDN",
+    "uploadFailed": "Upload failed",
+    "uploadFailedRetry": "Image upload failed, please try again",
+    "screenshotPreview": "Screenshot Preview",
+    "moduleLabel": "Module (optional)",
+    "modulePlaceholder": "Select module",
+    "noModule": "No module",
+    "moduleHint": "After selecting a module, the AI-generated key will automatically include the module code as a prefix",
+    "contextScreenshots": "Context Screenshots",
+    "uploading": "Uploading...",
+    "uploadImage": "Upload image",
+    "imageFormatHint": "Supports JPG, PNG, GIF, WebP formats, max 5MB per file",
+    "pasteHint": "Tip: You can paste screenshots directly with Ctrl/Cmd + V",
+    "translationHistory": "Translation History",
+    "restoring": "Restoring...",
+    "restoreVersion": "Restore this version",
+    "confirmRestore": "Confirm Restore Version",
+    "restoreWarning": "This action will overwrite all current translations with the content from this history record. Existing latest translations may be lost.",
+    "confirmRestoreButton": "Confirm Restore",
+    "keyTooltip": {
+      "description": "is the unique identifier for a token and cannot be duplicated.",
+      "rules": "Rules:",
+      "ruleLetters": "Can only contain letters,",
+      "ruleNumbers": ", and numbers",
+      "ruleLowercase": "Must start with a lowercase letter",
+      "ruleUse": "Use",
+      "ruleSeparator": "to separate multi-level (child) naming",
+      "examples": "Examples:",
+      "exUsage": "(usage)",
+      "exModuleUsage": "(module.usage)",
+      "exModuleUsageState": "(module.usage.state)"
+    }
   },
   "tokenTable": {
     "tags": "Tags",
@@ -896,11 +950,6 @@
         "labelPlaceholder": "Label (e.g. Thai)",
         "addHelpText": "Built-in languages only require a code. Custom languages require both a code and a label.",
         "common": "Common Languages",
-        "searchPlaceholder": "Search languages... type code or name",
-        "commonGroup": "Common",
-        "allGroup": "All",
-        "addCustom": "Add custom language \"{code}\"",
-        "customLabelPlaceholder": "Enter label (e.g. Thai)",
         "saveSuccess": "Language settings saved",
         "saveButton": "Save Language Settings",
         "customLanguageAdded": "Custom language added",
@@ -1014,17 +1063,7 @@
     "projectSettings": "Project AI Settings",
     "teamDefault": "Team Default",
     "teamDefaultHint": "Project-level configuration overrides team default. If not set here, the team default is used.",
-    "enableAiHint": "Configure an AI provider in project settings to enable AI translation",
-    "fetchModels": "Fetch Models",
-    "fetchModelsNeedKey": "Please enter an API key first",
-    "fetchModelsSuccess": "Fetched {count} models",
-    "fetchModelsFailed": "Failed to fetch models",
-    "modelSearchPlaceholder": "Search or type model name...",
-    "fetchModelsHint": "Enter API key and click refresh to load available models, or type a model name directly",
-    "noModelsFound": "No models found",
-    "customModel": "Use custom model",
-    "availableModels": "Available Models",
-    "baseUrlPlaceholder": "Leave empty to use default endpoint"
+    "enableAiHint": "Configure an AI provider in project settings to enable AI translation"
   },
   "sidebar": {
     "teams": "Teams",
@@ -1089,5 +1128,62 @@
       "revokeFailed": "Failed to revoke API key",
       "unknownError": "Unknown error"
     }
+  },
+  "modules": {
+    "title": "Module Management",
+    "description": "Manage project modules to organize and standardize translation key namespaces",
+    "addNew": "Add New Module",
+    "moduleName": "Module Name",
+    "moduleNamePlaceholder": "e.g., Smart Shield",
+    "moduleCode": "Module Code",
+    "moduleCodePlaceholder": "e.g., smartShield",
+    "addButton": "Add Module",
+    "nameCodeRequired": "Module name and code are required",
+    "codeFormatError": "Module code can only contain letters, numbers, and underscores, and must start with a letter",
+    "codeExists": "This module code already exists",
+    "addSuccess": "Added successfully",
+    "moduleAdded": "Module added",
+    "addFailed": "Failed to add",
+    "retryHint": "Please try again",
+    "deleteSuccess": "Deleted successfully",
+    "moduleDeleted": "Module deleted",
+    "deleteFailed": "Failed to delete",
+    "currentModules": "Current Modules",
+    "noModules": "No modules",
+    "noModulesHint": "Add the first module to start organizing your translation keys",
+    "tableModuleName": "Module Name",
+    "tableModuleCode": "Module Code",
+    "tableTokenCount": "Token Count",
+    "tableActions": "Actions",
+    "tokenCount": "{count} tokens",
+    "confirmDelete": "Confirm delete module?",
+    "hasTokensCannotDelete": "This module still has {count} tokens and cannot be deleted.",
+    "moveTokensFirst": "Please delete or move these tokens to another module first.",
+    "confirmDeleteDescription": "Are you sure you want to delete module {name} ({code})? This action cannot be undone.",
+    "cancelButton": "Cancel",
+    "confirmDeleteButton": "Confirm Delete",
+    "codeHint": "Module name is for display, module code will be used as key prefix, e.g.: {example}"
+  },
+  "dataTable": {
+    "selectedRows": "{selected} of {total} row(s) selected",
+    "rowsPerPage": "Rows per page",
+    "pageInfo": "Page {current} of {total}",
+    "firstPage": "First page",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "lastPage": "Last page",
+    "selected": "{count} selected",
+    "clearSelection": "Clear selection"
+  },
+  "loading": {
+    "message": "Loading, please wait..."
+  },
+  "projectCard": {
+    "languages": "languages",
+    "tokens": "tokens"
+  },
+  "teamsSubtitle": {
+    "teamCount": "{count} teams",
+    "createFirst": "Create your first team"
   }
 }

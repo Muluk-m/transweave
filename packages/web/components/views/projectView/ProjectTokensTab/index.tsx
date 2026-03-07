@@ -281,12 +281,12 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       setBatchModuleProgress(100);
 
       toast({
-        title: "批量更新模块成功",
+        title: t("batchModuleSuccess"),
       });
     } catch (error) {
       console.error("Batch set module error:", error);
       toast({
-        title: "批量更新模块失败",
+        title: t("batchModuleFailed"),
         variant: "destructive",
       });
     } finally {
@@ -305,12 +305,12 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       await fetchTokens();
       await fetchTags();
       toast({
-        title: "批量更新标签成功",
+        title: t("batchTagsSuccess"),
       });
     } catch (error) {
       console.error("Batch set tags error:", error);
       toast({
-        title: "批量更新标签失败",
+        title: t("batchTagsFailed"),
         variant: "destructive",
       });
     }
@@ -342,8 +342,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
     if (conflictCheck.conflict) {
       const errorMsg =
         conflictCheck.type === "parent"
-          ? `无法添加 key "${formData.key}"，因为已存在父级 key "${conflictCheck.conflictKey}"`
-          : `无法添加 key "${formData.key}"，因为已存在子级 key "${conflictCheck.conflictKey}"`;
+          ? t("errors.keyConflictParent", { key: formData.key, conflictKey: conflictCheck.conflictKey })
+          : t("errors.keyConflictChild", { key: formData.key, conflictKey: conflictCheck.conflictKey });
       toast({
         title: errorMsg,
         variant: "destructive",
@@ -585,7 +585,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       // Check key format
       if (!isValidTokenKey(tokenInput.key)) {
         toast({
-          title: `Key "${tokenInput.key}" 格式无效`,
+          title: t("errors.keyFormatInvalid", { key: tokenInput.key }),
           variant: "destructive",
           duration: 3000,
         });
@@ -597,8 +597,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
       if (conflictCheck.conflict) {
         const errorMsg =
           conflictCheck.type === "parent"
-            ? `无法添加 key "${tokenInput.key}"，因为已存在父级 key "${conflictCheck.conflictKey}"`
-            : `无法添加 key "${tokenInput.key}"，因为已存在子级 key "${conflictCheck.conflictKey}"`;
+            ? t("errors.keyConflictParent", { key: tokenInput.key, conflictKey: conflictCheck.conflictKey })
+            : t("errors.keyConflictChild", { key: tokenInput.key, conflictKey: conflictCheck.conflictKey });
         toast({
           title: errorMsg,
           variant: "destructive",
@@ -616,7 +616,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
         if (key1 === key2) {
           toast({
-            title: `批量添加中存在重复的 key: "${key1}"`,
+            title: t("errors.batchDuplicateKey", { key: key1 }),
             variant: "destructive",
             duration: 3000,
           });
@@ -625,7 +625,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
         if (key2.startsWith(key1 + ".")) {
           toast({
-            title: `批量添加中 key 冲突: "${key1}" 与 "${key2}"`,
+            title: t("errors.batchKeyConflict", { key1, key2 }),
             variant: "destructive",
             duration: 3000,
           });
@@ -634,7 +634,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
 
         if (key1.startsWith(key2 + ".")) {
           toast({
-            title: `批量添加中 key 冲突: "${key2}" 与 "${key1}"`,
+            title: t("errors.batchKeyConflict", { key1: key2, key2: key1 }),
             variant: "destructive",
             duration: 3000,
           });
@@ -785,7 +785,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
           if (!currentToken) return;
           await restoreTokenVersion(currentToken.id, historyId);
           await fetchTokens();
-          toast({ title: "版本已恢复" });
+          toast({ title: t("versionRestored") });
           setIsDrawerOpen(false);
         }}
         aiConfigured={aiConfigured}
@@ -817,7 +817,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-foreground">
-              批量翻译进行中...
+              {t("batchTranslating")}
             </span>
             <span className="text-sm text-primary">{translateProgress}%</span>
           </div>
@@ -829,7 +829,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         <div className="mb-4 p-4 bg-accent/10 border border-accent/20 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-foreground">
-              批量更新模块进行中...
+              {t("batchModuleUpdating")}
             </span>
             <span className="text-sm text-accent">{batchModuleProgress}%</span>
           </div>
@@ -867,12 +867,12 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 onValueChange={setSelectedStatus}
               >
                 <SelectTrigger className="h-[32px] w-[140px]">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t("statusAll")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="incomplete">Incomplete</SelectItem>
+                  <SelectItem value="all">{t("statusAll")}</SelectItem>
+                  <SelectItem value="completed">{t("statusCompleted")}</SelectItem>
+                  <SelectItem value="incomplete">{t("statusIncomplete")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -880,11 +880,11 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
                 onValueChange={(value) => setSelectedModule(value === "all" ? null : value)}
               >
                 <SelectTrigger className="h-[32px] w-[180px]">
-                  <SelectValue placeholder="所有模块" />
+                  <SelectValue placeholder={t("allModules")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">所有模块</SelectItem>
-                  <SelectItem value="__no_module__">无模块</SelectItem>
+                  <SelectItem value="all">{t("allModules")}</SelectItem>
+                  <SelectItem value="__no_module__">{t("noModuleFilter")}</SelectItem>
                   {(project?.modules || []).map((module) => (
                     <SelectItem key={module.code} value={module.code}>
                       {module.name}
