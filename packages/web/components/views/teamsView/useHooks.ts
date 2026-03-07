@@ -87,7 +87,7 @@ export const useHooks = () => {
 
         try {
             setLoading(true);
-            const newTeam = await createTeam({name: newTeamName});
+            const newTeam = await createTeam({name: newTeamName, url: newTeamUrl});
 
             setTeams([...teams, newTeam]);
             setNewTeamName("");

@@ -5,7 +5,7 @@ import { apiClient } from "../lib/api";
 const API_BASE = '/api/team';
 
 // Create new team
-export async function createTeam(teamData: { name: string }): Promise<Team> {
+export async function createTeam(teamData: { name: string; url?: string }): Promise<Team> {
   return apiClient.post<Team>(`${API_BASE}/create`, teamData);
 }
 
