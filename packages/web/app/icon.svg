@@ -1,11 +1,11 @@
 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none">
-  <style>
-    .bg { fill: #0d9488; }
-    @media (prefers-color-scheme: dark) {
-      .bg { fill: #14b8a6; }
-    }
-  </style>
-  <rect width="32" height="32" rx="8" class="bg"/>
+  <defs>
+    <linearGradient id="tw-icon-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#tw-icon-gradient)"/>
   <rect x="10" y="5" width="16" height="11" rx="3" fill="white" opacity="0.25"/>
   <rect x="8" y="10" width="16" height="11" rx="3" fill="white" opacity="0.5"/>
   <rect x="6" y="15" width="16" height="11" rx="3" fill="white"/>
