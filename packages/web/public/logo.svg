@@ -5,11 +5,8 @@
       <stop offset="1" stop-color="#6366f1"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="6" fill="url(#tw-icon-gradient)"/>
-  <!-- Weaving motif: two diagonal bands crossing -->
-  <!-- Band 2 (under): top-right to bottom-left — split into two segments so band 1 appears on top -->
-  <rect x="13" y="6" width="6" height="9" rx="3" fill="white" opacity="0.9" transform="rotate(-45 16 16)"/>
-  <rect x="13" y="17" width="6" height="9" rx="3" fill="white" opacity="0.9" transform="rotate(-45 16 16)"/>
-  <!-- Band 1 (over): top-left to bottom-right — single unbroken band -->
-  <rect x="13" y="6" width="6" height="20" rx="3" fill="white" transform="rotate(45 16 16)"/>
+  <rect width="32" height="32" rx="8" fill="url(#tw-icon-gradient)"/>
+  <rect x="10" y="5" width="16" height="11" rx="3" fill="white" opacity="0.25"/>
+  <rect x="8" y="10" width="16" height="11" rx="3" fill="white" opacity="0.5"/>
+  <rect x="6" y="15" width="16" height="11" rx="3" fill="white"/>
 </svg>
