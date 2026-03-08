@@ -159,20 +159,20 @@ export function BatchAddDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <Alert>
+          <Alert className="bg-muted/50">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <div className="text-sm space-y-1">
                 <p>{t("tips.tableInput")}</p>
-                <p>{t("tips.keyFormat")}</p>
+                <p className="text-muted-foreground">{t("tips.keyFormat")}</p>
               </div>
             </AlertDescription>
           </Alert>
 
-          <ScrollArea className="h-[400px] border rounded-md">
+          <ScrollArea className="max-h-[400px] border rounded-md">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/50">
                   <TableHead className="w-[35%]">
                     Key <span className="text-red-500">*</span>
                   </TableHead>
@@ -195,7 +195,7 @@ export function BatchAddDialog({
                         placeholder="login.title"
                         value={row.key}
                         onChange={(e) => updateRow(row.id, "key", e.target.value)}
-                        className={row.error && row.key ? "border-destructive" : ""}
+                        className={`bg-muted/50 ${row.error && row.key ? "border-destructive" : ""}`}
                       />
                     </TableCell>
                     <TableCell>
@@ -205,6 +205,7 @@ export function BatchAddDialog({
                         placeholder="auth,form"
                         value={row.tags}
                         onChange={(e) => updateRow(row.id, "tags", e.target.value)}
+                        className="bg-muted/50"
                       />
                     </TableCell>
                     <TableCell>
@@ -214,7 +215,7 @@ export function BatchAddDialog({
                         placeholder={t("commentPlaceholder")}
                         value={row.comment}
                         onChange={(e) => updateRow(row.id, "comment", e.target.value)}
-                        className={row.error && row.comment ? "border-destructive" : ""}
+                        className={`bg-muted/50 ${row.error && row.comment ? "border-destructive" : ""}`}
                       />
                       {row.error && (
                         <p className="text-xs text-destructive mt-1">{row.error}</p>
