@@ -1081,7 +1081,17 @@
     "projectSettings": "Project AI Settings",
     "teamDefault": "Team Default",
     "teamDefaultHint": "Project-level configuration overrides team default. If not set here, the team default is used.",
-    "enableAiHint": "Configure an AI provider in project settings to enable AI translation"
+    "enableAiHint": "Configure an AI provider in project settings to enable AI translation",
+    "modelSearchPlaceholder": "Search models...",
+    "noModelsFound": "No models found. Enter API key and click refresh to load models.",
+    "customModel": "Use custom model",
+    "availableModels": "Available Models",
+    "fetchModels": "Fetch available models",
+    "fetchModelsHint": "Enter your API key and click the refresh button to load available models from the provider.",
+    "fetchModelsNeedKey": "Please enter an API key first to fetch models.",
+    "fetchModelsSuccess": "Loaded {count} models",
+    "fetchModelsFailed": "Failed to fetch models. Please check your API key.",
+    "baseUrlPlaceholder": "Optional: https://custom-endpoint.example.com"
   },
   "sidebar": {
     "teams": "Teams",
