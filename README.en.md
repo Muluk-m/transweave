@@ -1,119 +1,114 @@
-# Transweave
+<p align="center">
+  <img src="packages/web/public/logo.svg" alt="Transweave" width="80" height="80" />
+</p>
 
-[中文](./README.md)
+<h1 align="center">Transweave</h1>
 
-Self-hosted internationalization management platform.
+<p align="center">
+  Self-hosted i18n management for teams that ship.<br/>
+  <a href="./README.md">中文</a>
+</p>
 
-- Multi-language translation management with modules and namespaces
-- Team collaboration with role-based access control (owner / manager / member)
-- AI-assisted translation via OpenAI, Claude, DeepL, or Google Translate (optional, bring your own API key)
-- Import and export in JSON, YAML, CSV, XLIFF, and Gettext (.po) formats
-- CLI tool for CI/CD integration (`transweave pull` / `transweave push`)
-- MCP server for AI coding assistants
-- PGlite support for zero-config local development (no PostgreSQL install needed)
+<p align="center">
+  <a href="https://render.com/deploy?repo=https://github.com/Muluk-m/transweave">
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
+  </a>
+</p>
 
-**Tech stack:** Next.js, NestJS, PostgreSQL / PGlite, Drizzle ORM, pnpm monorepo
+<p align="center">
+  <img src="packages/web/public/screenshots/hero-preview.png" alt="Transweave Screenshot" width="100%" style="border-radius: 8px;" />
+</p>
 
-## One-Click Deploy to Render (Free)
+---
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Muluk-m/transweave)
+## Features
 
-> Click the button, sign in with GitHub, then click Apply to automatically provision all services.
+- **Multi-language translation management** — organize with modules and namespaces
+- **Team collaboration** — role-based access control (owner / manager / member)
+- **AI-assisted translation** — OpenAI, Claude, DeepL, or Google Translate (bring your own API key)
+- **Import & export** — JSON, YAML, CSV, XLIFF, Gettext (.po)
+- **CLI tool** — `transweave pull` / `transweave push` for CI/CD integration
+- **MCP server** — for AI coding assistants
+- **Zero-config local dev** — PGlite embedded database, no PostgreSQL install needed
 
-## Quick Start with Docker
+**Tech stack:** Next.js 15 &middot; NestJS 11 &middot; PostgreSQL / PGlite &middot; Drizzle ORM &middot; pnpm monorepo
+
+## Quick Start
+
+### Docker (recommended)
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/Muluk-m/transweave.git
 cd transweave
 
-# 2. Configure environment
 cp .env.example .env
-# Edit .env and set the two required values:
+# Edit .env and set:
 #   POSTGRES_PASSWORD=<strong password>
 #   JWT_SECRET=$(openssl rand -base64 64)
 
-# 3. Start the platform
 docker compose up -d
 ```
 
-Open http://localhost:3000. On the first launch the app redirects automatically to `/setup` where you create your admin account and first team. After that you can log in normally.
+### Local Development (PGlite)
 
-## Quick Start without Docker (PGlite)
-
-No PostgreSQL installation needed. PGlite runs an embedded database automatically when `DATABASE_URL` is not set. Data is stored on disk and persists across restarts.
+No PostgreSQL needed. PGlite runs automatically when `DATABASE_URL` is not set.
 
 ```bash
-# 1. Clone and install
 git clone https://github.com/Muluk-m/transweave.git
 cd transweave
 pnpm install
 
-# 2. Configure environment (JWT_SECRET is the only required variable)
 cp .env.example packages/server/.env
-# Open packages/server/.env and set:
-#   JWT_SECRET=$(openssl rand -base64 64)
-# Leave DATABASE_URL commented out — PGlite is used automatically.
+# Edit packages/server/.env and set JWT_SECRET
 
-# 3. Start the backend
-pnpm dev:server
-
-# 4. Start the frontend (in a new terminal)
-pnpm dev:web
+pnpm dev:server   # start backend
+pnpm dev:web      # new terminal, start frontend
 ```
 
-Open http://localhost:3000. On the first launch the app redirects automatically to `/setup` where you create your admin account and first team. After that you can log in normally.
+Open http://localhost:3000. On first launch, the app redirects to `/setup` to create your admin account and team.
 
 ## Environment Variables
 
-All variables are defined in `.env.example`. Copy it and edit as needed.
+All variables are defined in `.env.example`.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | Docker: yes, Local: no | -- | PostgreSQL connection string. Omit for PGlite. |
-| `POSTGRES_DB` | No | `i18n` | PostgreSQL database name (Docker Compose only). |
-| `POSTGRES_USER` | No | `i18n` | PostgreSQL user (Docker Compose only). |
-| `POSTGRES_PASSWORD` | Docker: yes | -- | PostgreSQL password (Docker Compose only). |
-| `JWT_SECRET` | Yes | -- | Secret for signing JWT tokens. Generate with `openssl rand -base64 64`. |
-| `PORT` | No | `3001` | Port the backend API listens on. |
-| `UPLOAD_DIR` | No | `./uploads` | Directory for uploaded files (screenshots, etc.). |
-| `NEXT_INTERNAL_API_URL` | No | `http://server:3001` | Backend API URL for server-side rendering inside the Docker network. |
-| `WEB_PORT` | No | `3000` | Host port for the web UI (Docker Compose only). |
-| `AI_PROVIDER` | No | -- | AI translation provider: `openai`, `claude`, `deepl`, or `google`. Leave empty to disable. |
-| `AI_API_KEY` | No | -- | API key for the configured AI provider. |
-| `PGLITE_DATA_DIR` | No | `./data/pglite` | PGlite data directory (used when `DATABASE_URL` is not set). |
-
+| `DATABASE_URL` | Docker: yes / Local: no | — | PostgreSQL connection string. Omit for PGlite. |
+| `JWT_SECRET` | Yes | — | JWT signing secret. Generate with `openssl rand -base64 64`. |
+| `POSTGRES_PASSWORD` | Docker: yes | — | PostgreSQL password (Docker only). |
+| `POSTGRES_DB` | No | `i18n` | Database name (Docker only). |
+| `POSTGRES_USER` | No | `i18n` | Database user (Docker only). |
+| `PORT` | No | `3001` | Backend API port. |
+| `WEB_PORT` | No | `3000` | Frontend port (Docker only). |
+| `UPLOAD_DIR` | No | `./uploads` | Upload directory. |
+| `NEXT_INTERNAL_API_URL` | No | `http://server:3001` | Backend URL for SSR inside Docker network. |
+| `AI_PROVIDER` | No | — | AI translation: `openai` / `claude` / `deepl` / `google`. |
+| `AI_API_KEY` | No | — | API key for the AI provider. |
+| `PGLITE_DATA_DIR` | No | `./data/pglite` | PGlite data directory. |
 
 ## Architecture
 
 ```
 transweave/
   packages/
-    server/     NestJS API (authentication, teams, translations, AI, file storage)
+    server/     NestJS API — auth, teams, translations, AI, file storage
     web/        Next.js frontend
-    cli/        CLI tool for pull/push operations
+    cli/        CLI tool — pull / push
 ```
 
-- **Database:** PostgreSQL in production (Docker) or PGlite for local development (zero-config).
-- **File storage:** Local disk. In Docker, persisted via a named volume.
-- **Monorepo:** Managed with pnpm workspaces.
+- **Database** — PostgreSQL in production, PGlite for local dev (zero-config)
+- **File storage** — local disk, persisted via Docker named volumes
+- **Monorepo** — pnpm workspaces
 
 ## Development
 
-**Prerequisites:**
-
-- Node.js >= 22
-- pnpm >= 10.8.0
-
-**Run tests:**
+**Prerequisites:** Node.js >= 22, pnpm >= 10.8
 
 ```bash
+# Run E2E tests
 pnpm --filter @transweave/server test:e2e
-```
 
-**Drizzle Studio** (database browser):
-
-```bash
+# Drizzle Studio (database browser)
 pnpm --filter @transweave/server drizzle-kit studio
 ```
 
@@ -121,62 +116,42 @@ pnpm --filter @transweave/server drizzle-kit studio
 
 ### Services
 
-| Service | Image / Build | Port | Description |
-|---------|---------------|------|-------------|
-| `postgres` | `postgres:17-alpine` | Internal only | PostgreSQL database with health check |
-| `server` | `packages/server/Dockerfile` | Internal only | NestJS API server |
-| `web` | `packages/web/Dockerfile` | `${WEB_PORT:-3000}:3000` | Next.js frontend |
+| Service | Description | Port |
+|---------|-------------|------|
+| `postgres` | PostgreSQL 17 Alpine | Internal only |
+| `server` | NestJS API | Internal only |
+| `web` | Next.js frontend | `${WEB_PORT:-3000}:3000` |
 
 ### Volumes
 
-| Volume | Container path | Purpose |
-|--------|---------------|---------|
-| `pgdata` | `/var/lib/postgresql/data` | PostgreSQL data (persists across restarts) |
-| `uploads` | `/app/uploads` | Uploaded files (screenshots, etc.) |
+| Volume | Path | Purpose |
+|--------|------|---------|
+| `pgdata` | `/var/lib/postgresql/data` | Database data |
+| `uploads` | `/app/uploads` | Uploaded files |
 
-### Common commands
+### Common Commands
 
 ```bash
-# Rebuild after code changes
-docker compose build && docker compose up -d
-
-# View server logs
-docker compose logs -f server
-
-# Stop (data is preserved in volumes)
-docker compose down
-
-# Reset all data (WARNING: deletes database and uploads)
-docker compose down -v
+docker compose build && docker compose up -d   # rebuild
+docker compose logs -f server                   # view logs
+docker compose down                             # stop (keep data)
+docker compose down -v                          # reset all data
 ```
 
 ## Troubleshooting
 
-**Can't log in / login page won't accept credentials**
-On a fresh install there are no user accounts yet. The app should redirect you to `/setup` automatically when you open it. If the redirect doesn't happen, navigate to http://localhost:3000/setup directly to create your admin account and first team.
-
-**Server won't start**
-`JWT_SECRET` is required in all configurations. For Docker, `POSTGRES_PASSWORD` is also required. Check your `.env` (Docker) or `packages/server/.env` (local) and make sure both are set.
-
-**Data lost after restart (Docker)**
-Make sure you are using `docker compose down` (not `docker compose down -v`). The `-v` flag removes named volumes and all data with them.
-
-**Data lost after restart (local PGlite)**
-Check that `PGLITE_DATA_DIR` in `packages/server/.env` points to a stable path (default: `./data/pglite`). If the variable is unset, data is stored in `./data/pglite` relative to where the server is started.
-
-**Port already in use**
-Change `WEB_PORT` (Docker) or `PORT` (local) in your `.env` file to an available port.
-
-**PGlite errors in local development**
-Delete the PGlite data directory and restart (this resets all data):
-```bash
-rm -rf data/pglite
-pnpm dev:server
-```
+| Problem | Solution |
+|---------|----------|
+| Can't log in | First install requires visiting `/setup` to create admin. Go to http://localhost:3000/setup if not redirected. |
+| Server won't start | Ensure `JWT_SECRET` is set. Docker also requires `POSTGRES_PASSWORD`. |
+| Data lost after Docker restart | Use `docker compose down` without `-v`. |
+| Data lost after PGlite restart | Check `PGLITE_DATA_DIR` points to a stable path. |
+| Port in use | Change `WEB_PORT` (Docker) or `PORT` (local). |
+| PGlite errors | `rm -rf data/pglite && pnpm dev:server` to reset. |
 
 ## Contributing
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/). Prefix your commit messages with `feat:`, `fix:`, `docs:`, `chore:`, etc.
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
 git commit -m "feat: add new export format"
