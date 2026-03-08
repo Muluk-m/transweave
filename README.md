@@ -37,9 +37,12 @@
 
 ### Docker（推荐）
 
+无需克隆仓库，直接拉取官方镜像：
+
 ```bash
-git clone https://github.com/Muluk-m/transweave.git
-cd transweave
+# 下载 compose 文件和环境变量模板
+curl -O https://raw.githubusercontent.com/Muluk-m/transweave/master/docker-compose.yml
+curl -O https://raw.githubusercontent.com/Muluk-m/transweave/master/.env.example
 
 cp .env.example .env
 # 编辑 .env，设置：
@@ -47,6 +50,28 @@ cp .env.example .env
 #   JWT_SECRET=$(openssl rand -base64 64)
 
 docker compose up -d
+```
+
+> **镜像源**
+>
+> | 渠道 | 地址 |
+> |------|------|
+> | Docker Hub | `mulukma/transweave-server` · `mulukma/transweave-web` |
+> | GHCR | `ghcr.io/muluk-m/transweave-server` · `ghcr.io/muluk-m/transweave-web` |
+>
+> 默认使用 Docker Hub，如需 GHCR 请在 `docker-compose.yml` 中替换 image 地址。
+> 固定版本号：将 `:latest` 替换为 `:1.2.3`。
+
+### 从源码构建（开发者）
+
+```bash
+git clone https://github.com/Muluk-m/transweave.git
+cd transweave
+
+cp .env.example .env
+# 编辑 .env，设置 POSTGRES_PASSWORD 和 JWT_SECRET
+
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### 本地开发（PGlite）
@@ -132,10 +157,14 @@ pnpm --filter @transweave/server drizzle-kit studio
 ### 常用命令
 
 ```bash
-docker compose build && docker compose up -d   # 重新构建
-docker compose logs -f server                   # 查看日志
-docker compose down                             # 停止（保留数据）
-docker compose down -v                          # 重置所有数据
+docker compose up -d                             # 启动（拉取镜像）
+docker compose pull && docker compose up -d      # 更新到最新版
+docker compose logs -f server                    # 查看日志
+docker compose down                              # 停止（保留数据）
+docker compose down -v                           # 重置所有数据
+
+# 从源码构建（开发者）
+docker compose -f docker-compose.dev.yml build && docker compose -f docker-compose.dev.yml up -d
 ```
 
 ## 故障排除

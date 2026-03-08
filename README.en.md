@@ -37,9 +37,12 @@
 
 ### Docker (recommended)
 
+No need to clone the repo — just pull the official images:
+
 ```bash
-git clone https://github.com/Muluk-m/transweave.git
-cd transweave
+# Download compose file and env template
+curl -O https://raw.githubusercontent.com/Muluk-m/transweave/master/docker-compose.yml
+curl -O https://raw.githubusercontent.com/Muluk-m/transweave/master/.env.example
 
 cp .env.example .env
 # Edit .env and set:
@@ -47,6 +50,28 @@ cp .env.example .env
 #   JWT_SECRET=$(openssl rand -base64 64)
 
 docker compose up -d
+```
+
+> **Image registries**
+>
+> | Registry | Address |
+> |----------|---------|
+> | Docker Hub | `mulukma/transweave-server` · `mulukma/transweave-web` |
+> | GHCR | `ghcr.io/muluk-m/transweave-server` · `ghcr.io/muluk-m/transweave-web` |
+>
+> Docker Hub is used by default. To use GHCR, replace the image addresses in `docker-compose.yml`.
+> Pin a specific version by replacing `:latest` with e.g. `:1.2.3`.
+
+### Build from Source (developers)
+
+```bash
+git clone https://github.com/Muluk-m/transweave.git
+cd transweave
+
+cp .env.example .env
+# Edit .env and set POSTGRES_PASSWORD and JWT_SECRET
+
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Local Development (PGlite)
@@ -132,10 +157,14 @@ pnpm --filter @transweave/server drizzle-kit studio
 ### Common Commands
 
 ```bash
-docker compose build && docker compose up -d   # rebuild
-docker compose logs -f server                   # view logs
-docker compose down                             # stop (keep data)
-docker compose down -v                          # reset all data
+docker compose up -d                             # start (pull images)
+docker compose pull && docker compose up -d      # update to latest
+docker compose logs -f server                    # view logs
+docker compose down                              # stop (keep data)
+docker compose down -v                           # reset all data
+
+# Build from source (developers)
+docker compose -f docker-compose.dev.yml build && docker compose -f docker-compose.dev.yml up -d
 ```
 
 ## Troubleshooting
