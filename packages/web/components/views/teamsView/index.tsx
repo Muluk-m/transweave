@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import { Plus, Users2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useHooks } from "./useHooks";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { EmptyTeamsView } from "./EmptyTeamsView";
@@ -40,29 +40,28 @@ export default function TeamsView() {
             });
         });
     }, []);
-    
+
     return (
-        <div className="page-container py-6">
-            {/* Header - 更紧凑的顶部栏 */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                        <Users2 className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-semibold text-foreground">
-                            {t("teams.title")}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {teams.length > 0 ? t("teamsSubtitle.teamCount", { count: teams.length }) : t("teamsSubtitle.createFirst")}
+        <div className="page-container py-8 max-w-3xl">
+            {/* Header */}
+            <div className="flex items-baseline justify-between mb-8">
+                <div>
+                    <h1 className="text-lg font-semibold text-foreground">
+                        {t("teams.title")}
+                    </h1>
+                    {teams.length > 0 && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            {t("teamsSubtitle.teamCount", { count: teams.length })}
                         </p>
-                    </div>
+                    )}
                 </div>
-                <Button 
+                <Button
                     onClick={() => setTeamDialogOpen(true)}
-                    className="btn-gradient rounded-lg h-9 px-4"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
                 >
-                    <Plus className="h-4 w-4 mr-1.5" />
+                    <Plus className="h-3.5 w-3.5 mr-1" />
                     {t("teams.createTeam")}
                 </Button>
             </div>
@@ -76,22 +75,17 @@ export default function TeamsView() {
                 )}
 
                 {!loading && !!teams.length && (
-                    <div className="space-y-3">
-                        {teams.map((team, index) => (
-                            <div 
+                    <div className="space-y-10">
+                        {teams.map((team) => (
+                            <TeamView
                                 key={team.id}
-                                className="animate-fade-in"
-                                style={{ animationDelay: `${index * 30}ms` }}
-                            >
-                                <TeamView
-                                    team={team}
-                                    handleSelectTeam={handleSelectTeam}
-                                    handleDeleteTeam={handleDeleteTeam}
-                                    handleViewTeamMembers={handleViewTeamMembers}
-                                    loadingTeamId={loadingTeamId}
-                                    router={router}
-                                />
-                            </div>
+                                team={team}
+                                handleSelectTeam={handleSelectTeam}
+                                handleDeleteTeam={handleDeleteTeam}
+                                handleViewTeamMembers={handleViewTeamMembers}
+                                loadingTeamId={loadingTeamId}
+                                router={router}
+                            />
                         ))}
                     </div>
                 )}
