@@ -48,37 +48,31 @@ export default function WelcomeView() {
             icon: <Sparkles className="h-6 w-6" />,
             title: t('features.items.aiTranslation.title'),
             description: t('features.items.aiTranslation.description'),
-            gradient: "from-violet-500 to-purple-500"
         },
         {
             icon: <Terminal className="h-6 w-6" />,
             title: t('features.items.cliApi.title'),
             description: t('features.items.cliApi.description'),
-            gradient: "from-emerald-500 to-teal-500"
         },
         {
             icon: <Bot className="h-6 w-6" />,
             title: t('features.items.mcpIntegration.title'),
             description: t('features.items.mcpIntegration.description'),
-            gradient: "from-blue-500 to-cyan-500"
         },
         {
             icon: <FileCode className="h-6 w-6" />,
             title: t('features.items.multiFormat.title'),
             description: t('features.items.multiFormat.description'),
-            gradient: "from-amber-500 to-orange-500"
         },
         {
             icon: <Users className="h-6 w-6" />,
             title: t('features.items.teamwork.title'),
             description: t('features.items.teamwork.description'),
-            gradient: "from-rose-500 to-pink-500"
         },
         {
             icon: <Server className="h-6 w-6" />,
             title: t('features.items.selfHosted.title'),
             description: t('features.items.selfHosted.description'),
-            gradient: "from-slate-500 to-slate-700"
         }
     ];
 
@@ -108,27 +102,26 @@ export default function WelcomeView() {
 
     return (
         <div className="relative overflow-hidden">
-            {/* Background decorations */}
-            <div className="absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-                <div className="absolute top-1/3 -left-32 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
-            </div>
-
             <div className="page-container">
                 {/* Hero Section */}
                 <section className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16 lg:py-24 animate-fade-in-up">
                     <div className="flex-1 space-y-8 text-center lg:text-left">
                         {/* Badge */}
-                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20">
-                            <Github className="h-4 w-4" />
-                            {t('welcome.tagline')}
+                        <div className="inline-flex items-center gap-2.5 text-sm text-muted-foreground">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                            </span>
+                            <span className="tracking-wider uppercase text-xs font-medium">
+                                {t('welcome.tagline')}
+                            </span>
                         </div>
 
                         {/* Title */}
                         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                             {t.rich('welcome.title', {
                                 highlight: (chunks) => (
-                                    <span className="text-gradient bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] animate-shimmer">
+                                    <span className="text-gradient bg-gradient-to-r from-primary to-accent">
                                         {chunks}
                                     </span>
                                 )
@@ -171,7 +164,7 @@ export default function WelcomeView() {
                             >
                                 <Button
                                     size="lg"
-                                    className="btn-gradient rounded-xl px-6 h-11 text-base shadow-lg"
+                                    className="rounded-xl px-6 h-11 text-base bg-foreground text-background hover:bg-foreground/90 shadow-lg"
                                 >
                                     <Github className="mr-2 h-5 w-5" />
                                     GitHub
@@ -182,7 +175,7 @@ export default function WelcomeView() {
                                 size="lg"
                                 onClick={handleDemoLogin}
                                 disabled={isDemoLoading}
-                                className="rounded-xl px-6 h-11 text-base border-primary/30 text-primary hover:bg-primary/5"
+                                className="rounded-xl px-6 h-11 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
                             >
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -214,10 +207,6 @@ export default function WelcomeView() {
                 {/* Features Section */}
                 <section className="py-20" id="features">
                     <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-4">
-                            <Zap className="h-4 w-4" />
-                            {t('features.badge')}
-                        </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('features.title')}</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                             {t('features.description')}
@@ -231,7 +220,7 @@ export default function WelcomeView() {
                                 className="group border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
                             >
                                 <CardHeader>
-                                    <div className={`rounded-xl bg-gradient-to-br ${feature.gradient} w-12 h-12 flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <div className="rounded-xl bg-primary/10 border border-primary/20 w-12 h-12 flex items-center justify-center mb-4 text-primary group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
                                         {feature.icon}
                                     </div>
                                     <CardTitle className="text-lg">{feature.title}</CardTitle>
@@ -247,10 +236,6 @@ export default function WelcomeView() {
                 {/* Quick Start Section */}
                 <section className="py-20">
                     <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent border border-accent/20 mb-4">
-                            <Rocket className="h-4 w-4" />
-                            {t('quickstart.badge')}
-                        </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('quickstart.title')}</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                             {t('quickstart.description')}
@@ -260,7 +245,7 @@ export default function WelcomeView() {
                     <div className="max-w-3xl mx-auto space-y-6">
                         {quickstartSteps.map((step, i) => (
                             <div key={i} className="flex items-start gap-6">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-white text-lg font-bold flex-shrink-0">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary text-lg font-bold flex-shrink-0">
                                     {i + 1}
                                 </div>
                                 <div className="flex-1 space-y-2">
@@ -317,18 +302,18 @@ export default function WelcomeView() {
                         <div className="max-w-2xl mx-auto rounded-xl bg-background border border-border/50 overflow-hidden">
                             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-muted/30">
                                 <div className="flex gap-1.5">
-                                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                                    <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                                    <div className="w-3 h-3 rounded-full bg-foreground/10" />
+                                    <div className="w-3 h-3 rounded-full bg-foreground/10" />
+                                    <div className="w-3 h-3 rounded-full bg-foreground/10" />
                                 </div>
                                 <span className="text-xs text-muted-foreground ml-2 font-mono">terminal</span>
                             </div>
                             <pre className="p-4 font-mono text-sm leading-relaxed overflow-x-auto">
                                 <code>
                                     <span className="text-muted-foreground">{t('integrations.codeExamples.pull').split('\n')[0]}</span>{'\n'}
-                                    <span className="text-green-500">$ </span><span className="text-foreground">{t('integrations.codeExamples.pull').split('\n')[1]}</span>{'\n'}{'\n'}
+                                    <span className="text-primary">$ </span><span className="text-foreground">{t('integrations.codeExamples.pull').split('\n')[1]}</span>{'\n'}{'\n'}
                                     <span className="text-muted-foreground">{t('integrations.codeExamples.push').split('\n')[0]}</span>{'\n'}
-                                    <span className="text-green-500">$ </span><span className="text-foreground">{t('integrations.codeExamples.push').split('\n')[1]}</span>
+                                    <span className="text-primary">$ </span><span className="text-foreground">{t('integrations.codeExamples.push').split('\n')[1]}</span>
                                 </code>
                             </pre>
                         </div>
@@ -336,15 +321,8 @@ export default function WelcomeView() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-24 text-center relative">
-                    <div className="absolute inset-0 -z-10">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-3xl" />
-                    </div>
+                <section className="py-24 text-center">
                     <div className="max-w-3xl mx-auto px-4">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 mb-6">
-                            <Rocket className="h-4 w-4" />
-                            {t('cta.badge')}
-                        </div>
                         <h2 className="text-3xl sm:text-4xl font-bold mb-6">{t('cta.title')}</h2>
                         <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
                             {t('cta.description')}
@@ -357,7 +335,7 @@ export default function WelcomeView() {
                             >
                                 <Button
                                     size="lg"
-                                    className="btn-gradient rounded-xl px-8 h-12 text-base shadow-lg"
+                                    className="rounded-xl px-8 h-12 text-base bg-foreground text-background hover:bg-foreground/90 shadow-lg"
                                 >
                                     <Github className="mr-2 h-5 w-5" />
                                     {t('cta.github')}
@@ -368,7 +346,7 @@ export default function WelcomeView() {
                                 disabled={isDemoLoading}
                                 variant="outline"
                                 size="lg"
-                                className="rounded-xl px-8 h-12 text-base border-primary/30 text-primary hover:bg-primary/5"
+                                className="rounded-xl px-8 h-12 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
                             >
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
