@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { AllExceptionsFilter } from './interceptors/all-exceptions.filter';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -26,6 +27,7 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   await app.listen(process.env.PORT ?? 3001, '0.0.0.0');

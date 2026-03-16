@@ -48,14 +48,7 @@ export class ProjectController {
   @Get('all')
   @UseGuards(AuthGuard)
   async findAllProjects(@CurrentUser() user: UserPayload) {
-    // Only return projects the user has access to via their teams
-    const teams = await this.teamService.findTeamsByUserId(user.userId);
-    const projects: any[] = [];
-    for (const team of teams) {
-      const teamProjects = await this.projectService.findProjectsByTeamId(team.id);
-      projects.push(...teamProjects);
-    }
-    return projects;
+    return this.projectService.findProjectsByUserId(user.userId);
   }
 
   @Get('find/:id')

@@ -19,6 +19,7 @@ export const tokens = pgTable(
   },
   (table) => [
     index('tokens_project_id_idx').on(table.projectId),
+    index('tokens_module_idx').on(table.module),
     uniqueIndex('tokens_project_key_unique').on(table.projectId, table.key),
   ],
 );

@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
-import { projects, type NewProject, type Project } from '../db/schema';
+import { memberships, projects, type NewProject, type Project } from '../db/schema';
 import { BaseRepository } from './base.repository';
 
 @Injectable()
@@ -20,6 +20,28 @@ export class ProjectRepository extends BaseRepository<
       .select()
       .from(projects)
       .where(eq(projects.teamId, teamId));
+  }
+
+  async findByUserId(userId: string): Promise<Project[]> {
+    return this.db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        url: projects.url,
+        defaultLang: projects.defaultLang,
+        teamId: projects.teamId,
+        description: projects.description,
+        languages: projects.languages,
+        languageLabels: projects.languageLabels,
+        modules: projects.modules,
+        enableVersioning: projects.enableVersioning,
+        aiConfig: projects.aiConfig,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projects)
+      .innerJoin(memberships, eq(memberships.teamId, projects.teamId))
+      .where(eq(memberships.userId, userId));
   }
 
   async findByUrl(url: string): Promise<Project | null> {

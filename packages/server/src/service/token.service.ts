@@ -7,7 +7,7 @@ import {
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
-import { tokens, type Token } from '../db/schema';
+import { tokens, tokenHistory, type Token } from '../db/schema';
 import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ProjectRepository } from '../repository/project.repository';
@@ -118,55 +118,60 @@ export class TokenService {
       throw new BadRequestException(`Token key '${data.key}' already exists`);
     }
 
-    // Insert token (unique index on projectId+key prevents race conditions)
-    let token;
-    try {
-      token = await this.tokenRepository.create({
-        projectId: data.projectId,
-        key: data.key,
-        module: data.module || '',
-        tags: data.tags || [],
-        comment: data.comment || '',
-        translations: data.translations || {},
-        screenshots: data.screenshots || [],
-      });
-    } catch (error: any) {
-      if (error?.code === '23505') {
-        throw new BadRequestException(`Token key '${data.key}' already exists`);
-      }
-      throw error;
-    }
-
-    // Insert initial history record if versioning is enabled
-    await this.maybeRecordHistory(
-      data.projectId,
-      token.id,
-      data.userId,
-      data.translations || {},
-    );
-
-    // Log activity
-    await this.activityLogService.create({
-      type: ActivityType.TOKEN_CREATE,
-      projectId: data.projectId,
-      userId: data.userId,
-      details: {
-        entityId: token.id,
-        entityType: 'token',
-        entityName: token.key,
-        metadata: {
+    // Use transaction for atomicity: token creation + history + activity log
+    const tokenId = await (this.db as any).transaction(async (tx: any) => {
+      // Insert token (unique index on projectId+key prevents race conditions)
+      // Duplicate key errors (23505) are handled by the global exception filter
+      const [token] = await tx
+        .insert(tokens)
+        .values({
+          projectId: data.projectId,
+          key: data.key,
+          module: data.module || '',
           tags: data.tags || [],
           comment: data.comment || '',
-          translationsCount: Object.keys(data.translations || {}).length,
-          languages: Object.keys(data.translations || {}),
+          translations: data.translations || {},
+          screenshots: data.screenshots || [],
+        })
+        .returning();
+
+      // Insert initial history record if versioning is enabled
+      const project = await this.projectRepository.findById(data.projectId);
+      if (project?.enableVersioning) {
+        await tx
+          .insert(tokenHistory)
+          .values({
+            tokenId: token.id,
+            userId: data.userId,
+            translations: data.translations || {},
+          });
+      }
+
+      // Log activity
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_CREATE,
+        projectId: data.projectId,
+        userId: data.userId,
+        details: {
+          entityId: token.id,
+          entityType: 'token',
+          entityName: token.key,
+          metadata: {
+            tags: data.tags || [],
+            comment: data.comment || '',
+            translationsCount: Object.keys(data.translations || {}).length,
+            languages: Object.keys(data.translations || {}),
+          },
         },
-      },
-      ipAddress: data.ipAddress,
-      userAgent: data.userAgent,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
+      });
+
+      return token.id;
     });
 
     // Return token with populated history
-    return this.findById(token.id);
+    return this.findById(tokenId);
   }
 
   /**
@@ -698,26 +703,27 @@ export class TokenService {
     const projectId = existingTokens[0].projectId;
     const deletedKeys = existingTokens.map((t) => t.key);
 
-    // Delete all tokens in a single query
-    await (this.db as any)
-      .delete(tokens)
-      .where(inArray(tokens.id, tokenIds));
+    // Use transaction for atomicity: delete + activity log
+    await (this.db as any).transaction(async (tx: any) => {
+      await tx
+        .delete(tokens)
+        .where(inArray(tokens.id, tokenIds));
 
-    // Log a single activity entry
-    await this.activityLogService.create({
-      type: ActivityType.TOKEN_BATCH_UPDATE,
-      projectId,
-      userId,
-      details: {
-        entityType: 'token',
-        metadata: {
-          operation: 'bulk-delete',
-          count: tokenIds.length,
-          deletedKeys,
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_BATCH_UPDATE,
+        projectId,
+        userId,
+        details: {
+          entityType: 'token',
+          metadata: {
+            operation: 'bulk-delete',
+            count: tokenIds.length,
+            deletedKeys,
+          },
         },
-      },
-      ipAddress,
-      userAgent,
+        ipAddress,
+        userAgent,
+      });
     });
 
     return { deleted: tokenIds.length };
@@ -760,28 +766,31 @@ export class TokenService {
 
     const projectId = existingTokens[0].projectId;
 
-    // Update all tokens with the new tags
-    const updatedTokens: Token[] = await (this.db as any)
-      .update(tokens)
-      .set({ tags, updatedAt: new Date() })
-      .where(inArray(tokens.id, tokenIds))
-      .returning();
+    // Use transaction for atomicity: update + activity log
+    const updatedTokens: Token[] = await (this.db as any).transaction(async (tx: any) => {
+      const updated: Token[] = await tx
+        .update(tokens)
+        .set({ tags, updatedAt: new Date() })
+        .where(inArray(tokens.id, tokenIds))
+        .returning();
 
-    // Log activity
-    await this.activityLogService.create({
-      type: ActivityType.TOKEN_BATCH_UPDATE,
-      projectId,
-      userId,
-      details: {
-        entityType: 'token',
-        metadata: {
-          operation: 'bulk-set-tags',
-          count: tokenIds.length,
-          tags,
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_BATCH_UPDATE,
+        projectId,
+        userId,
+        details: {
+          entityType: 'token',
+          metadata: {
+            operation: 'bulk-set-tags',
+            count: tokenIds.length,
+            tags,
+          },
         },
-      },
-      ipAddress,
-      userAgent,
+        ipAddress,
+        userAgent,
+      });
+
+      return updated;
     });
 
     return updatedTokens;
@@ -823,28 +832,31 @@ export class TokenService {
 
     const projectId = existingTokens[0].projectId;
 
-    // Update all tokens with the new module
-    const updatedTokens: Token[] = await (this.db as any)
-      .update(tokens)
-      .set({ module: moduleCode, updatedAt: new Date() })
-      .where(inArray(tokens.id, tokenIds))
-      .returning();
+    // Use transaction for atomicity: update + activity log
+    const updatedTokens: Token[] = await (this.db as any).transaction(async (tx: any) => {
+      const updated: Token[] = await tx
+        .update(tokens)
+        .set({ module: moduleCode, updatedAt: new Date() })
+        .where(inArray(tokens.id, tokenIds))
+        .returning();
 
-    // Log activity
-    await this.activityLogService.create({
-      type: ActivityType.TOKEN_BATCH_UPDATE,
-      projectId,
-      userId,
-      details: {
-        entityType: 'token',
-        metadata: {
-          operation: 'bulk-set-module',
-          count: tokenIds.length,
-          moduleCode,
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_BATCH_UPDATE,
+        projectId,
+        userId,
+        details: {
+          entityType: 'token',
+          metadata: {
+            operation: 'bulk-set-module',
+            count: tokenIds.length,
+            moduleCode,
+          },
         },
-      },
-      ipAddress,
-      userAgent,
+        ipAddress,
+        userAgent,
+      });
+
+      return updated;
     });
 
     return updatedTokens;

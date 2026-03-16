@@ -78,6 +78,10 @@ export class ProjectService {
     return this.projectRepository.findByTeamId(teamId);
   }
 
+  async findProjectsByUserId(userId: string): Promise<Project[]> {
+    return this.projectRepository.findByUserId(userId);
+  }
+
   async updateProject(
     id: string,
     data: {
