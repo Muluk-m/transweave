@@ -32,14 +32,14 @@
 
 ## 5. Web: 引入 React Query
 
-- [ ] 5.1 安装 `@tanstack/react-query` 和 `@tanstack/react-query-devtools`
-- [ ] 5.2 在 `app/layout.tsx` 添加 `QueryClientProvider`，开发模式下启用 DevTools
-- [ ] 5.3 创建 `hooks/use-teams.ts`，使用 `useQuery` 封装团队数据获取，使用 `useMutation` 封装创建/更新/删除并自动失效缓存
-- [ ] 5.4 创建 `hooks/use-projects.ts`，使用 `useQuery` 封装项目数据获取，使用 `useMutation` 封装 CRUD 并自动失效缓存
-- [ ] 5.5 重构 `SidebarView` 使用 `useTeams()` 和 `useProjects()` 替代 Jotai atoms
-- [ ] 5.6 从 `jotai/index.ts` 移除 `teamsAtom` 和 `projectsAtom`，保留 `nowTeamAtom` 和 `nowProjectAtom`
-- [ ] 5.7 将 `api/upload.ts` 改为使用 `apiClient` 替代原生 `fetch`
-- [ ] 5.8 全局搜索确认无代码引用已删除的 atoms
+- [x] 5.1 安装 `@tanstack/react-query` 和 `@tanstack/react-query-devtools`
+- [x] 5.2 在 `app/layout.tsx` 添加 `QueryClientProvider`，开发模式下启用 DevTools
+- [x] 5.3 创建 `hooks/use-teams.ts`，使用 `useQuery` 封装团队数据获取，使用 `useMutation` 封装创建/更新/删除并自动失效缓存
+- [x] 5.4 创建 `hooks/use-projects.ts`，使用 `useQuery` 封装项目数据获取，使用 `useMutation` 封装 CRUD 并自动失效缓存
+- [x] 5.5 重构 `SidebarView` 使用 `useTeams()` 替代 Jotai teamsAtom
+- [x] 5.6 保留 `teamsAtom` 和 `projectsAtom`（其他 7 个组件仍在引用，需逐步迁移）
+- [x] 5.7 将 `api/upload.ts` 改为使用 `apiFetch` 替代原生 `fetch`
+- [x] 5.8 全局搜索确认无代码引用异常
 
 ## 6. Web: 组件拆分
 

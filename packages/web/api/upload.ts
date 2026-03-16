@@ -1,3 +1,5 @@
+import { apiFetch, handleApiResponse } from "../lib/api";
+
 export interface UploadFile {
   name: string;
   size: number;
@@ -14,19 +16,12 @@ export async function uploadImage(file: File): Promise<UploadFile> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('/api/upload', {
+  const response = await apiFetch<UploadFile>('/api/upload', {
     method: 'POST',
     body: formData,
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-    },
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to upload file');
-  }
-
-  return response.json();
+  return handleApiResponse(response);
 }
 
 /**

@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
-import { teamsAtom, nowTeamAtom } from '@/jotai';
-import { fetchMyTeams } from '@/api/team';
+import { nowTeamAtom } from '@/jotai';
+import { useTeams } from '@/hooks/use-teams';
 import { getTeamProjects } from '@/api/project';
 import { Team, Project } from '@/jotai/types';
 import { Button } from '@/components/ui/button';
@@ -36,11 +36,10 @@ export function SidebarView() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [teams, setTeams] = useAtom(teamsAtom);
+  const { data: teams = [], isLoading: teamsLoading } = useTeams();
   const [, setNowTeam] = useAtom(nowTeamAtom);
 
   const [teamsWithProjects, setTeamsWithProjects] = useState<TeamWithProjects[]>([]);
-  const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(COLLAPSED_KEY) === 'true';
@@ -89,7 +88,7 @@ export function SidebarView() {
     );
   };
 
-  // Sync teamsWithProjects from teamsAtom
+  // Sync teamsWithProjects from React Query data
   useEffect(() => {
     if (teams.length > 0) {
       setTeamsWithProjects((prev) => {
@@ -100,24 +99,8 @@ export function SidebarView() {
           return { ...team, expanded: true, projects: undefined, projectsLoaded: false };
         });
       });
-      setLoading(false);
     }
   }, [teams]);
-
-  // Fallback: fetch teams if atom is empty (e.g. direct navigation to /project/xxx)
-  useEffect(() => {
-    if (teams.length === 0) {
-      const fallback = async () => {
-        try {
-          const data = await fetchMyTeams();
-          if (data.length > 0) setTeams(data);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fallback();
-    }
-  }, []);
 
   // Load projects for new teams that don't have projects loaded yet
   useEffect(() => {
@@ -194,13 +177,13 @@ export function SidebarView() {
     <div className="flex flex-col h-full w-[240px] border-r border-border bg-background/95 flex-shrink-0 transition-all duration-200">
       {/* Teams + Projects */}
       <div className="flex-1 overflow-y-auto py-2">
-        {loading && (
+        {teamsLoading && (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         )}
 
-        {!loading && teamsWithProjects.length === 0 && (
+        {!teamsLoading && teamsWithProjects.length === 0 && (
           <div className="px-3 py-3 space-y-2">
             <p className="text-xs text-muted-foreground px-1">{t('sidebar.noTeams')}</p>
             <Button
@@ -215,7 +198,7 @@ export function SidebarView() {
           </div>
         )}
 
-        {!loading &&
+        {!teamsLoading &&
           teamsWithProjects.map((team) => (
             <div key={team.id} className="mb-1">
               {/* Team row */}

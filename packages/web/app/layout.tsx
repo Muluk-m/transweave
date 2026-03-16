@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { HeaderManager } from "@/components/views/header-manager";
 import { SidebarManager } from "@/components/views/sidebar-manager";
 import { I18nClientProvider } from "@/components/i18n/client-provider";
+import { QueryProvider } from "@/lib/query-client";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,6 +39,7 @@ export default function Layout({
     <html suppressHydrationWarning className="dark">
       <body className={inter.className}>
         <NuqsAdapter>
+          <QueryProvider>
           <AuthProvider>
             <I18nClientProvider>
               <div className="min-h-screen flex flex-col">
@@ -54,6 +56,7 @@ export default function Layout({
               </div>
             </I18nClientProvider>
           </AuthProvider>
+          </QueryProvider>
         </NuqsAdapter>
       </body>
     </html>
