@@ -1,9 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { formatLanguageDisplay } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +13,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetClose,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -27,42 +23,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Bot,
-  CircleHelp,
-  History,
-  LanguagesIcon,
-  RotateCcw,
-} from "lucide-react";
-import { Token, TokenHistory } from "@/jotai/types";
+import { Bot, CircleHelp, LanguagesIcon } from "lucide-react";
+import { Token } from "@/jotai/types";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { generateTokenKeyWithAi } from "@/api/ai";
-import { toast } from "@/hooks/use-toast";
-import { uploadImage, getImageUrl } from "@/api/upload";
-import { Image as ImageIcon, X, Upload, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useTokenForm } from "./useTokenForm";
+import { ScreenshotManager } from "./ScreenshotManager";
+import { TranslationFields } from "./TranslationFields";
 
 interface TokenFormDrawerProps {
   isOpen: boolean;
@@ -79,7 +50,7 @@ interface TokenFormDrawerProps {
     screenshots?: string[];
   };
   languages?: string[];
-  languageLabels?: Record<string, string>; // 自定义语言的中文备注
+  languageLabels?: Record<string, string>;
   modules?: Array<{ code: string; description?: string }>;
   currentToken?: Token;
   onInputChange: (
@@ -98,18 +69,6 @@ interface TokenFormDrawerProps {
   projectId?: string;
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString || Date.now());
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(date);
-};
-
 export function TokenFormDrawer({
   isOpen,
   onOpenChange,
@@ -126,592 +85,246 @@ export function TokenFormDrawer({
   onTranslationChange,
   onScreenshotsChange,
   onSubmit,
-  onAddNew,
   onTranslate,
   onRestoreVersion,
   aiConfigured = false,
   projectId,
 }: TokenFormDrawerProps) {
   const t = useTranslations("tokenForm");
-  const [isGeneratingKey, setIsGeneratingKey] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const screenshotAreaRef = useRef<HTMLDivElement>(null);
-  const [previewImage, setPreviewImage] = useState<{
-    url: string;
-    index: number;
-  } | null>(null);
 
-  // Get localized language names
-  const getLocalizedLanguageName = (langCode: string): string =>
-    formatLanguageDisplay(langCode, languageLabels);
-
-  const handleGenerateKey = async () => {
-    if (!formData.comment) {
-      toast({
-        title: t("enterCommentForAi"),
-      });
-      return;
-    }
-    setIsGeneratingKey(true);
-    const result = await generateTokenKeyWithAi(
-      formData.comment,
-      projectId || "",
-      formData.tags,
-      formData.module
-    ).catch(() => null);
-    setIsGeneratingKey(false);
-    if (result) {
-      onInputChange({
-        target: { value: result.data, name: "key" },
-      } as React.ChangeEvent<HTMLInputElement>);
-    }
-  };
-
-  // 通用的文件上传函数
-  const uploadFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: t("error"),
-        description: t("pleaseUploadImage"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: t("error"),
-        description: t("imageSizeLimit"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploadingImage(true);
-    try {
-      const result = await uploadImage(file);
-      const currentScreenshots = formData.screenshots || [];
-      // 使用 CDN 返回的 URL
-      onScreenshotsChange([...currentScreenshots, result.url]);
-      toast({
-        title: t("uploadSuccess"),
-        description: t("uploadedToCdn"),
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: t("uploadFailed"),
-        description: error instanceof Error ? error.message : t("uploadFailedRetry"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    await uploadFile(file);
-    
-    // 清空 input 的值，以便可以重复上传同一文件
-    event.target.value = '';
-  };
-
-  // 处理粘贴事件
-  const handlePaste = async (event: React.ClipboardEvent) => {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.indexOf('image') !== -1) {
-        event.preventDefault();
-        const blob = item.getAsFile();
-        if (blob) {
-          // 将 Blob 转换为 File 对象
-          const file = new File([blob], `screenshot-${Date.now()}.png`, {
-            type: blob.type,
-          });
-          await uploadFile(file);
-        }
-        break;
-      }
-    }
-  };
-
-  const handleRemoveScreenshot = (index: number) => {
-    const currentScreenshots = formData.screenshots || [];
-    const newScreenshots = currentScreenshots.filter((_, i) => i !== index);
-    onScreenshotsChange(newScreenshots);
-  };
-
-  const handlePreviewImage = (url: string, index: number) => {
-    setPreviewImage({ url, index });
-  };
-
-  const handlePrevImage = () => {
-    if (!previewImage || !formData.screenshots) return;
-    const newIndex = previewImage.index - 1;
-    if (newIndex >= 0) {
-      setPreviewImage({
-        url: formData.screenshots[newIndex],
-        index: newIndex,
-      });
-    }
-  };
-
-  const handleNextImage = () => {
-    if (!previewImage || !formData.screenshots) return;
-    const newIndex = previewImage.index + 1;
-    if (newIndex < formData.screenshots.length) {
-      setPreviewImage({
-        url: formData.screenshots[newIndex],
-        index: newIndex,
-      });
-    }
-  };
+  const form = useTokenForm({
+    formData,
+    onInputChange,
+    onScreenshotsChange,
+    projectId,
+    aiConfigured,
+  });
 
   return (
     <>
-      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl w-full">
-          <DialogHeader>
-            <DialogTitle>
-              {t("screenshotPreview")} {previewImage && `(${previewImage.index + 1} / ${formData.screenshots?.length || 0})`}
-            </DialogTitle>
-          </DialogHeader>
-          {previewImage && (
-            <div className="relative">
-              <img
-                src={getImageUrl(previewImage.url)}
-                alt="Preview"
-                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
-              />
-              {formData.screenshots && formData.screenshots.length > 1 && (
-                <div className="flex justify-between items-center mt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handlePrevImage}
-                    disabled={previewImage.index === 0}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm text-gray-500">
-                    {previewImage.index + 1} / {formData.screenshots.length}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleNextImage}
-                    disabled={previewImage.index === formData.screenshots.length - 1}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-[700px]">
-        <SheetHeader>
-          <SheetTitle>{isEditing ? t("editTitle") : t("addTitle")}</SheetTitle>
-          <SheetDescription>{t("description")}</SheetDescription>
-        </SheetHeader>
+          <SheetHeader>
+            <SheetTitle>
+              {isEditing ? t("editTitle") : t("addTitle")}
+            </SheetTitle>
+            <SheetDescription>{t("description")}</SheetDescription>
+          </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-220px)] mt-6 pr-4">
-          <div className="grid gap-6 pb-4 m-2">
-            <div className="grid gap-2">
-              <Label
-                htmlFor="key"
-                className="flex items-center gap-1 justify-between"
-              >
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-red-500 align-text-top"
-                    style={{ fontFamily: "SimSun,sans-serif" }}
-                  >
-                    *
-                  </span>
-                  Key
-                  <TooltipProvider delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <CircleHelp className="w-4 h-4 cursor-pointer" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <div className="text-sm text-gray-100 space-y-2">
-                          <p>
-                            <span className="font-medium text-white">Key</span>{" "}
-                            {t("keyTooltip.description")}
-                          </p>
-
-                          <p className="font-medium text-white">{t("keyTooltip.rules")}</p>
-                          <ul className="list-disc list-inside pl-4 space-y-1">
-                            <li>
-                              {t("keyTooltip.ruleLetters")}
-                              <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
-                                .
-                              </code>
-                              {t("keyTooltip.ruleNumbers")}
-                            </li>
-                            <li>{t("keyTooltip.ruleLowercase")}</li>
-                            <li>
-                              {t("keyTooltip.ruleUse")}{" "}
-                              <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
-                                .
-                              </code>{" "}
-                              {t("keyTooltip.ruleSeparator")}
-                            </li>
-                          </ul>
-
-                          <p className="font-medium text-white">{t("keyTooltip.examples")}</p>
-                          <ul className="list-decimal list-inside pl-4 space-y-1">
-                            <li>
-                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
-                                login
-                              </code>
-                              {t("keyTooltip.exUsage")}
-                            </li>
-                            <li>
-                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
-                                userCenter.loginSuccess
-                              </code>
-                              {t("keyTooltip.exModuleUsage")}
-                            </li>
-                            <li>
-                              <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
-                                userCenter.login.success
-                              </code>
-                              {t("keyTooltip.exModuleUsageState")}
-                            </li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                {aiConfigured && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-6 h-6"
-                    onClick={handleGenerateKey}
-                  >
-                    <Bot className="w-4 h-4" />
-                  </Button>
-                )}
-              </Label>
-              <Input
-                id="key"
-                name="key"
-                required
-                loading={isGeneratingKey}
-                maxLength={50}
-                value={formData.key}
-                onChange={onInputChange}
-                placeholder={t("keyPlaceholder")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="module">{t("moduleLabel")}</Label>
-              <Select
-                value={formData.module || "__none__"}
-                onValueChange={(value) => onModuleChange(value === "__none__" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("modulePlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("noModule")}</SelectItem>
-                  {modules.map((module) => (
-                    <SelectItem key={module.code} value={module.code}>
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm">{module.code}</code>
-                        {module.description && (
-                          <span className="text-xs text-gray-500">({module.description})</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                {t("moduleHint")}
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="tags">{t("tags")}</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={formData.tags}
-                onChange={onInputChange}
-                placeholder={t("tagsPlaceholder")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="comment">{t("comment")}</Label>
-              <Textarea
-                id="comment"
-                name="comment"
-                value={formData.comment}
-                onChange={onInputChange}
-                placeholder={t("commentPlaceholder")}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="screenshots">{t("contextScreenshots")}</Label>
-              <div 
-                className="space-y-2" 
-                ref={screenshotAreaRef}
-                onPaste={handlePaste}
-                tabIndex={0}
-              >
-                <div className="flex flex-wrap gap-2">
-                  {(formData.screenshots || []).map((screenshot, index) => (
-                    <div
-                      key={index}
-                      className="relative group w-24 h-24 border rounded-md overflow-hidden cursor-pointer"
+          <ScrollArea className="h-[calc(100vh-220px)] mt-6 pr-4">
+            <div className="grid gap-6 pb-4 m-2">
+              {/* Key field */}
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="key"
+                  className="flex items-center gap-1 justify-between"
+                >
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="text-red-500 align-text-top"
+                      style={{ fontFamily: "SimSun,sans-serif" }}
                     >
-                      <img
-                        src={getImageUrl(screenshot)}
-                        alt={`Screenshot ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onClick={() => handlePreviewImage(screenshot, index)}
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveScreenshot(index);
-                        }}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
-                      </div>
-                    </div>
-                  ))}
-                  <label
-                    htmlFor="screenshot-upload"
-                    className="w-24 h-24 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    {isUploadingImage ? (
-                      <div className="text-xs text-muted-foreground">{t("uploading")}</div>
-                    ) : (
-                      <>
-                        <Upload className="w-6 h-6 text-muted-foreground/60 mb-1" />
-                        <span className="text-xs text-muted-foreground">{t("uploadImage")}</span>
-                      </>
-                    )}
-                  </label>
-                  <input
-                    id="screenshot-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={isUploadingImage}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  {t("imageFormatHint")}
-                </p>
-                <p className="text-xs text-blue-600 font-medium">
-                  {t("pasteHint")}
-                </p>
-              </div>
-            </div>
-
-            {languages.length > 0 && <Separator className="my-2" />}
-
-            {/* Dynamically generate input fields for each language */}
-            {languages.map((lang) => (
-              <div key={lang} className="grid gap-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor={`lang-${lang}`}>
-                    {getLocalizedLanguageName(lang)}
-                  </Label>
-                  <TokenHistorySheet
-                    history={currentToken?.history || []}
-                    lang={lang}
-                    onRollback={(translation) => {
-                      onTranslationChange(lang, translation);
-                    }}
-                    onRestoreVersion={onRestoreVersion}
-                  />
-                </div>
+                      *
+                    </span>
+                    Key
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CircleHelp className="w-4 h-4 cursor-pointer" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <div className="text-sm text-gray-100 space-y-2">
+                            <p>
+                              <span className="font-medium text-white">
+                                Key
+                              </span>{" "}
+                              {t("keyTooltip.description")}
+                            </p>
+                            <p className="font-medium text-white">
+                              {t("keyTooltip.rules")}
+                            </p>
+                            <ul className="list-disc list-inside pl-4 space-y-1">
+                              <li>
+                                {t("keyTooltip.ruleLetters")}
+                                <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
+                                  .
+                                </code>
+                                {t("keyTooltip.ruleNumbers")}
+                              </li>
+                              <li>{t("keyTooltip.ruleLowercase")}</li>
+                              <li>
+                                {t("keyTooltip.ruleUse")}{" "}
+                                <code className="bg-gray-700 text-gray-100 px-1 rounded text-xs">
+                                  .
+                                </code>{" "}
+                                {t("keyTooltip.ruleSeparator")}
+                              </li>
+                            </ul>
+                            <p className="font-medium text-white">
+                              {t("keyTooltip.examples")}
+                            </p>
+                            <ul className="list-decimal list-inside pl-4 space-y-1">
+                              <li>
+                                <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
+                                  login
+                                </code>
+                                {t("keyTooltip.exUsage")}
+                              </li>
+                              <li>
+                                <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
+                                  userCenter.loginSuccess
+                                </code>
+                                {t("keyTooltip.exModuleUsage")}
+                              </li>
+                              <li>
+                                <code className="bg-gray-700 px-1 rounded text-sm text-gray-100">
+                                  userCenter.login.success
+                                </code>
+                                {t("keyTooltip.exModuleUsageState")}
+                              </li>
+                            </ul>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {aiConfigured && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-6 h-6"
+                      onClick={form.handleGenerateKey}
+                    >
+                      <Bot className="w-4 h-4" />
+                    </Button>
+                  )}
+                </Label>
                 <Input
-                  id={`lang-${lang}`}
-                  loading={isTranslating && !formData.translations[lang]}
-                  value={formData.translations[lang] || ""}
-                  onChange={(e) => onTranslationChange(lang, e.target.value)}
-                  placeholder={t("translationPlaceholder", {
-                    language: getLocalizedLanguageName(lang),
-                  })}
+                  id="key"
+                  name="key"
+                  required
+                  loading={form.isGeneratingKey}
+                  maxLength={50}
+                  value={formData.key}
+                  onChange={onInputChange}
+                  placeholder={t("keyPlaceholder")}
                 />
               </div>
-            ))}
-          </div>
-        </ScrollArea>
 
-        <SheetFooter className="mt-6 flex-row gap-2 items-center sm:justify-end">
-          {aiConfigured && (
+              {/* Module field */}
+              <div className="grid gap-2">
+                <Label htmlFor="module">{t("moduleLabel")}</Label>
+                <Select
+                  value={formData.module || "__none__"}
+                  onValueChange={(value) =>
+                    onModuleChange(value === "__none__" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("modulePlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{t("noModule")}</SelectItem>
+                    {modules.map((module) => (
+                      <SelectItem key={module.code} value={module.code}>
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm">{module.code}</code>
+                          {module.description && (
+                            <span className="text-xs text-gray-500">
+                              ({module.description})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">{t("moduleHint")}</p>
+              </div>
+
+              {/* Tags field */}
+              <div className="grid gap-2">
+                <Label htmlFor="tags">{t("tags")}</Label>
+                <Input
+                  id="tags"
+                  name="tags"
+                  value={formData.tags}
+                  onChange={onInputChange}
+                  placeholder={t("tagsPlaceholder")}
+                />
+              </div>
+
+              {/* Comment field */}
+              <div className="grid gap-2">
+                <Label htmlFor="comment">{t("comment")}</Label>
+                <Textarea
+                  id="comment"
+                  name="comment"
+                  value={formData.comment}
+                  onChange={onInputChange}
+                  placeholder={t("commentPlaceholder")}
+                />
+              </div>
+
+              {/* Screenshots */}
+              <ScreenshotManager
+                screenshots={formData.screenshots || []}
+                isUploadingImage={form.isUploadingImage}
+                screenshotAreaRef={form.screenshotAreaRef}
+                previewImage={form.previewImage}
+                onPaste={form.handlePaste}
+                onImageUpload={form.handleImageUpload}
+                onRemoveScreenshot={form.handleRemoveScreenshot}
+                onPreviewImage={form.handlePreviewImage}
+                onPrevImage={form.handlePrevImage}
+                onNextImage={form.handleNextImage}
+                onClosePreview={() => form.setPreviewImage(null)}
+              />
+
+              {/* Translation fields */}
+              <TranslationFields
+                languages={languages}
+                languageLabels={languageLabels}
+                translations={formData.translations}
+                isTranslating={isTranslating}
+                history={currentToken?.history || []}
+                onTranslationChange={onTranslationChange}
+                onRestoreVersion={onRestoreVersion}
+              />
+            </div>
+          </ScrollArea>
+
+          <SheetFooter className="mt-6 flex-row gap-2 items-center sm:justify-end">
+            {aiConfigured && (
+              <Button
+                size="icon"
+                onClick={onTranslate}
+                variant="outline"
+                disabled={isTranslating}
+                className="flex-1 sm:flex-initial"
+              >
+                <LanguagesIcon className="w-6 h-6" />
+              </Button>
+            )}
             <Button
-              size="icon"
-              onClick={onTranslate}
-              variant="outline"
-              disabled={isTranslating}
+              onClick={onSubmit}
+              disabled={isLoading}
               className="flex-1 sm:flex-initial"
             >
-              <LanguagesIcon className="w-6 h-6" />
+              {isLoading
+                ? t("submitting")
+                : isEditing
+                ? t("update")
+                : t("submit")}
             </Button>
-          )}
-          <Button
-            onClick={onSubmit}
-            disabled={isLoading}
-            className="flex-1 sm:flex-initial"
-          >
-            {isLoading
-              ? t("submitting")
-              : isEditing
-              ? t("update")
-              : t("submit")}
-          </Button>
-          <SheetClose asChild>
-            <Button variant="outline" className="flex-1 sm:flex-initial">
-              {t("cancel")}
-            </Button>
-          </SheetClose>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+            <SheetClose asChild>
+              <Button variant="outline" className="flex-1 sm:flex-initial">
+                {t("cancel")}
+              </Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
-  );
-}
-
-function TokenHistorySheet({
-  history,
-  lang,
-  onRollback,
-  onRestoreVersion,
-}: {
-  history: TokenHistory[];
-  lang: string;
-  onRollback: (translation: string) => void;
-  onRestoreVersion?: (historyId: string) => Promise<void>;
-}) {
-  const t = useTranslations("tokenForm");
-  const [restoringId, setRestoringId] = useState<string | null>(null);
-
-  const handleRestore = async (historyId: string) => {
-    if (!onRestoreVersion) return;
-    setRestoringId(historyId);
-    try {
-      await onRestoreVersion(historyId);
-    } finally {
-      setRestoringId(null);
-    }
-  };
-
-  return (
-    <Sheet>
-      <SheetTrigger>
-        <History className="w-4 h-4  cursor-pointer" />
-      </SheetTrigger>
-
-      <SheetContent className="sm:max-w-[700px]">
-        <SheetHeader>
-          <SheetTitle>{t("translationHistory")}</SheetTitle>
-        </SheetHeader>
-
-        <ScrollArea className="h-[calc(100vh-220px)] mt-6 pr-4">
-          <div className="grid gap-6 pb-4 m-2">
-            {history
-              .filter((item, index, array) => {
-                if (!item.translations?.[lang]) return false;
-                if (index === 0) return true;
-                const prevItem = array[index - 1];
-                return item.translations[lang] !== prevItem.translations?.[lang];
-              })
-              .sort(
-                (a, b) =>
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime()
-              )
-              .map((item) => (
-                <div
-                  key={item.createdAt}
-                  className="flex flex-col gap-2 border-b pb-2"
-                >
-                  <div className="flex justify-between items-center gap-2">
-                    <span>{item.translations[lang] || ""}</span>
-                    <div className="flex items-center gap-2">
-                      {onRestoreVersion && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 text-xs px-2"
-                              disabled={restoringId === item.id}
-                            >
-                              {restoringId === item.id ? t("restoring") : t("restoreVersion")}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t("confirmRestore")}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t("restoreWarning")}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleRestore(item.id)}
-                              >
-                                {t("confirmRestoreButton")}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                      <SheetClose asChild>
-                        <RotateCcw
-                          className="w-4 h-4 cursor-pointer"
-                          onClick={() => {
-                            onRollback(item.translations[lang]);
-                          }}
-                        />
-                      </SheetClose>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px] text-gray-500">
-                    <Avatar className="h-4 w-4">
-                      <AvatarImage src={item.user?.avatar || ""} />
-                    </Avatar>
-
-                    <span>{item.user?.name ?? "unknown"}</span>
-                    <span>{formatDate(item.createdAt)}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
   );
 }

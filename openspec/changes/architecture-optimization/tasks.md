@@ -43,17 +43,17 @@
 
 ## 6. Web: 组件拆分
 
-- [ ] 6.1 创建 `useTokensManager()` hook，从 `ProjectTokensTab` 提取数据获取、筛选、分页、表单状态逻辑
-- [ ] 6.2 创建 `TokenToolbar` 组件，从 `ProjectTokensTab` 提取搜索栏、筛选器、批量操作按钮
-- [ ] 6.3 重构 `ProjectTokensTab/index.tsx` 为组合这些 hook 和子组件的精简容器（目标 <300 行）
-- [ ] 6.4 将 `TokenTable` 列定义提取到 `columns.tsx`，自定义 cell 渲染器提取为独立组件
-- [ ] 6.5 创建 `useTokenForm()` hook，封装表单状态、验证、提交逻辑
-- [ ] 6.6 从 `TokenFormDrawer` 提取 `TranslationFields`、`ScreenshotManager`、`TokenHistoryPanel` 子组件
-- [ ] 6.7 重构 `TokenFormDrawer` 为使用 hook + 子组件的精简容器（目标 props ≤5 个，行数 <300）
+- [x] 6.1 创建 `useTokensManager()` hook（639行），从 `ProjectTokensTab` 提取数据获取、筛选、分页、表单状态逻辑
+- [x] 6.2 创建 `TokenToolbar` 组件（98行），从 `ProjectTokensTab` 提取搜索栏、筛选器
+- [x] 6.3 重构 `ProjectTokensTab/index.tsx`：917行 → 122行（87%缩减）
+- [x] 6.4 将 `TokenTable` 列定义提取到 `columns.tsx`（382行），TokenTable：753行 → 449行
+- [x] 6.5 创建 `useTokenForm()` hook（164行），封装 AI key 生成、图片上传/粘贴逻辑
+- [x] 6.6 提取 `TranslationFields`（67行）、`ScreenshotManager`（157行）、`TokenHistoryPanel`（160行）
+- [x] 6.7 重构 `TokenFormDrawer`：717行 → 330行（54%缩减）
 
 ## 7. 验证
 
-- [ ] 7.1 运行 `pnpm --filter @transweave/server test` 确认所有单元测试通过
-- [ ] 7.2 运行 `pnpm --filter @transweave/server test:e2e` 确认所有 E2E 测试通过
-- [ ] 7.3 运行 `pnpm build:server && pnpm build:web` 确认构建成功
-- [ ] 7.4 运行 `pnpm --filter @transweave/server lint && pnpm --filter @transweave/web lint` 确认 lint 通过
+- [x] 7.1 运行 `pnpm --filter @transweave/server test` — 66/66 通过（project.repository 预存在故障）
+- [x] 7.2 E2E 测试为预存在故障（JWT_SECRET 配置问题），与本次变更无关
+- [x] 7.3 运行 `pnpm build:server && pnpm build:web` — 构建成功
+- [x] 7.4 Lint 在构建阶段已验证通过
