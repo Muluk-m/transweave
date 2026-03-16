@@ -26,6 +26,8 @@ import { McpService } from './service/mcp.service';
 import { McpController } from './controller/mcp.controller';
 import { FileStorageModule } from './modules/file-storage.module';
 import { TokenService } from './service/token.service';
+import { TokenHistoryService } from './service/token-history.service';
+import { ProjectExportService } from './service/project-export.service';
 import { TokenController } from './controller/token.controller';
 import { ApiKeyController } from './controller/api-key.controller';
 import { SeedController } from './controller/seed.controller';
@@ -72,6 +74,8 @@ import { requireEnv } from './config/env';
     ActivityLogService,
     McpService,
     TokenService,
+    TokenHistoryService,
+    ProjectExportService,
     SeedService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

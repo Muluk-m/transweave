@@ -12,6 +12,7 @@ import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { ActivityLogService } from './activity-log.service';
+import { TokenHistoryService } from './token-history.service';
 import { ActivityType } from '../db/schema';
 
 // --- Search & Progress Types ---
@@ -41,6 +42,7 @@ export class TokenService {
     private readonly tokenRepository: TokenRepository,
     private readonly tokenHistoryRepository: TokenHistoryRepository,
     private readonly activityLogService: ActivityLogService,
+    private readonly tokenHistoryService: TokenHistoryService,
     private readonly projectRepository: ProjectRepository,
     @Inject(DRIZZLE) private readonly db: DrizzleDB,
   ) {}
@@ -246,7 +248,7 @@ export class TokenService {
 
       if (translationsChanged) {
         // Create history record if versioning is enabled
-        await this.maybeRecordHistory(
+        await this.tokenHistoryService.maybeRecordHistory(
           token.projectId,
           tokenId,
           data.userId,
@@ -365,74 +367,10 @@ export class TokenService {
 
   /**
    * Restore a token's translations to a specific historical version.
+   * Delegates to TokenHistoryService.
    */
   async restore(tokenId: string, historyId: string, userId: string) {
-    const [token, historyRecord] = await Promise.all([
-      this.tokenRepository.findById(tokenId),
-      this.tokenHistoryRepository.findById(historyId),
-    ]);
-
-    if (!token) {
-      throw new NotFoundException(`Token ${tokenId} not found`);
-    }
-    if (!historyRecord || historyRecord.tokenId !== tokenId) {
-      throw new NotFoundException(
-        `History record ${historyId} not found for token ${tokenId}`,
-      );
-    }
-
-    const restoredTranslations =
-      (historyRecord.translations as Record<string, string>) || {};
-
-    await Promise.all([
-      this.maybeRecordHistory(
-        token.projectId,
-        tokenId,
-        userId,
-        restoredTranslations,
-      ),
-      this.tokenRepository.update(tokenId, {
-        translations: restoredTranslations,
-      } as any),
-      this.activityLogService.create({
-        type: ActivityType.TOKEN_UPDATE,
-        projectId: token.projectId,
-        userId,
-        details: {
-          entityId: tokenId,
-          entityType: 'token',
-          entityName: token.key,
-          changes: [
-            {
-              field: 'translations',
-              oldValue: token.translations,
-              newValue: restoredTranslations,
-            },
-          ],
-          metadata: { operation: 'restore', historyId },
-        },
-      }),
-    ]);
-
-    return this.findById(tokenId);
-  }
-
-  // ============= Private Helpers =============
-
-  private async maybeRecordHistory(
-    projectId: string,
-    tokenId: string,
-    userId: string,
-    translations: Record<string, any>,
-  ): Promise<void> {
-    const project = await this.projectRepository.findById(projectId);
-    if (project?.enableVersioning) {
-      await this.tokenHistoryRepository.create({
-        tokenId,
-        userId,
-        translations,
-      });
-    }
+    return this.tokenHistoryService.restore(tokenId, historyId, userId);
   }
 
   // ============= Search & Filter (Plan 05-02) =============

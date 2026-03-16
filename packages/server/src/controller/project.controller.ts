@@ -18,6 +18,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
+import { ProjectExportService } from '../service/project-export.service';
 import { AuthGuard } from '../jwt/guard';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { Response } from 'express';
@@ -29,6 +30,7 @@ import { CreateProjectDto, UpdateProjectDto, ExportProjectDto, ImportProjectDto,
 export class ProjectController {
   constructor(
     private projectService: ProjectService,
+    private projectExportService: ProjectExportService,
     private teamService: TeamService,
   ) {}
 
@@ -166,7 +168,7 @@ export class ProjectController {
 
     try {
       // Call service to export data as ZIP package
-      const zipBuffer = await this.projectService.exportProjectTokens(projectId, data);
+      const zipBuffer = await this.projectExportService.exportProjectTokens(projectId, data);
 
       // Set response headers
       res.setHeader('Content-Disposition', `attachment; filename="translations-${projectId}.zip"`);
@@ -214,7 +216,7 @@ export class ProjectController {
       };
 
       // Call service to export data as ZIP package
-      const zipBuffer = await this.projectService.exportProjectTokens(projectId, exportConfig);
+      const zipBuffer = await this.projectExportService.exportProjectTokens(projectId, exportConfig);
 
       // Set response headers
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -244,7 +246,7 @@ export class ProjectController {
     }
 
     try {
-      const changes = await this.projectService.previewImportTokens(projectId, data);
+      const changes = await this.projectExportService.previewImportTokens(projectId, data);
       return {
         success: true,
         changes,
@@ -270,7 +272,7 @@ export class ProjectController {
     }
 
     try {
-      const result = await this.projectService.importProjectTokens(projectId, {
+      const result = await this.projectExportService.importProjectTokens(projectId, {
         ...data,
         userId: user.userId,
       });
@@ -299,7 +301,7 @@ export class ProjectController {
     }
 
     try {
-      const result = await this.projectService.migrateLanguageCodes(projectId, {
+      const result = await this.projectExportService.migrateLanguageCodes(projectId, {
         ...data,
         userId: user.userId,
       });

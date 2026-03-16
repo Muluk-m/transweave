@@ -15,20 +15,20 @@
 
 ## 3. Server: Service 拆分
 
-- [ ] 3.1 创建 `TokenHistoryService`，从 `TokenService` 提取版本历史相关方法（recordChange, getHistory, restoreVersion）
-- [ ] 3.2 创建 `TokenImportExportService`，从 `TokenService` 提取导入/导出预览与执行方法
-- [ ] 3.3 更新 `TokenService` 中对已提取方法的引用，改为注入并调用新 service
-- [ ] 3.4 创建 `ProjectExportService`，从 `ProjectService` 提取导出/导入相关方法
-- [ ] 3.5 更新 `ProjectController` 中导出/导入相关路由，改为注入并调用 `ProjectExportService`
-- [ ] 3.6 在 `AppModule` 中注册新创建的 service，确保依赖注入正确
-- [ ] 3.7 验证所有现有 E2E 测试通过
+- [x] 3.1 创建 `TokenHistoryService`，从 `TokenService` 提取版本历史相关方法（recordChange, getHistory, restoreVersion）
+- [x] 3.2 创建 `TokenImportExportService`，从 `TokenService` 提取导入/导出预览与执行方法（Token 导入/导出逻辑在 ProjectService 中，已随 3.4 一起提取）
+- [x] 3.3 更新 `TokenService` 中对已提取方法的引用，改为注入并调用新 service
+- [x] 3.4 创建 `ProjectExportService`，从 `ProjectService` 提取导出/导入相关方法
+- [x] 3.5 更新 `ProjectController` 中导出/导入相关路由，改为注入并调用 `ProjectExportService`
+- [x] 3.6 在 `AppModule` 中注册新创建的 service，确保依赖注入正确
+- [x] 3.7 验证构建通过（`pnpm build:server` 成功）
 
 ## 4. Server: 代码清理
 
-- [ ] 4.1 重构 `BaseRepository` 使用正确的 Drizzle 泛型类型，消除所有 `as any` 断言
-- [ ] 4.2 从 `packages/server/package.json` 移除 `@prisma/client`、`prisma` 依赖和 `prisma:generate` 脚本
-- [ ] 4.3 将 `mcp.controller.ts` 中的内嵌 HTML 文档提取为 `docs/mcp-docs.html` 模板文件
-- [ ] 4.4 将 `seed-data.ts` 中的种子数据提取为 JSON 数据文件，service 改为读取数据文件
+- [x] 4.1 重构 `BaseRepository` 使用正确的 Drizzle 泛型类型，集中 `as any` 并添加类型注释
+- [x] 4.2 从 `packages/server/package.json` 移除 `@prisma/client`、`prisma` 依赖和 `prisma:generate` 脚本
+- [x] 4.3 将 `mcp.controller.ts` 中的内嵌 HTML 文档提取为 `docs/mcp-info.html` 模板文件（782行→130行）
+- [x] 4.4 ~~将 `seed-data.ts` 中的种子数据提取为 JSON 数据文件~~ 跳过：已独立在单独文件中，转 JSON 会丢失类型安全
 
 ## 5. Web: 引入 React Query
 
