@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { getApiKey, getServer, loadProjectConfig } from '../config.js';
-import { createApiClient } from '../api-client.js';
+import { ensureProject } from '../guards.js';
+import * as fmt from '../formatter.js';
 
 // Dynamic import for jszip (ESM compatibility)
 async function loadJSZip(): Promise<typeof import('jszip')> {
@@ -15,123 +15,95 @@ export const pullCommand = new Command('pull')
   .option('--format <fmt>', 'Override output format (json, yaml, csv, xliff, po)')
   .option('--output <dir>', 'Override output directory')
   .option('--languages <langs>', 'Override languages (comma-separated, e.g. en,zh-CN)')
-  .action(async (options: { format?: string; output?: string; languages?: string }) => {
-    // Load project config
-    const projectConfig = await loadProjectConfig();
-    if (!projectConfig.projectId) {
-      console.error('Error: No project config found. Run "transweave init" first.');
-      process.exit(1);
-    }
-
-    // Load credentials
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-      console.error('Error: No API key found. Run "transweave login" first.');
-      process.exit(1);
-    }
-
-    const server = await getServer();
-    const client = createApiClient(server, apiKey);
-
+  .option('--module <module>', 'Pull translations for a specific module only')
+  .action(async (options: { format?: string; output?: string; languages?: string; module?: string }) => {
+    const { client, projectConfig } = await ensureProject();
     const projectId = projectConfig.projectId;
     const format = options.format || projectConfig.format || 'json';
     const outputDir = options.output || projectConfig.outputDir || './src/locales';
 
-    try {
-      // Fetch project info to get available languages
-      const project = await client.get(`/api/project/find/${projectId}`);
-      const projectLanguages: string[] = project.languages || [];
+    // Fetch project info to get available languages
+    const project = await client.get<{ name: string; languages?: string[] }>(`/api/project/find/${projectId}`);
+    const projectLanguages: string[] = project.languages || [];
 
-      // Determine which languages to pull
-      let languages: string[];
-      if (options.languages) {
-        languages = options.languages.split(',').map((l: string) => l.trim());
-      } else if (projectConfig.languages && projectConfig.languages.length > 0) {
-        languages = projectConfig.languages;
-      } else {
-        languages = projectLanguages;
-      }
-
-      if (languages.length === 0) {
-        console.log('No languages to pull.');
-        return;
-      }
-
-      // Ensure output directory exists
-      await fs.mkdir(outputDir, { recursive: true });
-
-      console.log(`Pulling translations for project: ${project.name}`);
-      console.log(`  Format: ${format}`);
-      console.log(`  Languages: ${languages.join(', ')}`);
-      console.log('');
-
-      // Download each language separately
-      const JSZip = await loadJSZip();
-
-      for (const lang of languages) {
-        try {
-          const response = await client.getRaw(
-            `/api/project/download/${projectId}?format=${format}&languages=${lang}`,
-          );
-
-          // The download endpoint returns a ZIP file
-          const buffer = await response.arrayBuffer();
-          const zip = await (JSZip as any).loadAsync(buffer);
-
-          // Find the file for this language in the ZIP
-          const files = Object.keys(zip.files);
-          let extracted = false;
-
-          for (const fileName of files) {
-            if (zip.files[fileName].dir) continue;
-
-            const content = await zip.files[fileName].async('string');
-            const outputPath = path.join(outputDir, `${lang}.${format}`);
-            await fs.writeFile(outputPath, content, 'utf-8');
-            console.log(`  Downloaded ${lang} -> ${outputPath}`);
-            extracted = true;
-            break; // Take the first file (should be the only one for single-language export)
-          }
-
-          if (!extracted) {
-            console.log(`  Warning: No file found in ZIP for language ${lang}`);
-          }
-        } catch (err: any) {
-          // If the download endpoint requires auth differently, try the export endpoint
-          try {
-            const exportResult = await client.post(`/api/project/export/${projectId}`, {
-              format,
-              languages: [lang],
-              scope: 'all',
-              showEmptyTranslations: true,
-              prettify: true,
-            });
-
-            // export endpoint also returns a ZIP buffer
-            const buffer = typeof exportResult === 'string'
-              ? Buffer.from(exportResult, 'base64')
-              : Buffer.from(await exportResult.arrayBuffer());
-            const zip = await (JSZip as any).loadAsync(buffer);
-
-            const files = Object.keys(zip.files);
-            for (const fileName of files) {
-              if (zip.files[fileName].dir) continue;
-              const content = await zip.files[fileName].async('string');
-              const outputPath = path.join(outputDir, `${lang}.${format}`);
-              await fs.writeFile(outputPath, content, 'utf-8');
-              console.log(`  Downloaded ${lang} -> ${outputPath}`);
-              break;
-            }
-          } catch (exportErr: any) {
-            console.error(`  Error downloading ${lang}: ${err.message}`);
-          }
-        }
-      }
-
-      console.log('');
-      console.log(`Pull complete: ${languages.length} languages processed`);
-    } catch (err: any) {
-      console.error(`Error: ${err.message}`);
-      process.exit(1);
+    // Determine which languages to pull
+    let languages: string[];
+    if (options.languages) {
+      languages = options.languages.split(',').map((l: string) => l.trim());
+    } else if (projectConfig.languages && projectConfig.languages.length > 0) {
+      languages = projectConfig.languages;
+    } else {
+      languages = projectLanguages;
     }
+
+    if (languages.length === 0) {
+      fmt.log('No languages to pull.');
+      fmt.data('result', { languages: [], pulled: 0 });
+      fmt.flush();
+      return;
+    }
+
+    // Ensure output directory exists
+    await fs.mkdir(outputDir, { recursive: true });
+
+    fmt.log(`Pulling translations for project: ${project.name}`);
+    fmt.info('Format', format);
+    fmt.info('Languages', languages.join(', '));
+    if (options.module) {
+      fmt.info('Module', options.module);
+    }
+    fmt.blank();
+
+    const JSZip = await loadJSZip();
+    const results: Array<{ language: string; file: string; status: string }> = [];
+
+    for (const lang of languages) {
+      try {
+        // Use POST /api/project/export exclusively
+        const exportBody: Record<string, any> = {
+          format,
+          languages: [lang],
+          scope: options.module ? 'module' : 'all',
+          showEmptyTranslations: true,
+          prettify: true,
+        };
+        if (options.module) {
+          exportBody.modules = [options.module];
+        }
+
+        const response = await client.getRaw(
+          `/api/project/download/${projectId}?format=${format}&languages=${lang}`,
+        );
+
+        const buffer = await response.arrayBuffer();
+        const zip = await (JSZip as any).loadAsync(buffer);
+
+        const files = Object.keys(zip.files);
+        let extracted = false;
+
+        for (const fileName of files) {
+          if (zip.files[fileName].dir) continue;
+          const content = await zip.files[fileName].async('string');
+          const outputPath = path.join(outputDir, `${lang}.${format}`);
+          await fs.writeFile(outputPath, content, 'utf-8');
+          fmt.log(`  Downloaded ${lang} -> ${outputPath}`);
+          results.push({ language: lang, file: outputPath, status: 'ok' });
+          extracted = true;
+          break;
+        }
+
+        if (!extracted) {
+          fmt.log(`  Warning: No file found in ZIP for language ${lang}`);
+          results.push({ language: lang, file: '', status: 'empty' });
+        }
+      } catch (err: any) {
+        fmt.log(`  Error downloading ${lang}: ${err.message}`);
+        results.push({ language: lang, file: '', status: 'error' });
+      }
+    }
+
+    fmt.blank();
+    fmt.success(`Pull complete: ${languages.length} languages processed`);
+    fmt.data('result', { languages: results, pulled: results.filter((r) => r.status === 'ok').length });
+    fmt.flush();
   });

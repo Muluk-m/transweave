@@ -1,54 +1,97 @@
 import { Command } from 'commander';
-import { getApiKey, getServer, saveProjectConfig } from '../config.js';
-import { createApiClient } from '../api-client.js';
+import { saveProjectConfig } from '../config.js';
+import { ensureAuth } from '../guards.js';
+import * as fmt from '../formatter.js';
 
 export const initCommand = new Command('init')
   .description('Initialize project config (.transweave.json) in the current directory')
-  .requiredOption('--project-id <id>', 'Project ID')
+  .option('--project-id <id>', 'Project ID')
   .option('--output-dir <dir>', 'Output directory for translations', './src/locales')
   .option('--format <fmt>', 'Translation file format', 'json')
-  .action(async (options: { projectId: string; outputDir: string; format: string }) => {
-    const { projectId, outputDir, format } = options;
+  .action(async (options: { projectId?: string; outputDir: string; format: string }) => {
+    const { client } = await ensureAuth();
+    let { projectId, outputDir, format } = options;
 
-    // Load credentials
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-      console.error('Error: No API key found. Run "transweave login" first.');
-      process.exit(1);
-    }
+    // Interactive mode when project-id is omitted and TTY is available
+    if (!projectId && process.stdin.isTTY) {
+      const prompts = await import('@clack/prompts');
+      prompts.intro('Initialize Project');
 
-    const server = await getServer();
+      const spinner = prompts.spinner();
+      spinner.start('Fetching your projects...');
 
-    // Validate project exists
-    console.log(`Fetching project info from ${server}...`);
-    try {
-      const client = createApiClient(server, apiKey);
-      const project = await client.get(`/api/project/find/${projectId}`);
+      const projects = await client.get<Array<{ id: string; name: string; languages?: string[] }>>('/api/project/all');
+      spinner.stop('Projects loaded');
 
-      if (!project || !project.name) {
-        console.error('Error: Project not found or invalid response');
+      if (!projects || projects.length === 0) {
+        fmt.error('No projects found. Create a project in the Transweave Web UI first.');
         process.exit(1);
       }
 
-      // Extract languages from project
-      const languages: string[] = project.languages || [];
-
-      // Save project config
-      await saveProjectConfig({
-        projectId,
-        outputDir,
-        format,
-        languages,
+      const selected = await prompts.select({
+        message: 'Select a project',
+        options: projects.map((p) => ({
+          value: p.id,
+          label: `${p.name} (${(p.languages || []).join(', ') || 'no languages'})`,
+        })),
       });
+      if (prompts.isCancel(selected)) {
+        prompts.cancel('Init cancelled.');
+        process.exit(0);
+      }
+      projectId = selected as string;
 
-      console.log(`Initialized Transweave config for project: ${project.name}`);
-      console.log(`  Project ID: ${projectId}`);
-      console.log(`  Languages: ${languages.join(', ') || '(none)'}`);
-      console.log(`  Output dir: ${outputDir}`);
-      console.log(`  Format: ${format}`);
-      console.log(`  Config saved to .transweave.json`);
-    } catch (err: any) {
-      console.error(`Error: ${err.message}`);
+      const dirResult = await prompts.text({
+        message: 'Output directory',
+        defaultValue: outputDir,
+        placeholder: outputDir,
+      });
+      if (prompts.isCancel(dirResult)) {
+        prompts.cancel('Init cancelled.');
+        process.exit(0);
+      }
+      outputDir = dirResult;
+
+      const fmtResult = await prompts.select({
+        message: 'Translation format',
+        options: [
+          { value: 'json', label: 'JSON' },
+          { value: 'yaml', label: 'YAML' },
+          { value: 'xliff', label: 'XLIFF' },
+          { value: 'po', label: 'Gettext (.po)' },
+        ],
+      });
+      if (prompts.isCancel(fmtResult)) {
+        prompts.cancel('Init cancelled.');
+        process.exit(0);
+      }
+      format = fmtResult as string;
+    }
+
+    if (!projectId) {
+      fmt.error('Missing --project-id flag. Use interactive mode in a terminal or provide the flag.');
       process.exit(1);
     }
+
+    fmt.log(`Fetching project info...`);
+    const project = await client.get<{ name: string; languages?: string[] }>(`/api/project/find/${projectId}`);
+
+    if (!project || !project.name) {
+      fmt.error('Project not found or invalid response');
+      process.exit(1);
+    }
+
+    const languages: string[] = project.languages || [];
+
+    await saveProjectConfig({ projectId, outputDir, format, languages });
+
+    fmt.success(`Initialized Transweave config for project: ${project.name}`);
+    fmt.info('Project ID', projectId);
+    fmt.info('Languages', languages.join(', ') || '(none)');
+    fmt.info('Output dir', outputDir);
+    fmt.info('Format', format);
+    fmt.log('Config saved to .transweave.json');
+    fmt.data('project', { id: projectId, name: project.name, languages });
+    fmt.data('config', { outputDir, format });
+    fmt.flush();
   });

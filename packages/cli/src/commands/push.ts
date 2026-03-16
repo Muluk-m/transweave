@@ -1,8 +1,9 @@
 import { Command } from 'commander';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { getApiKey, getServer, loadProjectConfig } from '../config.js';
-import { createApiClient } from '../api-client.js';
+import { ensureProject } from '../guards.js';
+import { ExitCode } from '../errors.js';
+import * as fmt from '../formatter.js';
 
 export const pushCommand = new Command('push')
   .description('Upload local translation files to server')
@@ -10,87 +11,98 @@ export const pushCommand = new Command('push')
   .option('--input <dir>', 'Override input directory')
   .option('--languages <langs>', 'Override languages (comma-separated, e.g. en,zh-CN)')
   .option('--mode <mode>', 'Import mode: append or replace', 'append')
-  .action(async (options: { format?: string; input?: string; languages?: string; mode: string }) => {
-    // Load project config
-    const projectConfig = await loadProjectConfig();
-    if (!projectConfig.projectId) {
-      console.error('Error: No project config found. Run "transweave init" first.');
-      process.exit(1);
-    }
-
-    // Load credentials
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-      console.error('Error: No API key found. Run "transweave login" first.');
-      process.exit(1);
-    }
-
-    const server = await getServer();
-    const client = createApiClient(server, apiKey);
-
+  .option('--dry-run', 'Preview changes without actually importing')
+  .action(async (options: { format?: string; input?: string; languages?: string; mode: string; dryRun?: boolean }) => {
+    const { client, projectConfig } = await ensureProject();
     const projectId = projectConfig.projectId;
     const format = options.format || projectConfig.format || 'json';
     const inputDir = options.input || projectConfig.outputDir || './src/locales';
     const mode = options.mode as 'append' | 'replace';
+    const dryRun = options.dryRun || false;
 
-    try {
-      // Determine which languages to push
-      let languages: string[];
-      if (options.languages) {
-        languages = options.languages.split(',').map((l: string) => l.trim());
-      } else {
-        // Scan input directory for matching files
-        const files = await fs.readdir(inputDir);
-        const ext = `.${format}`;
-        languages = files
-          .filter((f) => f.endsWith(ext))
-          .map((f) => f.slice(0, -ext.length));
-      }
+    // Determine which languages to push
+    let languages: string[];
+    if (options.languages) {
+      languages = options.languages.split(',').map((l: string) => l.trim());
+    } else {
+      const files = await fs.readdir(inputDir);
+      const ext = `.${format}`;
+      languages = files
+        .filter((f) => f.endsWith(ext))
+        .map((f) => f.slice(0, -ext.length));
+    }
 
-      if (languages.length === 0) {
-        console.log(`No translation files found in ${inputDir} with format .${format}`);
-        return;
-      }
+    if (languages.length === 0) {
+      fmt.log(`No translation files found in ${inputDir} with format .${format}`);
+      fmt.data('result', { languages: [], processed: 0 });
+      fmt.flush();
+      return;
+    }
 
-      console.log(`Pushing translations for project: ${projectId}`);
-      console.log(`  Format: ${format}`);
-      console.log(`  Mode: ${mode}`);
-      console.log(`  Languages: ${languages.join(', ')}`);
-      console.log('');
+    const action = dryRun ? 'Previewing' : 'Pushing';
+    fmt.log(`${action} translations for project: ${projectId}`);
+    fmt.info('Format', format);
+    fmt.info('Mode', mode);
+    fmt.info('Languages', languages.join(', '));
+    if (dryRun) fmt.log('  (dry run — no changes will be applied)');
+    fmt.blank();
 
-      let processedCount = 0;
+    let processedCount = 0;
+    let errorCount = 0;
+    const results: Array<{ language: string; stats?: any; status: string; error?: string }> = [];
 
-      for (const lang of languages) {
-        const filePath = path.join(inputDir, `${lang}.${format}`);
+    for (const lang of languages) {
+      const filePath = path.join(inputDir, `${lang}.${format}`);
 
-        try {
-          const content = await fs.readFile(filePath, 'utf-8');
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const endpoint = dryRun
+          ? `/api/project/import/preview/${projectId}`
+          : `/api/project/import/${projectId}`;
 
-          const result = await client.post(`/api/project/import/${projectId}`, {
-            language: lang,
-            content,
-            format,
-            mode,
-          });
+        const body: Record<string, any> = {
+          language: lang,
+          content,
+          format,
+          mode,
+        };
 
+        const result = await client.post<{ stats?: any; changes?: any; success?: boolean }>(endpoint, body);
+
+        if (dryRun) {
+          const changes = result.changes || {};
+          fmt.log(`  ${lang}: ${JSON.stringify(changes)}`);
+          results.push({ language: lang, stats: changes, status: 'preview' });
+        } else {
           const stats = result.stats || {};
-          console.log(
+          fmt.log(
             `  Pushed ${lang}: ${stats.added || 0} added, ${stats.updated || 0} updated, ${stats.unchanged || 0} unchanged`,
           );
-          processedCount++;
-        } catch (err: any) {
-          if (err.code === 'ENOENT' || err.message?.includes('ENOENT')) {
-            console.error(`  Skipped ${lang}: file not found at ${filePath}`);
-          } else {
-            console.error(`  Error pushing ${lang}: ${err.message}`);
-          }
+          results.push({ language: lang, stats, status: 'ok' });
+        }
+        processedCount++;
+      } catch (err: any) {
+        if (err.code === 'ENOENT' || err.message?.includes('ENOENT')) {
+          fmt.log(`  Skipped ${lang}: file not found at ${filePath}`);
+          results.push({ language: lang, status: 'skipped', error: 'file not found' });
+        } else {
+          fmt.log(`  Error pushing ${lang}: ${err.message}`);
+          results.push({ language: lang, status: 'error', error: err.message });
+          errorCount++;
         }
       }
+    }
 
-      console.log('');
-      console.log(`Push complete: ${processedCount} languages processed`);
-    } catch (err: any) {
-      console.error(`Error: ${err.message}`);
-      process.exit(1);
+    fmt.blank();
+    const label = dryRun ? 'Dry run' : 'Push';
+    fmt.success(`${label} complete: ${processedCount} languages processed`);
+    fmt.data('result', { languages: results, processed: processedCount, errors: errorCount, dryRun });
+    fmt.flush();
+
+    // Exit code 2 for partial failure
+    if (errorCount > 0 && processedCount > 0) {
+      process.exit(ExitCode.PARTIAL_FAILURE);
+    } else if (errorCount > 0 && processedCount === 0) {
+      process.exit(ExitCode.ERROR);
     }
   });
