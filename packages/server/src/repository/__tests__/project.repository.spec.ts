@@ -36,7 +36,7 @@ describe('ProjectRepository', () => {
       defaultLang: 'en',
       languages: ['en', 'zh', 'ja'],
       languageLabels: { zh: '中文', ja: '日本語' },
-      modules: [{ name: '用户中心', code: 'userCenter' }],
+      modules: [{ description: '用户中心', code: 'userCenter' }],
     });
 
     expect(project).toBeDefined();
@@ -75,8 +75,8 @@ describe('ProjectRepository', () => {
 
   it('should round-trip modules JSONB array of objects', async () => {
     const modules = [
-      { name: '用户中心', code: 'userCenter' },
-      { name: '设置', code: 'settings' },
+      { description: '用户中心', code: 'userCenter' },
+      { description: '设置', code: 'settings' },
     ];
     const project = await projectRepo.create({
       name: 'Modules Test',
