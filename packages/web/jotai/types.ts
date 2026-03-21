@@ -62,11 +62,15 @@ export interface TokenHistory {
   createdAt: string;
 }
 
+export type TranslationStatus = 'draft' | 'translated' | 'reviewed' | 'approved' | 'rejected';
+
 export interface Token {
   id: string;
   key: string;
   module?: string;
   translations: Translation;
+  translationStatus?: Record<string, TranslationStatus>;
+  translationMeta?: Record<string, { confidence?: number; source?: string }>;
   tags: string[];
   comment?: string;
   screenshots?: string[];

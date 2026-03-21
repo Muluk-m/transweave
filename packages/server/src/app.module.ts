@@ -34,6 +34,8 @@ import { SeedController } from './controller/seed.controller';
 import { SeedService } from './service/seed.service';
 import { AgentService } from './service/agent.service';
 import { AgentController } from './controller/agent.controller';
+import { WebhookService } from './service/webhook.service';
+import { WebhookController } from './controller/webhook.controller';
 import { QaCheckService } from './service/qa-check.service';
 import { GlossaryService } from './service/glossary.service';
 import { GlossaryRepository } from './repository/glossary.repository';
@@ -71,6 +73,7 @@ import { requireEnv } from './config/env';
     ApiKeyController,
     SeedController,
     AgentController,
+    WebhookController,
     GlossaryController,
     TranslationMemoryController,
   ],
@@ -90,6 +93,7 @@ import { requireEnv } from './config/env';
     ProjectExportService,
     SeedService,
     AgentService,
+    WebhookService,
     QaCheckService,
     GlossaryService,
     GlossaryRepository,

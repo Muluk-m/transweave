@@ -829,4 +829,37 @@ export class TokenService {
 
     return updatedTokens;
   }
+
+  async updateTranslationStatus(
+    tokenId: string,
+    status: Record<string, string>,
+    userId: string,
+  ) {
+    const token = await this.tokenRepository.findById(tokenId);
+    if (!token) {
+      throw new NotFoundException(`Token ${tokenId} not found`);
+    }
+
+    const currentStatus = (token.translationStatus as Record<string, string>) || {};
+    const mergedStatus = { ...currentStatus, ...status };
+
+    return this.tokenRepository.update(tokenId, {
+      translationStatus: mergedStatus,
+    } as any);
+  }
+
+  async updateTranslationMeta(
+    tokenId: string,
+    meta: Record<string, { confidence?: number; source?: string }>,
+  ) {
+    const token = await this.tokenRepository.findById(tokenId);
+    if (!token) return;
+
+    const currentMeta = (token.translationMeta as Record<string, any>) || {};
+    const mergedMeta = { ...currentMeta, ...meta };
+
+    await this.tokenRepository.update(tokenId, {
+      translationMeta: mergedMeta,
+    } as any);
+  }
 }

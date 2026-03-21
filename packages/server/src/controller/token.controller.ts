@@ -159,6 +159,37 @@ export class TokenController {
   }
 
   /**
+   * PUT /api/tokens/status
+   * Update translation status for a token's languages.
+   */
+  @Put('status')
+  @UseGuards(AuthGuard)
+  async updateStatus(
+    @Body()
+    data: {
+      tokenId: string;
+      status: Record<string, string>;
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    const token = await this.tokenService.findById(data.tokenId);
+    await this.checkPermission(token.projectId, user.userId);
+
+    const validStatuses = ['draft', 'translated', 'reviewed', 'approved', 'rejected'];
+    for (const s of Object.values(data.status)) {
+      if (!validStatuses.includes(s)) {
+        throw new BadRequestException(`Invalid status: ${s}`);
+      }
+    }
+
+    return this.tokenService.updateTranslationStatus(
+      data.tokenId,
+      data.status as any,
+      user.userId,
+    );
+  }
+
+  /**
    * POST /api/tokens/bulk
    * Bulk operations: delete, set-tags, set-module.
    * Must be defined BEFORE parameterized routes.

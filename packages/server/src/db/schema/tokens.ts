@@ -1,6 +1,8 @@
 import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { projects } from './projects';
 
+export type TranslationStatus = 'draft' | 'translated' | 'reviewed' | 'approved' | 'rejected';
+
 export const tokens = pgTable(
   'tokens',
   {
@@ -8,6 +10,8 @@ export const tokens = pgTable(
     key: text('key').notNull(),
     module: text('module'),
     translations: jsonb('translations').$type<Record<string, string>>().notNull(),
+    translationStatus: jsonb('translation_status').$type<Record<string, TranslationStatus>>().default({}),
+    translationMeta: jsonb('translation_meta').$type<Record<string, { confidence?: number; source?: string }>>().default({}),
     tags: jsonb('tags').$type<string[]>().default([]),
     comment: text('comment'),
     screenshots: jsonb('screenshots').$type<string[]>().default([]),
