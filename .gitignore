@@ -54,3 +54,4 @@ packages/server/data/pglite/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.gstack/
