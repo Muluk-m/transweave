@@ -34,6 +34,10 @@ import {
 import { useTokenForm } from "./useTokenForm";
 import { ScreenshotManager } from "./ScreenshotManager";
 import { TranslationFields } from "./TranslationFields";
+import { QaIssuesDisplay } from "./QaIssuesDisplay";
+import { qaCheckToken } from "@/api/qa-check";
+import type { QaResult } from "@/api/qa-check";
+import { useState, useEffect, useRef } from "react";
 
 interface TokenFormDrawerProps {
   isOpen: boolean;
@@ -67,6 +71,7 @@ interface TokenFormDrawerProps {
   onRestoreVersion?: (historyId: string) => Promise<void>;
   aiConfigured?: boolean;
   projectId?: string;
+  defaultLang?: string;
 }
 
 export function TokenFormDrawer({
@@ -89,8 +94,52 @@ export function TokenFormDrawer({
   onRestoreVersion,
   aiConfigured = false,
   projectId,
+  defaultLang,
 }: TokenFormDrawerProps) {
   const t = useTranslations("tokenForm");
+  const [qaResult, setQaResult] = useState<QaResult | null>(null);
+  const qaTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Run QA check with debounce when editing translations
+  useEffect(() => {
+    if (!isEditing || !projectId || !currentToken || !defaultLang) {
+      setQaResult(null);
+      return;
+    }
+
+    const sourceText = formData.translations[defaultLang];
+    if (!sourceText?.trim()) {
+      setQaResult(null);
+      return;
+    }
+
+    // Only check if there are non-source translations
+    const hasTranslations = Object.entries(formData.translations).some(
+      ([lang, val]) => lang !== defaultLang && val?.trim()
+    );
+    if (!hasTranslations) {
+      setQaResult(null);
+      return;
+    }
+
+    clearTimeout(qaTimerRef.current);
+    qaTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await qaCheckToken({
+          tokenId: currentToken.id,
+          sourceText,
+          sourceLang: defaultLang,
+          translations: formData.translations,
+          projectId,
+        });
+        setQaResult(result);
+      } catch {
+        // silent fail
+      }
+    }, 800);
+
+    return () => clearTimeout(qaTimerRef.current);
+  }, [isEditing, projectId, currentToken, defaultLang, formData.translations]);
 
   const form = useTokenForm({
     formData,
@@ -291,6 +340,14 @@ export function TokenFormDrawer({
                 onTranslationChange={onTranslationChange}
                 onRestoreVersion={onRestoreVersion}
               />
+
+              {/* QA Check Results */}
+              {qaResult && (
+                <QaIssuesDisplay
+                  issues={qaResult.issues}
+                  passed={qaResult.passed}
+                />
+              )}
             </div>
           </ScrollArea>
 

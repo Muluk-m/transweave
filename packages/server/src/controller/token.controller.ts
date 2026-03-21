@@ -16,6 +16,8 @@ import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
 import { TokenService } from '../service/token.service';
 import { ProjectService } from '../service/project.service';
 import { MembershipService } from '../service/membership.service';
+import { QaCheckService } from '../service/qa-check.service';
+import { GlossaryService } from '../service/glossary.service';
 
 @Controller('api/tokens')
 export class TokenController {
@@ -23,6 +25,8 @@ export class TokenController {
     private readonly tokenService: TokenService,
     private readonly projectService: ProjectService,
     private readonly membershipService: MembershipService,
+    private readonly qaCheckService: QaCheckService,
+    private readonly glossaryService: GlossaryService,
   ) {}
 
   /**
@@ -57,6 +61,101 @@ export class TokenController {
     const token = await this.tokenService.findById(tokenId);
     await this.checkPermission(token.projectId, user.userId);
     return token;
+  }
+
+  /**
+   * POST /api/tokens/qa-check
+   * Run QA checks on a single token.
+   */
+  @Post('qa-check')
+  @UseGuards(AuthGuard)
+  async qaCheck(
+    @Body()
+    data: {
+      tokenId: string;
+      sourceText: string;
+      sourceLang: string;
+      translations: Record<string, string>;
+      projectId: string;
+    },
+    @CurrentUser() user: UserPayload,
+  ) {
+    await this.checkPermission(data.projectId, user.userId);
+    const project =
+      await this.projectService.findProjectById(data.projectId);
+    if (!project) throw new BadRequestException('Project not found');
+
+    let glossaryTerms;
+    try {
+      const allTerms = await this.glossaryService.resolveForProject(
+        data.projectId,
+        project.teamId,
+      );
+      glossaryTerms = this.glossaryService.filterMatchingTerms(
+        allTerms,
+        data.sourceText,
+      );
+    } catch {
+      // Continue without glossary
+    }
+
+    return this.qaCheckService.checkToken({
+      tokenId: data.tokenId,
+      sourceText: data.sourceText,
+      sourceLang: data.sourceLang,
+      translations: data.translations,
+      glossaryTerms,
+    });
+  }
+
+  /**
+   * POST /api/tokens/qa-check-all
+   * Run QA checks on all tokens in a project.
+   */
+  @Post('qa-check-all')
+  @UseGuards(AuthGuard)
+  async qaCheckAll(
+    @Body() data: { projectId: string },
+    @CurrentUser() user: UserPayload,
+  ) {
+    await this.checkPermission(data.projectId, user.userId);
+    const project =
+      await this.projectService.findProjectById(data.projectId);
+    if (!project) throw new BadRequestException('Project not found');
+
+    const tokens = await this.tokenService.findByProject(data.projectId);
+    const sourceLang = project.defaultLang || project.languages?.[0] || '';
+
+    let glossaryTerms;
+    try {
+      glossaryTerms = await this.glossaryService.resolveForProject(
+        data.projectId,
+        project.teamId,
+      );
+    } catch {
+      // Continue without glossary
+    }
+
+    const results = tokens.map((token) => {
+      const sourceText = token.translations?.[sourceLang] || '';
+      const matchingTerms = glossaryTerms
+        ? this.glossaryService.filterMatchingTerms(glossaryTerms, sourceText)
+        : undefined;
+
+      return this.qaCheckService.checkToken({
+        tokenId: token.id,
+        sourceText,
+        sourceLang,
+        translations: (token.translations as Record<string, string>) || {},
+        glossaryTerms: matchingTerms,
+      });
+    });
+
+    const total = results.length;
+    const passed = results.filter((r) => r.passed).length;
+    const failed = total - passed;
+
+    return { results, summary: { total, passed, failed } };
   }
 
   /**

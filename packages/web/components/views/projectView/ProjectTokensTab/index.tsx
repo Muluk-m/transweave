@@ -41,6 +41,7 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onRestoreVersion={mgr.handleRestoreVersion}
         aiConfigured={mgr.aiConfigured}
         projectId={project?.id}
+        defaultLang={project?.defaultLang}
       />
 
       <div className="flex justify-between items-center mb-3">
