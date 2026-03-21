@@ -12,6 +12,25 @@ export type ProviderType = (typeof SUPPORTED_PROVIDERS)[number];
 export const LLM_PROVIDERS = ['openai', 'claude', 'deepseek', 'gemini'] as const satisfies readonly ProviderType[];
 export type LLMProviderType = (typeof LLM_PROVIDERS)[number];
 
+export interface TranslationContext {
+  glossaryTerms?: Array<{
+    sourceTerm: string;
+    translations: Record<string, string>;
+    doNotTranslate?: boolean;
+  }>;
+  tmMatches?: Array<{
+    sourceText: string;
+    targetText: string;
+    targetLanguage: string;
+    similarity: number;
+  }>;
+}
+
+export interface TranslationResult {
+  translations: Record<string, string>;
+  confidence: Record<string, number>;
+}
+
 export interface TranslationProvider {
   readonly name: string;
 
@@ -19,7 +38,8 @@ export interface TranslationProvider {
     text: string;
     from: string;
     to: string[];
-  }): Promise<Record<string, string>>;
+    context?: TranslationContext;
+  }): Promise<TranslationResult>;
 
   validateApiKey(): Promise<boolean>;
 

@@ -1,4 +1,7 @@
-import type { TranslationProvider } from './translation-provider.interface';
+import type {
+  TranslationProvider,
+  TranslationResult,
+} from './translation-provider.interface';
 
 export class DeepLProvider implements TranslationProvider {
   readonly name = 'deepl';
@@ -15,8 +18,9 @@ export class DeepLProvider implements TranslationProvider {
     text: string;
     from: string;
     to: string[];
-  }): Promise<Record<string, string>> {
-    const results: Record<string, string> = {};
+  }): Promise<TranslationResult> {
+    const translations: Record<string, string> = {};
+    const confidence: Record<string, number> = {};
 
     // DeepL translates one target language at a time
     for (const targetLang of params.to) {
@@ -38,10 +42,11 @@ export class DeepLProvider implements TranslationProvider {
       }
 
       const data = await response.json();
-      results[targetLang] = data.translations[0].text;
+      translations[targetLang] = data.translations[0].text;
+      confidence[targetLang] = 80; // DeepL doesn't provide confidence
     }
 
-    return results;
+    return { translations, confidence };
   }
 
   private mapLanguageCode(code: string): string {

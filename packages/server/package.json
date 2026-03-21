@@ -17,7 +17,6 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest --config ./test/jest-e2e.json --runInBand",
     "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
@@ -42,6 +41,7 @@
     "jszip": "^3.10.1",
     "multer": "^1.4.5-lts.2",
     "openai": "^6.25.0",
+    "p-limit": "^7.3.0",
     "p-queue": "^9.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

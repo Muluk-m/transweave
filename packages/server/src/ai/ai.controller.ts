@@ -4,8 +4,10 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AiService } from './ai.service';
 import { AuthGuard } from '../jwt/guard';
 
@@ -34,6 +36,33 @@ export class AiController {
     }
 
     return result;
+  }
+
+  @Post('batch-translate')
+  async batchTranslate(
+    @Body()
+    data: {
+      tokens: Array<{ id: string; text: string; from: string; to: string[] }>;
+      projectId: string;
+    },
+    @Res() res: Response,
+  ) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+      for await (const event of this.aiService.batchTranslate(data)) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } catch (err) {
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', error: err instanceof Error ? err.message : String(err) })}\n\n`,
+      );
+    }
+
+    res.end();
   }
 
   @Post('generate/key')

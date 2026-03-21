@@ -2,9 +2,13 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AiConfigService } from './ai-config.service';
 import { ProjectRepository } from '../repository/project.repository';
 import { TeamRepository } from '../repository/team.repository';
+import { GlossaryService } from '../service/glossary.service';
+import { TranslationMemoryService } from '../service/translation-memory.service';
 import type {
   AiConfigStored,
   ProviderConfig,
+  TranslationContext,
+  TranslationResult,
 } from './providers/translation-provider.interface';
 import { decryptApiKey } from './encryption.util';
 import {
@@ -12,7 +16,7 @@ import {
   isLLMProvider,
 } from './providers/provider-factory';
 import { buildKeyGenerationPrompt } from './providers/prompt';
-import { extractJson } from './providers/json-extract';
+import type { ResolvedGlossaryTerm } from '../service/glossary.service';
 
 @Injectable()
 export class AiService {
@@ -22,6 +26,8 @@ export class AiService {
     private readonly aiConfigService: AiConfigService,
     private readonly projectRepository: ProjectRepository,
     private readonly teamRepository: TeamRepository,
+    private readonly glossaryService: GlossaryService,
+    private readonly translationMemoryService: TranslationMemoryService,
   ) {}
 
   async resolveProviderConfig(
@@ -61,7 +67,7 @@ export class AiService {
     from: string;
     to: string[];
     projectId: string;
-  }): Promise<Record<string, string>> {
+  }): Promise<TranslationResult> {
     const config = await this.resolveProviderConfig(params.projectId);
     if (!config) {
       throw new HttpException(
@@ -72,11 +78,56 @@ export class AiService {
 
     const provider = createTranslationProvider(config);
 
+    // Build translation context from glossary and TM
+    let context: TranslationContext | undefined;
+    try {
+      const project = await this.projectRepository.findById(params.projectId);
+      if (project) {
+        const [allTerms, tmSuggestions] = await Promise.all([
+          this.glossaryService.resolveForProject(params.projectId, project.teamId),
+          project.defaultLang
+            ? Promise.all(
+                params.to.map((lang) =>
+                  this.translationMemoryService.querySuggestions({
+                    projectId: params.projectId,
+                    sourceText: params.text,
+                    sourceLanguage: params.from,
+                    targetLanguage: lang,
+                    minSimilarity: 80,
+                    maxResults: 3,
+                  }),
+                ),
+              )
+            : Promise.resolve([]),
+        ]);
+
+        const matchingTerms = this.glossaryService.filterMatchingTerms(allTerms, params.text);
+        const flatTmMatches = tmSuggestions
+          .flat()
+          .map((m) => ({
+            sourceText: m.sourceText,
+            targetText: m.targetText,
+            targetLanguage: (m as any).targetLanguage || '',
+            similarity: m.similarity,
+          }));
+
+        if (matchingTerms.length > 0 || flatTmMatches.length > 0) {
+          context = {
+            glossaryTerms: matchingTerms.length > 0 ? matchingTerms : undefined,
+            tmMatches: flatTmMatches.length > 0 ? flatTmMatches : undefined,
+          };
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to load glossary/TM context: ${err}`);
+    }
+
     try {
       const result = await provider.translate({
         text: params.text,
         from: params.from,
         to: params.to,
+        context,
       });
       return result;
     } catch (error) {
@@ -89,11 +140,127 @@ export class AiService {
           text: params.text,
           from: params.from,
           to: params.to,
+          context,
         });
         return retryResult;
       }
       throw error;
     }
+  }
+
+  async *batchTranslate(params: {
+    tokens: Array<{ id: string; text: string; from: string; to: string[] }>;
+    projectId: string;
+  }): AsyncGenerator<{
+    type: 'progress' | 'result' | 'error' | 'done';
+    tokenId?: string;
+    translations?: Record<string, string>;
+    confidence?: Record<string, number>;
+    completed?: number;
+    total?: number;
+    failed?: number;
+    error?: string;
+  }> {
+    const config = await this.resolveProviderConfig(params.projectId);
+    if (!config) {
+      throw new HttpException(
+        'No AI provider configured. Configure one in team or project settings.',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const { default: pLimit } = await import('p-limit');
+    const limit = pLimit(5);
+
+    const total = params.tokens.length;
+    let completed = 0;
+    let failed = 0;
+
+    // Pre-resolve glossary once for the whole batch
+    let glossaryTerms: ResolvedGlossaryTerm[] | undefined;
+    try {
+      const project = await this.projectRepository.findById(params.projectId);
+      if (project) {
+        const allTerms = await this.glossaryService.resolveForProject(
+          params.projectId,
+          project.teamId,
+        );
+        if (allTerms.length > 0) {
+          glossaryTerms = allTerms;
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to load glossary context for batch: ${err}`);
+    }
+
+    // Use a shared results queue for yielding
+    const results: Array<{
+      type: 'progress' | 'result' | 'error';
+      tokenId?: string;
+      translations?: Record<string, string>;
+      confidence?: Record<string, number>;
+      completed?: number;
+      total?: number;
+      failed?: number;
+      error?: string;
+    }> = [];
+
+    const tasks = params.tokens.map((token) =>
+      limit(async () => {
+        try {
+          // Build per-token context (TM is text-specific)
+          let context: TranslationContext | undefined;
+          const matchingTerms = glossaryTerms
+            ? this.glossaryService.filterMatchingTerms(glossaryTerms, token.text)
+            : [];
+
+          if (matchingTerms.length > 0) {
+            context = { glossaryTerms: matchingTerms };
+          }
+
+          const provider = createTranslationProvider(config);
+          const result = await provider.translate({
+            text: token.text,
+            from: token.from,
+            to: token.to,
+            context,
+          });
+
+          completed++;
+          results.push({
+            type: 'result',
+            tokenId: token.id,
+            translations: result.translations,
+            confidence: result.confidence,
+            completed,
+            total,
+            failed,
+          });
+        } catch (err) {
+          completed++;
+          failed++;
+          this.logger.warn(`Batch translate failed for token ${token.id}: ${err}`);
+          results.push({
+            type: 'error',
+            tokenId: token.id,
+            error: err instanceof Error ? err.message : String(err),
+            completed,
+            total,
+            failed,
+          });
+        }
+      }),
+    );
+
+    // Run all tasks concurrently (limited to 5)
+    await Promise.all(tasks);
+
+    // Yield all results
+    for (const r of results) {
+      yield r;
+    }
+
+    yield { type: 'done', completed, total, failed };
   }
 
   async generateTokenKey(params: {

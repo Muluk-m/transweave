@@ -1,6 +1,9 @@
-import type { TranslationProvider } from './translation-provider.interface';
+import type {
+  TranslationProvider,
+  TranslationResult,
+} from './translation-provider.interface';
 import { buildTranslationPrompt } from './prompt';
-import { extractJson } from './json-extract';
+import { extractJson, parseTranslationResponse } from './json-extract';
 
 export abstract class BaseOpenAICompatibleProvider
   implements TranslationProvider
@@ -32,9 +35,13 @@ export abstract class BaseOpenAICompatibleProvider
     text: string;
     from: string;
     to: string[];
-  }): Promise<Record<string, string>> {
+    context?: import('./translation-provider.interface').TranslationContext;
+  }): Promise<TranslationResult> {
     const client = await this.getClient();
-    const prompt = buildTranslationPrompt(params.text, params.from, params.to);
+    const prompt = buildTranslationPrompt(params.text, params.from, params.to, {
+      glossaryTerms: params.context?.glossaryTerms,
+      tmMatches: params.context?.tmMatches,
+    });
 
     const response = await client.chat.completions.create({
       model: this.model,
@@ -51,7 +58,7 @@ export abstract class BaseOpenAICompatibleProvider
     const parsed = extractJson(content);
     if (!parsed)
       throw new Error(`Failed to parse JSON from ${this.name} response`);
-    return parsed;
+    return parseTranslationResponse(parsed);
   }
 
   async validateApiKey(): Promise<boolean> {

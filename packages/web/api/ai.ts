@@ -5,7 +5,8 @@ const API_BASE = '/api/ai';
 
 // Types
 export interface TranslateResponse {
-  [key: string]: string;
+  translations: Record<string, string>;
+  confidence: Record<string, number>;
 }
 
 export interface AiConfigResponse {
@@ -37,6 +38,60 @@ export async function translateWithAi(
     to,
     projectId,
   });
+}
+
+export interface BatchTranslateEvent {
+  type: 'progress' | 'result' | 'error' | 'done';
+  tokenId?: string;
+  translations?: Record<string, string>;
+  confidence?: Record<string, number>;
+  completed?: number;
+  total?: number;
+  failed?: number;
+  error?: string;
+}
+
+/**
+ * Batch translate tokens via SSE
+ */
+export async function batchTranslateWithAi(
+  tokens: Array<{ id: string; text: string; from: string; to: string[] }>,
+  projectId: string,
+  onEvent: (event: BatchTranslateEvent) => void,
+): Promise<void> {
+  const response = await fetch('/api/ai/batch-translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tokens, projectId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Batch translate failed: ${response.status}`);
+  }
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const event = JSON.parse(line.slice(6)) as BatchTranslateEvent;
+          onEvent(event);
+        } catch {
+          // skip malformed events
+        }
+      }
+    }
+  }
 }
 
 /**

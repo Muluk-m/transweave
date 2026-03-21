@@ -12,7 +12,7 @@ import {
 } from "@/api/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
-import { translateWithAi, getAiConfigStatus } from "@/api/ai";
+import { translateWithAi, batchTranslateWithAi, getAiConfigStatus } from "@/api/ai";
 import { useQueryState } from "nuqs";
 import { parseAsInteger } from "nuqs";
 import { getSortingStateParser } from "@/lib/parsers";
@@ -394,7 +394,7 @@ export function useTokensManager(project: Project | null) {
     if (result) {
       setFormData((prev) => ({
         ...prev,
-        translations: { ...prev.translations, ...result },
+        translations: { ...prev.translations, ...result.translations },
       }));
     }
   };
@@ -513,7 +513,7 @@ export function useTokensManager(project: Project | null) {
     }
   };
 
-  // Batch translate
+  // Batch translate via SSE
   const handleBatchTranslateSelected = async (selectedTokens: Token[]) => {
     if (!project?.languages || project.languages.length === 0) {
       toast({ title: t("errors.noLanguageToTranslate"), variant: "destructive" });
@@ -524,34 +524,48 @@ export function useTokensManager(project: Project | null) {
     try {
       setIsBatchTranslating(true);
       setTranslateProgress(0);
-      const total = selectedTokens.length;
-      let completed = 0;
 
-      for (const token of selectedTokens) {
-        const filledLangs = project.languages.filter(
-          (lang) => token.translations?.[lang]?.trim()
-        );
-        const emptyLangs = project.languages.filter(
-          (lang) => !token.translations?.[lang]?.trim()
-        );
+      // Build batch request — filter out tokens with no translatable content
+      const batchTokens = selectedTokens
+        .map((token) => {
+          const filledLangs = project.languages.filter(
+            (lang) => token.translations?.[lang]?.trim()
+          );
+          const emptyLangs = project.languages.filter(
+            (lang) => !token.translations?.[lang]?.trim()
+          );
+          if (filledLangs.length === 0 || emptyLangs.length === 0) return null;
+          const sourceLang = filledLangs[0];
+          return {
+            id: token.id,
+            text: token.translations![sourceLang],
+            from: sourceLang,
+            to: emptyLangs,
+          };
+        })
+        .filter(Boolean) as Array<{ id: string; text: string; from: string; to: string[] }>;
 
-        if (filledLangs.length === 0 || emptyLangs.length === 0) {
-          completed++;
-          setTranslateProgress(Math.round((completed / total) * 100));
-          continue;
-        }
-
-        const sourceLang = filledLangs[0];
-        const sourceText = token.translations![sourceLang];
-        const translationResult = await translateWithAi(sourceText, sourceLang, emptyLangs, project?.id || "");
-        const updatedTranslations: Record<string, string> = {
-          ...token.translations,
-          ...translationResult,
-        };
-        await updateToken(token.id, { translations: updatedTranslations });
-        completed++;
-        setTranslateProgress(Math.round((completed / total) * 100));
+      if (batchTokens.length === 0) {
+        toast({ title: t("errors.noLanguageToTranslate"), variant: "destructive" });
+        setIsBatchTranslating(false);
+        return;
       }
+
+      // Map token IDs to their current translations for merging
+      const tokenMap = new Map(selectedTokens.map((t) => [t.id, t]));
+
+      await batchTranslateWithAi(batchTokens, project.id, async (event) => {
+        if (event.type === 'result' && event.tokenId && event.translations) {
+          const token = tokenMap.get(event.tokenId);
+          if (token) {
+            const updatedTranslations = { ...token.translations, ...event.translations };
+            await updateToken(event.tokenId, { translations: updatedTranslations });
+          }
+        }
+        if (event.completed != null && event.total != null) {
+          setTranslateProgress(Math.round((event.completed / event.total) * 100));
+        }
+      });
 
       await fetchTokens();
       toast({ title: t("success.batchTranslated") });

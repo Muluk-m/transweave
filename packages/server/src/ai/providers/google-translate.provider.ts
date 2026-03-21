@@ -1,4 +1,7 @@
-import type { TranslationProvider } from './translation-provider.interface';
+import type {
+  TranslationProvider,
+  TranslationResult,
+} from './translation-provider.interface';
 
 const GOOGLE_TRANSLATE_BASE =
   'https://translation.googleapis.com/language/translate/v2';
@@ -12,8 +15,9 @@ export class GoogleTranslateProvider implements TranslationProvider {
     text: string;
     from: string;
     to: string[];
-  }): Promise<Record<string, string>> {
-    const results: Record<string, string> = {};
+  }): Promise<TranslationResult> {
+    const translations: Record<string, string> = {};
+    const confidence: Record<string, number> = {};
 
     // Google Translate translates one target language at a time
     for (const targetLang of params.to) {
@@ -34,10 +38,11 @@ export class GoogleTranslateProvider implements TranslationProvider {
       }
 
       const data = await response.json();
-      results[targetLang] = data.data.translations[0].translatedText;
+      translations[targetLang] = data.data.translations[0].translatedText;
+      confidence[targetLang] = 80; // Google Translate doesn't provide confidence
     }
 
-    return results;
+    return { translations, confidence };
   }
 
   async validateApiKey(): Promise<boolean> {
