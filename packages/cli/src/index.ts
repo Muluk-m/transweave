@@ -7,6 +7,7 @@ import { whoamiCommand } from './commands/whoami.js';
 import { statusCommand } from './commands/status.js';
 import { diffCommand } from './commands/diff.js';
 import { searchCommand } from './commands/search.js';
+import { translateCommand } from './commands/translate.js';
 import { setOutputMode } from './formatter.js';
 import * as fmt from './formatter.js';
 import { TransweaveError, getExitCode } from './errors.js';
@@ -35,6 +36,7 @@ program.addCommand(whoamiCommand);
 program.addCommand(statusCommand);
 program.addCommand(diffCommand);
 program.addCommand(searchCommand);
+program.addCommand(translateCommand);
 
 // Top-level error handler
 program.parseAsync().catch((err: unknown) => {

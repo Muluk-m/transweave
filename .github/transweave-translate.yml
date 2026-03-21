@@ -1,0 +1,73 @@
+# Transweave Auto-Translate GitHub Action Template
+#
+# Copy this file to your project's .github/workflows/ directory.
+# Required secrets:
+#   TRANSWEAVE_API_KEY - API key from Transweave project settings
+#   TRANSWEAVE_URL     - Your Transweave server URL (e.g., https://transweave.example.com)
+#
+# This workflow:
+# 1. Detects changed translation files on push
+# 2. Pushes changes to Transweave server
+# 3. Triggers AI translation for incomplete tokens
+# 4. Pulls translated results back and creates a PR
+
+name: Auto-Translate
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/locales/**'
+      - 'i18n/**'
+      - 'translations/**'
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Transweave CLI
+        run: pnpm add -g @transweave/cli
+
+      - name: Configure Transweave
+        run: |
+          transweave login --token ${{ secrets.TRANSWEAVE_API_KEY }} --server ${{ secrets.TRANSWEAVE_URL }}
+
+      - name: Check for changes
+        id: diff
+        run: |
+          OUTPUT=$(transweave diff --json 2>/dev/null || echo '{"totalChanges":0}')
+          CHANGES=$(echo "$OUTPUT" | jq -r '.totalChanges // 0')
+          echo "changes=$CHANGES" >> $GITHUB_OUTPUT
+
+      - name: Push translations
+        if: steps.diff.outputs.changes != '0'
+        run: transweave push
+
+      - name: AI Translate
+        if: steps.diff.outputs.changes != '0'
+        run: transweave translate
+
+      - name: Pull translations
+        run: transweave pull
+
+      - name: Create PR if changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(i18n): auto-translate missing translations'
+          title: 'chore(i18n): auto-translate missing translations'
+          body: |
+            Automated translation update triggered by push to `${{ github.ref_name }}`.
+
+            - Pushed local changes to Transweave
+            - AI-translated missing tokens
+            - Pulled results back
+          branch: auto-translate
+          delete-branch: true
