@@ -244,7 +244,7 @@ export function ProjectGlossaryTab() {
                 <td className="px-4 py-3 font-medium">
                   {entry.sourceTerm}
                   {entry.doNotTranslate && (
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-warning/10 text-warning">
                       DNT
                     </span>
                   )}

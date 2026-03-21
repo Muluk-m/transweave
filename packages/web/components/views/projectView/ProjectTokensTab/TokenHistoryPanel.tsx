@@ -69,9 +69,9 @@ function InlineDiff({ oldText, newText }: { oldText: string; newText: string }) 
           key={idx}
           className={
             seg.type === "add"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              ? "bg-success/10 text-success"
               : seg.type === "remove"
-                ? "bg-red-100 text-red-800 line-through dark:bg-red-900/30 dark:text-red-300"
+                ? "bg-destructive/10 text-destructive line-through"
                 : ""
           }
         >

@@ -29,7 +29,8 @@ export const Logo = ({ className, withText, ...props }: LogoProps) => {
             y2="32"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stopColor="#14b8a6" />
+            <stop stopColor="#06b6d4" />
+            <stop offset="0.5" stopColor="#3b82f6" />
             <stop offset="1" stopColor="#6366f1" />
           </linearGradient>
         </defs>

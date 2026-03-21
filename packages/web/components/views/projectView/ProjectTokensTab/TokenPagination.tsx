@@ -24,7 +24,7 @@ export function TokenPagination({ currentPage, totalPages, onPageChange }: Token
                 <PaginationItem>
                     <PaginationPrevious 
                         onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
-                        className={`text-blue-500 hover:text-blue-600 text-sm ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`} 
+                        className={`text-primary hover:text-primary/80 text-sm ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`} 
                     />
                 </PaginationItem>
                 
@@ -55,14 +55,14 @@ export function TokenPagination({ currentPage, totalPages, onPageChange }: Token
                 
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                     <PaginationItem>
-                        <PaginationEllipsis className="text-gray-500 text-sm" />
+                        <PaginationEllipsis className="text-muted-foreground text-sm" />
                     </PaginationItem>
                 )}
                 
                 <PaginationItem>
                     <PaginationNext 
                         onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
-                        className={`text-blue-500 hover:text-blue-600 text-sm ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`} 
+                        className={`text-primary hover:text-primary/80 text-sm ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`} 
                     />
                 </PaginationItem>
             </PaginationContent>

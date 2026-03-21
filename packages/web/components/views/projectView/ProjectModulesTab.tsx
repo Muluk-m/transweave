@@ -228,7 +228,7 @@ export function ProjectModulesTab() {
                 </Button>
               </div>
               {moduleError && (
-                <p className="text-sm text-red-500">{moduleError}</p>
+                <p className="text-sm text-destructive">{moduleError}</p>
               )}
               <p className="text-xs text-muted-foreground">
                 {t("codeHint", { example: "smartShield.login.title" })}
@@ -239,7 +239,7 @@ export function ProjectModulesTab() {
           {/* Module list */}
           {modules.length === 0 ? (
             !showAddForm && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <Package className="h-10 w-10 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">{t("noModules")}</p>
                 <p className="text-xs mt-1">{t("noModulesHint")}</p>
@@ -262,7 +262,7 @@ export function ProjectModulesTab() {
                   return (
                     <TableRow key={module.code}>
                       <TableCell>
-                        <code className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
+                        <code className="bg-primary/10 text-primary px-2 py-1 rounded text-sm">
                           {module.code}
                         </code>
                       </TableCell>
@@ -280,7 +280,7 @@ export function ProjectModulesTab() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -305,7 +305,7 @@ export function ProjectModulesTab() {
                               {tokenCount === 0 && (
                                 <AlertDialogAction
                                   onClick={() => handleDeleteModule(module.code)}
-                                  className="bg-red-500 hover:bg-red-600"
+                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                                 >
                                   {t("confirmDeleteButton")}
                                 </AlertDialogAction>

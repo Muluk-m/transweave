@@ -174,11 +174,11 @@ export function BatchAddDialog({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-[35%]">
-                    Key <span className="text-red-500">*</span>
+                    Key <span className="text-destructive">*</span>
                   </TableHead>
                   <TableHead className="w-[20%]">Tags</TableHead>
                   <TableHead className="w-[35%]">
-                    {t("comment")} <span className="text-red-500">*</span>
+                    {t("comment")} <span className="text-destructive">*</span>
                   </TableHead>
                   <TableHead className="w-[10%] text-center">
                     {t("actions")}

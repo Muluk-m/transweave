@@ -430,7 +430,7 @@ export function TokenTable({
                               .rows.map((row) => row.id)
                           );
                         }}
-                        className="bg-red-500 hover:bg-red-600"
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                       >
                         确认删除
                       </AlertDialogAction>

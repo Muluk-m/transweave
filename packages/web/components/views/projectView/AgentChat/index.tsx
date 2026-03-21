@@ -38,7 +38,7 @@ function ToolCallDisplay({
         <Wrench className="w-3 h-3" />
         <span className="font-medium">{name}</span>
         {result ? (
-          <span className="text-green-600 ml-auto">done</span>
+          <span className="text-success ml-auto">done</span>
         ) : (
           <Loader2 className="w-3 h-3 animate-spin ml-auto" />
         )}

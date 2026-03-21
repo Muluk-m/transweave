@@ -15,7 +15,7 @@ export function ProjectFilesTab({ project }: ProjectFilesTabProps) {
 
   return (
     <Tabs defaultValue="import" className="w-full">
-      <TabsList className="mb-6 inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
+      <TabsList className="mb-6 inline-flex h-auto p-1 bg-muted/50 rounded-lg gap-1">
         <TabsTrigger
           value="import"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg

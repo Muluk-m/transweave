@@ -18,9 +18,8 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
   return (
     <div 
       onClick={() => onClick(project)} 
-      className="group relative bg-card p-5 rounded-xl border border-border/50
-        shadow-soft hover:shadow-soft-lg hover:border-primary/30
-        transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
+      className="group relative bg-card p-5 rounded-lg border border-border
+        hover:border-primary/30 transition-colors duration-150 cursor-pointer"
     >
       {/* Card Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -35,8 +34,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
           )}
         </div>
         <div className="flex h-10 w-10 items-center justify-center rounded-lg 
-          bg-gradient-to-br from-primary/10 to-accent/10 
-          group-hover:from-primary/20 group-hover:to-accent/20 transition-colors flex-shrink-0">
+          bg-primary/10 group-hover:bg-primary/15 transition-colors flex-shrink-0">
           <Globe className="h-5 w-5 text-primary" />
         </div>
       </div>

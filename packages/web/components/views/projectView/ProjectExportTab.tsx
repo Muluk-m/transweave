@@ -218,7 +218,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                       fileFormat === "xliff" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <FileText className="h-8 w-8 text-blue-500" />
+                    <FileText className="h-8 w-8 text-primary" />
                     <RadioGroupItem value="xliff" id="xliff" className="sr-only" />
                     <div className="font-medium text-foreground">XLIFF</div>
                     <span className="text-xs text-muted-foreground">
@@ -232,7 +232,7 @@ export function ProjectExportTab({ project }: ProjectExportTabProps) {
                       fileFormat === "po" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                   >
-                    <FileText className="h-8 w-8 text-orange-500" />
+                    <FileText className="h-8 w-8 text-warning" />
                     <RadioGroupItem value="po" id="po" className="sr-only" />
                     <div className="font-medium text-foreground">Gettext (.po)</div>
                     <span className="text-xs text-muted-foreground">

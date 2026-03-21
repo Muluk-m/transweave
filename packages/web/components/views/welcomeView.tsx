@@ -135,17 +135,17 @@ export default function WelcomeView() {
 
                         {/* Docker Command */}
                         <div className="flex items-center gap-2 max-w-lg mx-auto lg:mx-0">
-                            <div className="flex-1 flex items-center gap-3 rounded-xl bg-muted/50 border border-border/50 px-4 py-3 font-mono text-sm">
+                            <div className="flex-1 flex items-center gap-3 rounded-lg bg-muted/50 border border-border/50 px-4 py-3 font-mono text-sm">
                                 <span className="text-muted-foreground select-none">$</span>
                                 <span className="text-foreground">{t('welcome.dockerCommand')}</span>
                             </div>
                             <Button
                                 variant="outline"
                                 size="icon"
-                                className="rounded-xl h-[46px] w-[46px] border-border/50 shrink-0"
+                                className="rounded-lg h-[46px] w-[46px] border-border/50 shrink-0"
                                 onClick={() => handleCopy(t('welcome.dockerCommand'))}
                             >
-                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                             </Button>
                         </div>
 
@@ -164,7 +164,7 @@ export default function WelcomeView() {
                             >
                                 <Button
                                     size="lg"
-                                    className="rounded-xl px-6 h-11 text-base bg-foreground text-background hover:bg-foreground/90 shadow-lg"
+                                    className="rounded-lg px-6 h-11 text-base bg-foreground text-background hover:bg-foreground/90"
                                 >
                                     <Github className="mr-2 h-5 w-5" />
                                     GitHub
@@ -175,7 +175,7 @@ export default function WelcomeView() {
                                 size="lg"
                                 onClick={handleDemoLogin}
                                 disabled={isDemoLoading}
-                                className="rounded-xl px-6 h-11 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                                className="rounded-lg px-6 h-11 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
                             >
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -188,7 +188,7 @@ export default function WelcomeView() {
                                 variant="ghost"
                                 size="lg"
                                 onClick={() => router.push('/tutorial')}
-                                className="rounded-xl px-6 h-11 text-base"
+                                className="rounded-lg px-6 h-11 text-base"
                             >
                                 {t('welcome.viewDocs')}
                                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -198,7 +198,7 @@ export default function WelcomeView() {
 
                     {/* Hero Image */}
                     <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
-                        <div className="relative w-full overflow-hidden rounded-2xl shadow-soft-lg border border-border/50">
+                        <div className="relative w-full overflow-hidden rounded-lg border border-border">
                             <img src="/screenshots/hero-preview.png" alt="Transweave" className="w-full h-auto" />
                         </div>
                     </div>
@@ -217,10 +217,10 @@ export default function WelcomeView() {
                         {features.map((feature, index) => (
                             <Card
                                 key={index}
-                                className="group border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-soft-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
+                                className="group border-border bg-card hover:border-primary/30 transition-colors duration-150"
                             >
                                 <CardHeader>
-                                    <div className="rounded-xl bg-primary/10 border border-primary/20 w-12 h-12 flex items-center justify-center mb-4 text-primary group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                                    <div className="rounded-lg bg-primary/10 border border-primary/20 w-12 h-12 flex items-center justify-center mb-4 text-primary group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
                                         {feature.icon}
                                     </div>
                                     <CardTitle className="text-lg">{feature.title}</CardTitle>
@@ -245,7 +245,7 @@ export default function WelcomeView() {
                     <div className="max-w-3xl mx-auto space-y-6">
                         {quickstartSteps.map((step, i) => (
                             <div key={i} className="flex items-start gap-6">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary text-lg font-bold flex-shrink-0">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary text-lg font-bold flex-shrink-0">
                                     {i + 1}
                                 </div>
                                 <div className="flex-1 space-y-2">
@@ -275,7 +275,7 @@ export default function WelcomeView() {
 
                 {/* Integrations Section */}
                 <section className="py-20 relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-muted/50 to-muted/30 rounded-3xl -z-10" />
+                    <div className="absolute inset-0 bg-muted/30 rounded-lg -z-10" />
                     <div className="px-6 py-12">
                         <div className="text-center mb-16">
                             <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t('integrations.title')}</h2>
@@ -299,7 +299,7 @@ export default function WelcomeView() {
                         </div>
 
                         {/* Code examples */}
-                        <div className="max-w-2xl mx-auto rounded-xl bg-background border border-border/50 overflow-hidden">
+                        <div className="max-w-2xl mx-auto rounded-lg bg-background border border-border/50 overflow-hidden">
                             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-muted/30">
                                 <div className="flex gap-1.5">
                                     <div className="w-3 h-3 rounded-full bg-foreground/10" />
@@ -335,7 +335,7 @@ export default function WelcomeView() {
                             >
                                 <Button
                                     size="lg"
-                                    className="rounded-xl px-8 h-12 text-base bg-foreground text-background hover:bg-foreground/90 shadow-lg"
+                                    className="rounded-lg px-8 h-12 text-base bg-foreground text-background hover:bg-foreground/90"
                                 >
                                     <Github className="mr-2 h-5 w-5" />
                                     {t('cta.github')}
@@ -346,7 +346,7 @@ export default function WelcomeView() {
                                 disabled={isDemoLoading}
                                 variant="outline"
                                 size="lg"
-                                className="rounded-xl px-8 h-12 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                                className="rounded-lg px-8 h-12 text-base border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
                             >
                                 {isDemoLoading ? (
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />

@@ -181,7 +181,7 @@ export function ActionsCell({
       </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="p-1 text-red-500">
+          <Button variant="ghost" size="sm" className="p-1 text-destructive">
             <Trash2 size={16} />
           </Button>
         </AlertDialogTrigger>
@@ -196,7 +196,7 @@ export function ActionsCell({
             <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => onDelete(token.id)}
-              className="bg-red-500 text-white hover:bg-red-600"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("delete")}
             </AlertDialogAction>

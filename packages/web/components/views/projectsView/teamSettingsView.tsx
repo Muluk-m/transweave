@@ -231,7 +231,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                   maxLength={12}
                 />
                 <p
-                  className={`text-xs ${teamName.length > 12 ? "text-red-500" : "text-gray-500"
+                  className={`text-xs ${teamName.length > 12 ? "text-destructive" : "text-muted-foreground"
                     }`}
                 >
                   {teamName.length}/12 {t("general.characters")}
@@ -250,15 +250,15 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                     onChange={handleTeamUrlChange}
                     placeholder={t("general.urlPlaceholder")}
                     maxLength={24}
-                    className={!isUrlValid && teamUrl ? "border-red-500" : ""}
+                    className={!isUrlValid && teamUrl ? "border-destructive" : ""}
                   />
                 </div>
                 {!isUrlValid && teamUrl && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {t("danger.urlValidation")}
                   </p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {teamUrl.length}/24 {t("general.characters")}
                 </p>
               </div>
@@ -272,7 +272,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle className="text-red-600">
+              <CardTitle className="text-destructive">
                 {t("danger.title")}
               </CardTitle>
               <CardDescription>{t("danger.description")}</CardDescription>
@@ -416,7 +416,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-red-600"
+                              className="text-destructive"
                               onClick={() => handleRemoveMember(member.id)}
                             >
                               {t("members.dropdown.remove")}

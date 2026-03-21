@@ -153,7 +153,7 @@ export function HeaderView() {
                       src={user?.avatar || "https://github.com/shadcn.png"}
                       alt={user?.name || "User"}
                     />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-sm">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                       {user?.name?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -188,7 +188,7 @@ export function HeaderView() {
           ) : (
             <Button 
               onClick={handleLogin}
-              className="btn-gradient rounded-full px-4"
+              className="rounded-full px-4"
             >
               <User className="mr-2 h-4 w-4" />
               {t("header.login")}

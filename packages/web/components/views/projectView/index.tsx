@@ -55,7 +55,7 @@ export function ProjectView() {
       <Tabs defaultValue="overview" className="w-full">
         {/* Tab Navigation */}
         <div className="relative mb-3">
-          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-lg gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -77,7 +77,7 @@ export function ProjectView() {
         </div>
 
         {/* Tab Contents */}
-        <div className="bg-card rounded-xl border border-border/50 shadow-soft overflow-hidden">
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
           <TabsContent value="overview" className="m-0 p-6 animate-fade-in">
             <ProjectOverviewTab project={nowProject} />
           </TabsContent>

@@ -194,7 +194,7 @@ export function TokenFormDrawer({
                 >
                   <div className="flex items-center gap-1">
                     <span
-                      className="text-red-500 align-text-top"
+                      className="text-destructive align-text-top"
                       style={{ fontFamily: "SimSun,sans-serif" }}
                     >
                       *

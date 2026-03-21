@@ -80,8 +80,8 @@ export function TmSuggestions({
               <span
                 className={`text-xs font-mono ${
                   s.similarity === 100
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-amber-600 dark:text-amber-400"
+                    ? "text-success"
+                    : "text-warning"
                 }`}
               >
                 {s.similarity}%

@@ -234,8 +234,8 @@ export function ProjectImportTab({ project }: ProjectImportTabProps) {
         if (ext === 'csv') return <TableIcon className="h-12 w-12 text-success" />;
         if (ext === 'xml') return <FileText className="h-12 w-12 text-warning" />;
         if (ext === 'yaml' || ext === 'yml') return <FileText className="h-12 w-12 text-accent" />;
-        if (ext === 'xlf' || ext === 'xliff') return <FileText className="h-12 w-12 text-blue-500" />;
-        if (ext === 'po') return <FileText className="h-12 w-12 text-orange-500" />;
+        if (ext === 'xlf' || ext === 'xliff') return <FileText className="h-12 w-12 text-primary" />;
+        if (ext === 'po') return <FileText className="h-12 w-12 text-warning" />;
         return <FileText className="h-12 w-12 text-muted-foreground" />;
     };
 

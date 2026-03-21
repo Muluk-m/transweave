@@ -99,7 +99,7 @@ export function GlossaryHighlight({
               <TooltipContent>
                 <div className="text-xs">
                   {seg.term.doNotTranslate ? (
-                    <span className="text-yellow-600">Do not translate</span>
+                    <span className="text-warning">Do not translate</span>
                   ) : (
                     <span>
                       {targetLang}:{" "}

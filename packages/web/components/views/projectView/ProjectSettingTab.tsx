@@ -135,7 +135,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold mb-2">{t('project.tabs.setting')}</h1>
-                <p className="text-gray-600">{t('project.settings.description', { projectName: project?.name })}</p>
+                <p className="text-muted-foreground">{t('project.settings.description', { projectName: project?.name })}</p>
             </div>
 
             <Tabs defaultValue="basic" className="space-y-6">
@@ -156,7 +156,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                         <Bot className="h-4 w-4" />
                         {t('aiSettings.title')}
                     </TabsTrigger>
-                    <TabsTrigger value="danger" className="flex gap-2 items-center text-red-500">
+                    <TabsTrigger value="danger" className="flex gap-2 items-center text-destructive">
                         <AlertTriangle className="h-4 w-4" />
                         {t('project.settings.tabs.danger')}
                     </TabsTrigger>
@@ -199,11 +199,11 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     onChange={(e) => setProjectUrl(e.target.value)}
                                     placeholder={t('project.settings.basic.urlPlaceholder')}
                                 />
-                                <p className="text-sm text-gray-500">{t('project.settings.basic.urlHelpText')}</p>
+                                <p className="text-sm text-muted-foreground">{t('project.settings.basic.urlHelpText')}</p>
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                                 {saveStatus === "success" && t('project.settings.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
@@ -236,7 +236,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                             {lang !== "en" && (
                                                 <button
                                                     onClick={() => handleToggleLanguage(lang)}
-                                                    className="ml-1 text-gray-500 hover:text-red-500"
+                                                    className="ml-1 text-muted-foreground hover:text-destructive"
                                                 >
                                                     <Trash className="h-3 w-3" />
                                                 </button>
@@ -245,7 +245,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     ))}
                                 </div>
                                 {projectLanguages.length === 0 && (
-                                    <p className="text-sm text-gray-500">{t('project.settings.languages.noLanguages')}</p>
+                                    <p className="text-sm text-muted-foreground">{t('project.settings.languages.noLanguages')}</p>
                                 )}
                             </div>
 
@@ -258,7 +258,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             />
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                                 {saveStatus === "success" && t('project.settings.languages.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
@@ -292,14 +292,14 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                     disabled
                                 />
                             </div>
-                            <p className="text-sm text-gray-500">{t('project.settings.advanced.autoTranslate.description')}</p>
+                            <p className="text-sm text-muted-foreground">{t('project.settings.advanced.autoTranslate.description')}</p>
 
                             <Separator />
 
                             <div className="flex items-center justify-between">
                                 <div>
                                     <Label htmlFor="enableVersioning" className="font-medium">{t('project.settings.advanced.versioning.title')}</Label>
-                                    <p className="text-sm text-gray-500">{t('project.settings.advanced.versioning.description')}</p>
+                                    <p className="text-sm text-muted-foreground">{t('project.settings.advanced.versioning.description')}</p>
                                 </div>
                                 <Switch
                                     id="enableVersioning"
@@ -309,7 +309,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                                 {saveStatus === "success" && t('project.settings.advanced.saveSuccess')}
                                 {saveStatus === "error" && t('project.settings.saveError')}
                             </p>
@@ -345,13 +345,13 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
 
                 {/* Danger zone */}
                 <TabsContent value="danger">
-                    <Card className="border-red-200">
-                        <CardHeader className="text-red-500">
+                    <Card className="border-destructive/30">
+                        <CardHeader className="text-destructive">
                             <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle className="h-5 w-5" />
                                 {t('project.settings.danger.title')}
                             </CardTitle>
-                            <CardDescription className="text-red-400">
+                            <CardDescription className="text-destructive/80">
                                 {t('project.settings.danger.description')}
                             </CardDescription>
                         </CardHeader>
@@ -363,9 +363,9 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                 </AlertDescription>
                             </Alert>
 
-                            <div className="p-4 border border-red-200 rounded-md">
-                                <h3 className="text-lg font-medium text-red-500 mb-2">{t('project.settings.danger.deleteProject')}</h3>
-                                <p className="text-sm text-gray-600 mb-4">
+                            <div className="p-4 border border-destructive/30 rounded-md">
+                                <h3 className="text-lg font-medium text-destructive mb-2">{t('project.settings.danger.deleteProject')}</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
                                     {t('project.settings.danger.deleteDescription', { projectName: project?.name })}
                                 </p>
                                 <AlertDialog>
@@ -386,7 +386,7 @@ export function ProjectSettingTab({ project }: ProjectSettingTabProps) {
                                             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={handleDeleteProject}
-                                                className="bg-red-500 hover:bg-red-600"
+                                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                                             >
                                                 {t('project.settings.danger.confirmDeleteButton')}
                                             </AlertDialogAction>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import "./globals.css";
@@ -9,8 +8,6 @@ import { HeaderManager } from "@/components/views/header-manager";
 import { SidebarManager } from "@/components/views/sidebar-manager";
 import { I18nClientProvider } from "@/components/i18n/client-provider";
 import { QueryProvider } from "@/lib/query-client";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Transweave",
@@ -37,7 +34,17 @@ export default function Layout({
 }>) {
   return (
     <html suppressHydrationWarning className="dark">
-      <body className={inter.className}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.min.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.min.css"
+        />
+      </head>
+      <body className="font-[Geist,system-ui,sans-serif]">
         <NuqsAdapter>
           <QueryProvider>
           <AuthProvider>

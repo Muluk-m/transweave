@@ -72,7 +72,7 @@ export function ProjectsView() {
       <Tabs defaultValue="projects" className="w-full">
         {/* Modern Tab Navigation */}
         <div className="relative mb-6">
-          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl gap-1">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-lg gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -94,7 +94,7 @@ export function ProjectsView() {
         </div>
 
         {/* Tab Contents */}
-        <div className="bg-card rounded-xl border border-border/50 shadow-soft overflow-hidden">
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
           <TabsContent value="projects" className="m-0 p-6 animate-fade-in">
             <ProjectsList
               projects={projects}

@@ -492,7 +492,7 @@ export function AiProviderSettings({
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleRemove}
-                  className="bg-red-500 hover:bg-red-600"
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                 >
                   {t("remove")}
                 </AlertDialogAction>

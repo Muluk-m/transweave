@@ -32,7 +32,7 @@ export function ProjectsList({ projects, onProjectClick, onCreateProject, teamId
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            className="pl-10 h-11 rounded-xl border-border/50 bg-muted/30 focus:bg-background transition-colors" 
+            className="pl-10 h-11 rounded-lg border-border/50 bg-muted/30 focus:bg-background transition-colors" 
             placeholder={t("searchPlaceholder")}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -40,7 +40,7 @@ export function ProjectsList({ projects, onProjectClick, onCreateProject, teamId
         </div>
         <Button 
           onClick={() => setIsDialogOpen(true)} 
-          className="btn-gradient rounded-xl h-11 px-5"
+          className="rounded-lg h-11 px-5"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t("newProject")}
@@ -70,14 +70,14 @@ export function ProjectsList({ projects, onProjectClick, onCreateProject, teamId
           ))
         ) : (
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted/50 mb-4">
               <FolderOpen className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground mb-4">{t("noMatchingProjects")}</p>
             <Button 
               variant="outline" 
               onClick={() => setIsDialogOpen(true)}
-              className="rounded-xl"
+              className="rounded-lg"
             >
               <Plus className="h-4 w-4 mr-2" />
               {t("createNewProject")}

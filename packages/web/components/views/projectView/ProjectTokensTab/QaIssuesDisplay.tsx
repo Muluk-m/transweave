@@ -25,7 +25,7 @@ export function QaIssuesDisplay({ issues, passed }: QaIssuesDisplayProps) {
       {errors.map((issue, i) => (
         <div
           key={`e-${i}`}
-          className="flex items-start gap-1.5 text-xs text-red-600"
+          className="flex items-start gap-1.5 text-xs text-destructive"
         >
           <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
@@ -37,7 +37,7 @@ export function QaIssuesDisplay({ issues, passed }: QaIssuesDisplayProps) {
       {warnings.map((issue, i) => (
         <div
           key={`w-${i}`}
-          className="flex items-start gap-1.5 text-xs text-amber-600"
+          className="flex items-start gap-1.5 text-xs text-warning"
         >
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>

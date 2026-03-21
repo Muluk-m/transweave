@@ -83,35 +83,35 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       case ActivityType.TOKEN_CREATE:
         return {
           icon: <Plus className={iconClass} />,
-          colorClass: "bg-green-500/15 text-green-500",
+          colorClass: "bg-success/10 text-success",
         };
       case ActivityType.PROJECT_UPDATE:
       case ActivityType.TOKEN_UPDATE:
         return {
           icon: <Edit className={iconClass} />,
-          colorClass: "bg-blue-500/15 text-blue-500",
+          colorClass: "bg-primary/10 text-primary",
         };
       case ActivityType.PROJECT_DELETE:
       case ActivityType.TOKEN_DELETE:
         return {
           icon: <Trash className={iconClass} />,
-          colorClass: "bg-red-500/15 text-red-500",
+          colorClass: "bg-destructive/10 text-destructive",
         };
       case ActivityType.PROJECT_LANGUAGE_ADD:
       case ActivityType.PROJECT_LANGUAGE_REMOVE:
         return {
           icon: <Languages className={iconClass} />,
-          colorClass: "bg-purple-500/15 text-purple-500",
+          colorClass: "bg-info/10 text-info",
         };
       case ActivityType.PROJECT_EXPORT:
         return {
           icon: <Download className={iconClass} />,
-          colorClass: "bg-indigo-500/15 text-indigo-500",
+          colorClass: "bg-primary/10 text-primary",
         };
       case ActivityType.PROJECT_IMPORT:
         return {
           icon: <Upload className={iconClass} />,
-          colorClass: "bg-yellow-500/15 text-yellow-500",
+          colorClass: "bg-warning/10 text-warning",
         };
       default:
         return {
@@ -275,7 +275,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     <div className="space-y-6 animate-fade-in">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
+        <Card className="border-border hover:border-primary/20 transition-colors duration-150">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("documentCount")}
@@ -292,7 +292,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
+        <Card className="border-border hover:border-primary/20 transition-colors duration-150">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("supportedLanguages")}
@@ -313,7 +313,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
+        <Card className="border-border hover:border-primary/20 transition-colors duration-150">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("translationProgress")}
@@ -330,7 +330,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 hover:shadow-soft hover:border-primary/20 transition-all duration-300">
+        <Card className="border-border hover:border-primary/20 transition-colors duration-150">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("teamMembers")}
@@ -360,7 +360,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-muted animate-pulse" />
+                    <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
                     <div className="flex-1 space-y-2">
                       <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
                       <div className="h-3 w-1/4 bg-muted animate-pulse rounded" />
@@ -370,7 +370,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               </div>
             ) : activities.length === 0 ? (
               <div className="text-center py-8">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/50 mx-auto mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted/50 mx-auto mb-3">
                   <Clock className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -384,7 +384,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                   className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div
-                    className={`rounded-xl h-10 w-10 ${
+                    className={`rounded-lg h-10 w-10 ${
                       getActivityIcon(activity.type).colorClass
                     } flex items-center justify-center flex-shrink-0`}
                   >
@@ -457,8 +457,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <Card className="border-border/50">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/10 to-primary/10">
-                <Globe className="h-5 w-5 text-accent" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Globe className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <CardTitle className="text-lg">{t("translationProgress")}</CardTitle>
@@ -494,7 +494,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <Card className="border-border/50">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <div>

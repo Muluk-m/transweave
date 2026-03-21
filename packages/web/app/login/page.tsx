@@ -121,18 +121,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-      </div>
 
-      <Card className="w-full max-w-md border-border/50 shadow-lg">
+      <Card className="w-full max-w-md border-border">
         <CardHeader className="text-center pb-2">
           {/* Logo */}
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25">
-              <Languages className="h-7 w-7 text-white" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
+              <Languages className="h-7 w-7 text-primary" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">
@@ -180,7 +175,7 @@ export default function LoginPage() {
             )}
             <Button
               type="submit"
-              className="w-full h-12 rounded-xl font-medium"
+              className="w-full h-12 rounded-lg font-medium"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -206,7 +201,7 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 rounded-xl font-medium border-primary/30 text-primary hover:bg-primary/5"
+                className="w-full h-12 rounded-lg font-medium border-primary/30 text-primary hover:bg-primary/5"
                 disabled={isSubmitting || isDemoLoading}
                 onClick={handleDemoLogin}
               >

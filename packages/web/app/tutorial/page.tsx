@@ -234,7 +234,7 @@ export default function TutorialPage() {
                             
                             <div className="space-y-10">
                                 {section.content.map((item, idx) => (
-                                    <div key={idx} className="bg-muted/30 rounded-xl p-6">
+                                    <div key={idx} className="bg-muted/30 rounded-lg p-6">
                                         <h3 className="text-2xl font-semibold mb-4">{item.title}</h3>
                                         <p className="text-muted-foreground mb-6">{item.description}</p>
                                         
