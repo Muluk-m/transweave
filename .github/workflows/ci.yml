@@ -7,7 +7,62 @@ on:
     branches: [master]
 
 jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint server
+        run: pnpm --filter @transweave/server lint
+
+      - name: Lint web
+        run: pnpm --filter @transweave/web lint
+
+      - name: Type-check server
+        run: pnpm --filter @transweave/server exec tsc --noEmit
+
+      - name: Type-check web
+        run: pnpm --filter @transweave/web exec tsc --noEmit
+
   test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm --filter @transweave/server test
+        env:
+          JWT_SECRET: test-jwt-secret-12345
+          NODE_OPTIONS: '--experimental-vm-modules'
+
+      - name: Run e2e tests
+        run: pnpm --filter @transweave/server test:e2e
+        env:
+          JWT_SECRET: e2e-test-jwt-secret-12345
+          NODE_OPTIONS: '--experimental-vm-modules'
+
+  build:
+    needs: [lint-and-typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,14 +83,8 @@ jobs:
       - name: Build web
         run: pnpm --filter @transweave/web build
 
-      - name: Run e2e tests
-        run: pnpm --filter @transweave/server run test:e2e
-        env:
-          JWT_SECRET: e2e-test-jwt-secret-12345
-          NODE_OPTIONS: '--experimental-vm-modules'
-
   docker-build:
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
