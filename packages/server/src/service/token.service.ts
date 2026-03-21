@@ -13,6 +13,7 @@ import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { ActivityLogService } from './activity-log.service';
 import { TokenHistoryService } from './token-history.service';
+import { TranslationMemoryService } from './translation-memory.service';
 import { ActivityType } from '../db/schema';
 
 // --- Search & Progress Types ---
@@ -44,6 +45,7 @@ export class TokenService {
     private readonly activityLogService: ActivityLogService,
     private readonly tokenHistoryService: TokenHistoryService,
     private readonly projectRepository: ProjectRepository,
+    private readonly translationMemoryService: TranslationMemoryService,
     @Inject(DRIZZLE) private readonly db: DrizzleDB,
   ) {}
 
@@ -171,6 +173,20 @@ export class TokenService {
 
       return token.id;
     });
+
+    // Populate translation memory (non-blocking)
+    if (data.translations && Object.keys(data.translations).length > 0) {
+      const project = await this.projectRepository.findById(data.projectId);
+      if (project?.defaultLang) {
+        this.translationMemoryService.recordTokenTranslations({
+          projectId: data.projectId,
+          tokenId,
+          translations: data.translations,
+          defaultLang: project.defaultLang,
+          userId: data.userId,
+        }).catch(() => {});
+      }
+    }
 
     // Return token with populated history
     return this.findById(tokenId);
@@ -315,6 +331,20 @@ export class TokenService {
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
       });
+    }
+
+    // Populate translation memory if translations were updated (non-blocking)
+    if (mergedTranslations) {
+      const project = await this.projectRepository.findById(token.projectId);
+      if (project?.defaultLang) {
+        this.translationMemoryService.recordTokenTranslations({
+          projectId: token.projectId,
+          tokenId,
+          translations: mergedTranslations,
+          defaultLang: project.defaultLang,
+          userId: data.userId,
+        }).catch(() => {});
+      }
     }
 
     // Return updated token with history

@@ -50,6 +50,13 @@
       "when": 1773849600000,
       "tag": "0006_add_missing_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773673422044,
+      "tag": "0007_glossary_and_tm",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,128 @@
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { GlossaryRepository } from '../repository/glossary.repository';
+import type { GlossaryEntry, NewGlossaryEntry } from '../db/schema';
+
+export interface ResolvedGlossaryTerm {
+  sourceTerm: string;
+  translations: Record<string, string>;
+  description?: string | null;
+  caseSensitive: boolean;
+  doNotTranslate: boolean;
+}
+
+@Injectable()
+export class GlossaryService {
+  constructor(private readonly glossaryRepo: GlossaryRepository) {}
+
+  async create(data: NewGlossaryEntry): Promise<GlossaryEntry> {
+    const existing = await this.glossaryRepo.findByProjectAndTerm(
+      data.projectId ?? null,
+      data.teamId ?? null,
+      data.sourceTerm,
+    );
+    if (existing) {
+      throw new ConflictException(`Glossary entry for "${data.sourceTerm}" already exists in this scope`);
+    }
+    return this.glossaryRepo.create(data);
+  }
+
+  async update(id: string, data: Partial<NewGlossaryEntry>): Promise<GlossaryEntry> {
+    const entry = await this.glossaryRepo.findById(id);
+    if (!entry) throw new NotFoundException('Glossary entry not found');
+    const result = await this.glossaryRepo.update(id, { ...data, updatedAt: new Date() } as any);
+    return result!;
+  }
+
+  async delete(id: string): Promise<void> {
+    const entry = await this.glossaryRepo.findById(id);
+    if (!entry) throw new NotFoundException('Glossary entry not found');
+    await this.glossaryRepo.delete(id);
+  }
+
+  async list(opts: {
+    teamId?: string;
+    projectId?: string;
+    query?: string;
+    page?: number;
+    perPage?: number;
+  }) {
+    return this.glossaryRepo.findByScope(opts);
+  }
+
+  /**
+   * Resolve glossary for a project: merge team-level + project-level,
+   * project entries take precedence over team entries for the same term.
+   */
+  async resolveForProject(projectId: string, teamId: string): Promise<ResolvedGlossaryTerm[]> {
+    const [teamEntries, projectEntries] = await Promise.all([
+      this.glossaryRepo.findAllByTeamId(teamId),
+      this.glossaryRepo.findAllByProjectId(projectId),
+    ]);
+
+    const merged = new Map<string, ResolvedGlossaryTerm>();
+
+    // Team entries first
+    for (const e of teamEntries) {
+      merged.set(e.sourceTerm.toLowerCase(), {
+        sourceTerm: e.sourceTerm,
+        translations: e.translations,
+        description: e.description,
+        caseSensitive: e.caseSensitive,
+        doNotTranslate: e.doNotTranslate,
+      });
+    }
+
+    // Project entries override
+    for (const e of projectEntries) {
+      merged.set(e.sourceTerm.toLowerCase(), {
+        sourceTerm: e.sourceTerm,
+        translations: e.translations,
+        description: e.description,
+        caseSensitive: e.caseSensitive,
+        doNotTranslate: e.doNotTranslate,
+      });
+    }
+
+    return Array.from(merged.values());
+  }
+
+  /**
+   * Filter resolved glossary terms to only those matching the given source text.
+   */
+  filterMatchingTerms(terms: ResolvedGlossaryTerm[], sourceText: string): ResolvedGlossaryTerm[] {
+    return terms.filter((term) => {
+      if (term.caseSensitive) {
+        return sourceText.includes(term.sourceTerm);
+      }
+      return sourceText.toLowerCase().includes(term.sourceTerm.toLowerCase());
+    });
+  }
+
+  async bulkImport(
+    entries: Array<{
+      sourceTerm: string;
+      translations: Record<string, string>;
+      description?: string;
+      caseSensitive?: boolean;
+      doNotTranslate?: boolean;
+    }>,
+    scope: { teamId?: string; projectId?: string },
+    userId: string,
+  ) {
+    const toUpsert: NewGlossaryEntry[] = entries.map((e) => ({
+      ...scope,
+      sourceTerm: e.sourceTerm,
+      translations: e.translations,
+      description: e.description,
+      caseSensitive: e.caseSensitive ?? false,
+      doNotTranslate: e.doNotTranslate ?? false,
+      createdBy: userId,
+    }));
+    return this.glossaryRepo.bulkUpsert(toUpsert);
+  }
+
+  async exportAll(opts: { teamId?: string; projectId?: string }): Promise<GlossaryEntry[]> {
+    const { entries } = await this.glossaryRepo.findByScope({ ...opts, perPage: 10000 });
+    return entries;
+  }
+}

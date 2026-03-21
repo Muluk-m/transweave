@@ -7,6 +7,8 @@ import { tokens } from './tokens';
 import { tokenHistory } from './token-history';
 import { activityLogs } from './activity-logs';
 import { apiKeys } from './api-keys';
+import { glossaryEntries } from './glossary';
+import { translationMemory } from './translation-memory';
 
 export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(memberships),
@@ -18,6 +20,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const teamsRelations = relations(teams, ({ many }) => ({
   memberships: many(memberships),
   projects: many(projects),
+  glossaryEntries: many(glossaryEntries),
 }));
 
 export const membershipsRelations = relations(memberships, ({ one }) => ({
@@ -38,6 +41,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   tokens: many(tokens),
   activityLogs: many(activityLogs),
+  glossaryEntries: many(glossaryEntries),
+  translationMemory: many(translationMemory),
 }));
 
 export const tokensRelations = relations(tokens, ({ one, many }) => ({
@@ -73,6 +78,36 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
   user: one(users, {
     fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const glossaryEntriesRelations = relations(glossaryEntries, ({ one }) => ({
+  team: one(teams, {
+    fields: [glossaryEntries.teamId],
+    references: [teams.id],
+  }),
+  project: one(projects, {
+    fields: [glossaryEntries.projectId],
+    references: [projects.id],
+  }),
+  creator: one(users, {
+    fields: [glossaryEntries.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const translationMemoryRelations = relations(translationMemory, ({ one }) => ({
+  project: one(projects, {
+    fields: [translationMemory.projectId],
+    references: [projects.id],
+  }),
+  token: one(tokens, {
+    fields: [translationMemory.tokenId],
+    references: [tokens.id],
+  }),
+  creator: one(users, {
+    fields: [translationMemory.createdBy],
     references: [users.id],
   }),
 }));

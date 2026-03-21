@@ -7,4 +7,6 @@ export * from './token-history';
 export * from './activity-logs';
 export * from './api-keys';
 export * from './files';
+export * from './glossary';
+export * from './translation-memory';
 export * from './relations';

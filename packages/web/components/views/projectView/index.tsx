@@ -7,8 +7,9 @@ import { ProjectTokensTab } from "@/components/views/projectView/ProjectTokensTa
 import { ProjectFilesTab } from "@/components/views/projectView/ProjectFilesTab";
 import { ProjectModulesTab } from "@/components/views/projectView/ProjectModulesTab";
 import { ProjectSettingTab } from "@/components/views/projectView/ProjectSettingTab";
+import { ProjectGlossaryTab } from "@/components/views/projectView/ProjectGlossaryTab";
 import { useTranslations } from "next-intl";
-import { BarChart3, FileText, FolderOpen, Package, Settings } from "lucide-react";
+import { BarChart3, BookOpen, FileText, FolderOpen, Package, Settings } from "lucide-react";
 
 export function ProjectView() {
   const [nowProject] = useAtom(nowProjectAtom);
@@ -17,6 +18,7 @@ export function ProjectView() {
   const tabs = [
     { value: "overview", label: t("project.tabs.overview"), icon: BarChart3 },
     { value: "tokens", label: t("project.tabs.translations"), icon: FileText },
+    { value: "glossary", label: t("project.tabs.glossary"), icon: BookOpen },
     { value: "modules", label: t("project.tabs.modules"), icon: Package },
     { value: "files", label: t("project.tabs.files"), icon: FolderOpen },
     { value: "setting", label: t("project.tabs.setting"), icon: Settings },
@@ -70,6 +72,10 @@ export function ProjectView() {
 
           <TabsContent value="tokens" className="m-0 p-4 animate-fade-in">
             <ProjectTokensTab project={nowProject} />
+          </TabsContent>
+
+          <TabsContent value="glossary" className="m-0 p-4 animate-fade-in">
+            <ProjectGlossaryTab />
           </TabsContent>
 
           <TabsContent value="modules" className="m-0 animate-fade-in">

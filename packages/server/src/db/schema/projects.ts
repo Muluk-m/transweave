@@ -21,6 +21,7 @@ export const projects = pgTable(
     languageLabels: jsonb('language_labels').$type<Record<string, string>>().default({}),
     modules: jsonb('modules').$type<ProjectModule[]>().default([]),
     enableVersioning: boolean('enable_versioning').default(true).notNull(),
+    enableCrossProjectTM: boolean('enable_cross_project_tm').default(true).notNull(),
     aiConfig: jsonb('ai_config').$type<import('../../ai/providers/translation-provider.interface').AiConfigStored>(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

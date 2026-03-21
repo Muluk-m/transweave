@@ -773,7 +773,8 @@
       "modules": "Modules",
       "files": "Files",
       "import": "Import",
-      "export": "Export"
+      "export": "Export",
+      "glossary": "Glossary"
     },
     "import": {
       "title": "Import Translations",
@@ -1211,5 +1212,40 @@
   "teamsSubtitle": {
     "teamCount": "{count} teams",
     "createFirst": "Create your first team"
+  },
+  "glossary": {
+    "searchPlaceholder": "Search terms...",
+    "import": "Import",
+    "export": "Export",
+    "addTerm": "Add Term",
+    "sourceTerm": "Source Term",
+    "sourceTermPlaceholder": "Enter source term",
+    "description": "Description",
+    "descriptionPlaceholder": "Term description (optional)",
+    "translations": "Translations",
+    "translationPlaceholder": "{lang} translation",
+    "caseSensitive": "Case Sensitive",
+    "doNotTranslate": "Do Not Translate",
+    "actions": "Actions",
+    "addTitle": "Add Term",
+    "editTitle": "Edit Term",
+    "cancel": "Cancel",
+    "save": "Save",
+    "created": "Term created",
+    "updated": "Term updated",
+    "deleted": "Term deleted",
+    "empty": "No glossary terms yet. Click Add Term to get started.",
+    "prev": "Previous",
+    "next": "Next",
+    "fetchError": "Failed to load glossary",
+    "saveError": "Failed to save",
+    "deleteError": "Failed to delete",
+    "exportError": "Failed to export",
+    "importSuccess": "Import complete: {created} created, {updated} updated",
+    "importError": "Failed to import"
+  },
+  "tm": {
+    "suggestions": "Translation Memory Suggestions",
+    "apply": "Apply"
   }
 }

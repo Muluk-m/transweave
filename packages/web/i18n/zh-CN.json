@@ -773,7 +773,8 @@
       "modules": "模块",
       "files": "文件",
       "import": "导入",
-      "export": "导出"
+      "export": "导出",
+      "glossary": "术语表"
     },
     "import": {
       "title": "导入翻译文案",
@@ -1211,5 +1212,40 @@
   "teamsSubtitle": {
     "teamCount": "{count} 个团队",
     "createFirst": "开始创建您的第一个团队"
+  },
+  "glossary": {
+    "searchPlaceholder": "搜索术语...",
+    "import": "导入",
+    "export": "导出",
+    "addTerm": "添加术语",
+    "sourceTerm": "源术语",
+    "sourceTermPlaceholder": "输入源术语",
+    "description": "描述",
+    "descriptionPlaceholder": "术语说明（可选）",
+    "translations": "翻译",
+    "translationPlaceholder": "{lang} 翻译",
+    "caseSensitive": "区分大小写",
+    "doNotTranslate": "不翻译",
+    "actions": "操作",
+    "addTitle": "添加术语",
+    "editTitle": "编辑术语",
+    "cancel": "取消",
+    "save": "保存",
+    "created": "术语已创建",
+    "updated": "术语已更新",
+    "deleted": "术语已删除",
+    "empty": "暂无术语，点击添加术语开始",
+    "prev": "上一页",
+    "next": "下一页",
+    "fetchError": "加载术语失败",
+    "saveError": "保存失败",
+    "deleteError": "删除失败",
+    "exportError": "导出失败",
+    "importSuccess": "导入完成：{created} 个新增，{updated} 个更新",
+    "importError": "导入失败"
+  },
+  "tm": {
+    "suggestions": "翻译记忆建议",
+    "apply": "应用"
   }
 }

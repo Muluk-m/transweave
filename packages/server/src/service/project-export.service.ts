@@ -6,6 +6,7 @@ import {
 import { ProjectRepository } from '../repository/project.repository';
 import { TokenRepository } from '../repository/token.repository';
 import { ActivityLogService } from './activity-log.service';
+import { TranslationMemoryService } from './translation-memory.service';
 import { ActivityType } from '../db/schema/activity-logs';
 import { type Token } from '../db/schema/tokens';
 import { createZipWithLanguageFiles } from 'src/utils/exportTo';
@@ -18,6 +19,7 @@ export class ProjectExportService {
     private readonly projectRepository: ProjectRepository,
     private readonly tokenRepository: TokenRepository,
     private readonly activityLogService: ActivityLogService,
+    private readonly translationMemoryService: TranslationMemoryService,
   ) {}
 
   async exportProjectTokens(
@@ -234,6 +236,21 @@ export class ProjectExportService {
           }
         }
       }
+    }
+
+    // Batch-populate translation memory after import
+    if (project.defaultLang && (stats.added > 0 || stats.updated > 0)) {
+      const allTokens = await this.tokenRepository.findByProjectId(projectId);
+      const tokenData = allTokens.map((t) => ({
+        tokenId: t.id,
+        translations: t.translations as Record<string, string>,
+      }));
+      this.translationMemoryService.batchRecordFromTokens(
+        tokenData,
+        projectId,
+        project.defaultLang,
+        data.userId,
+      ).catch(() => {});
     }
 
     if (data.userId) {

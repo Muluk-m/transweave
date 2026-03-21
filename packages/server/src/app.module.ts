@@ -32,6 +32,13 @@ import { TokenController } from './controller/token.controller';
 import { ApiKeyController } from './controller/api-key.controller';
 import { SeedController } from './controller/seed.controller';
 import { SeedService } from './service/seed.service';
+import { QaCheckService } from './service/qa-check.service';
+import { GlossaryService } from './service/glossary.service';
+import { GlossaryRepository } from './repository/glossary.repository';
+import { GlossaryController } from './controller/glossary.controller';
+import { TranslationMemoryService } from './service/translation-memory.service';
+import { TranslationMemoryRepository } from './repository/translation-memory.repository';
+import { TranslationMemoryController } from './controller/translation-memory.controller';
 import { HealthModule } from './health/health.module';
 import { requireEnv } from './config/env';
 
@@ -61,6 +68,8 @@ import { requireEnv } from './config/env';
     TokenController,
     ApiKeyController,
     SeedController,
+    GlossaryController,
+    TranslationMemoryController,
   ],
   providers: [
     AppService,
@@ -77,6 +86,11 @@ import { requireEnv } from './config/env';
     TokenHistoryService,
     ProjectExportService,
     SeedService,
+    QaCheckService,
+    GlossaryService,
+    GlossaryRepository,
+    TranslationMemoryService,
+    TranslationMemoryRepository,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

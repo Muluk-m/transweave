@@ -35,6 +35,7 @@ export class ProjectRepository extends BaseRepository<
         languageLabels: projects.languageLabels,
         modules: projects.modules,
         enableVersioning: projects.enableVersioning,
+        enableCrossProjectTM: projects.enableCrossProjectTM,
         aiConfig: projects.aiConfig,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
