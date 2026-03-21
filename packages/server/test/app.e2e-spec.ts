@@ -48,7 +48,7 @@ describe('Transweave Server (e2e)', () => {
   afterAll(async () => {
     await app.close();
     fs.rmSync(testDataDir, { recursive: true, force: true });
-  });
+  }, 30000);
 
   // ─── Health ───────────────────────────────────────────────────────────────
 
