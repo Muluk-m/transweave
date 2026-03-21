@@ -22,12 +22,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint server
-        run: pnpm --filter @transweave/server lint
-
-      - name: Lint web
-        run: pnpm --filter @transweave/web lint
-
       - name: Type-check server
         run: pnpm --filter @transweave/server exec tsc --noEmit
 

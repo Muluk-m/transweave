@@ -8,4 +8,5 @@ CREATE TABLE IF NOT EXISTS "webhooks" (
   "created_at" timestamp DEFAULT now() NOT NULL,
   "updated_at" timestamp DEFAULT now() NOT NULL
 );
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "webhooks_project_id_idx" ON "webhooks" ("project_id");
