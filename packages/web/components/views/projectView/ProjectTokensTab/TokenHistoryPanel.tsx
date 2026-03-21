@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { History, RotateCcw } from "lucide-react";
 import { TokenHistory } from "@/jotai/types";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { useMemo } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,49 @@ const formatDate = (dateString: string) => {
     second: "2-digit",
   }).format(date);
 };
+
+function InlineDiff({ oldText, newText }: { oldText: string; newText: string }) {
+  if (!oldText) return <span className="text-green-600">{newText}</span>;
+  if (oldText === newText) return <span>{newText}</span>;
+
+  // Simple character-level diff using LCS
+  const segments: Array<{ text: string; type: "same" | "add" | "remove" }> = [];
+  let i = 0, j = 0;
+  const a = oldText, b = newText;
+
+  // Find common prefix
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  if (i > 0) segments.push({ text: b.slice(0, i), type: "same" });
+
+  // Find common suffix
+  let ai = a.length - 1, bi = b.length - 1;
+  while (ai >= i && bi >= i && a[ai] === b[bi]) { ai--; bi--; }
+  const suffixStart = bi + 1;
+
+  // Middle section is the diff
+  if (i <= ai) segments.push({ text: a.slice(i, ai + 1), type: "remove" });
+  if (i <= bi) segments.push({ text: b.slice(i, bi + 1), type: "add" });
+  if (suffixStart < b.length) segments.push({ text: b.slice(suffixStart), type: "same" });
+
+  return (
+    <span>
+      {segments.map((seg, idx) => (
+        <span
+          key={idx}
+          className={
+            seg.type === "add"
+              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              : seg.type === "remove"
+                ? "bg-red-100 text-red-800 line-through dark:bg-red-900/30 dark:text-red-300"
+                : ""
+          }
+        >
+          {seg.text}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 interface TokenHistoryPanelProps {
   history: TokenHistory[];
@@ -89,13 +133,19 @@ export function TokenHistoryPanel({
                   new Date(b.createdAt).getTime() -
                   new Date(a.createdAt).getTime()
               )
-              .map((item) => (
+              .map((item, idx, arr) => {
+                const prevItem = idx < arr.length - 1 ? arr[idx + 1] : null;
+                const prevText = prevItem?.translations?.[lang] || "";
+                const currentText = item.translations[lang] || "";
+                return (
                 <div
                   key={item.createdAt}
                   className="flex flex-col gap-2 border-b pb-2"
                 >
                   <div className="flex justify-between items-center gap-2">
-                    <span>{item.translations[lang] || ""}</span>
+                    <span className="text-sm">
+                      <InlineDiff oldText={prevText} newText={currentText} />
+                    </span>
                     <div className="flex items-center gap-2">
                       {onRestoreVersion && (
                         <AlertDialog>
@@ -151,7 +201,8 @@ export function TokenHistoryPanel({
                     <span>{formatDate(item.createdAt)}</span>
                   </div>
                 </div>
-              ))}
+              );
+              })}
           </div>
         </ScrollArea>
       </SheetContent>

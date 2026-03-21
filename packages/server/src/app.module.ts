@@ -36,6 +36,7 @@ import { AgentService } from './service/agent.service';
 import { AgentController } from './controller/agent.controller';
 import { WebhookService } from './service/webhook.service';
 import { WebhookController } from './controller/webhook.controller';
+import { BadgeController } from './controller/badge.controller';
 import { QaCheckService } from './service/qa-check.service';
 import { GlossaryService } from './service/glossary.service';
 import { GlossaryRepository } from './repository/glossary.repository';
@@ -74,6 +75,7 @@ import { requireEnv } from './config/env';
     SeedController,
     AgentController,
     WebhookController,
+    BadgeController,
     GlossaryController,
     TranslationMemoryController,
   ],
