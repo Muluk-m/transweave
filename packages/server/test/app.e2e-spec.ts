@@ -822,6 +822,276 @@ describe('Transweave Server (e2e)', () => {
     });
   });
 
+  // ─── Glossary ───────────────────────────────────────────────────────────
+
+  let glossaryEntryId: string;
+
+  describe('Glossary', () => {
+    it('POST /api/glossary should create a glossary entry', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/glossary')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          projectId,
+          sourceTerm: 'token',
+          translations: { en: 'token', 'zh-CN': '词条' },
+          caseSensitive: false,
+          doNotTranslate: false,
+        })
+        .expect(201);
+
+      expect(res.body.id).toBeDefined();
+      expect(res.body.sourceTerm).toBe('token');
+      glossaryEntryId = res.body.id;
+    });
+
+    it('GET /api/glossary should list glossary entries', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/glossary')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .query({ projectId })
+        .expect(200);
+
+      expect(res.body.entries).toBeDefined();
+      expect(res.body.entries.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('POST /api/glossary should reject duplicate term', async () => {
+      await request(app.getHttpServer())
+        .post('/api/glossary')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          projectId,
+          sourceTerm: 'token',
+          translations: { en: 'token' },
+        })
+        .expect(409);
+    });
+
+    it('PUT /api/glossary/:id should update entry', async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/api/glossary/${glossaryEntryId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ translations: { en: 'token', 'zh-CN': '词条', ja: 'トークン' } })
+        .expect(200);
+
+      expect(res.body.translations.ja).toBe('トークン');
+    });
+
+    it('GET /api/glossary/resolve/:projectId should return merged glossary', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/glossary/resolve/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0].sourceTerm).toBe('token');
+    });
+
+    it('GET /api/glossary/export should export glossary', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/glossary/export')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .query({ projectId })
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it('POST /api/glossary/import should bulk import', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/glossary/import')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          projectId,
+          entries: [
+            { sourceTerm: 'module', translations: { en: 'module', 'zh-CN': '模块' } },
+          ],
+        })
+        .expect(201);
+
+      expect(res.body.created).toBeDefined();
+    });
+  });
+
+  // ─── Translation Memory ────────────────────────────────────────────────
+
+  describe('Translation Memory', () => {
+    it('GET /api/tm/suggestions should return suggestions', async () => {
+      // First ensure there's a token with translations (created earlier in test)
+      const res = await request(app.getHttpServer())
+        .get('/api/tm/suggestions')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .query({
+          projectId,
+          sourceText: 'Hello World',
+          sourceLanguage: 'en',
+          targetLanguage: 'zh-CN',
+        })
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  // ─── QA Check ──────────────────────────────────────────────────────────
+
+  describe('QA Check', () => {
+    it('POST /api/tokens/qa-check should check a single token', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/tokens/qa-check')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          tokenId,
+          sourceText: 'Hello {name}',
+          sourceLang: 'en',
+          translations: { en: 'Hello {name}', 'zh-CN': '你好 {name}' },
+          projectId,
+        })
+        .expect(201);
+
+      expect(res.body.tokenId).toBe(tokenId);
+      expect(res.body.passed).toBe(true);
+      expect(res.body.issues).toEqual([]);
+    });
+
+    it('POST /api/tokens/qa-check should detect missing placeholders', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/tokens/qa-check')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          tokenId,
+          sourceText: 'Hello {name}',
+          sourceLang: 'en',
+          translations: { en: 'Hello {name}', 'zh-CN': '你好' },
+          projectId,
+        })
+        .expect(201);
+
+      expect(res.body.passed).toBe(false);
+      expect(res.body.issues.length).toBeGreaterThan(0);
+      expect(res.body.issues[0].rule).toBe('placeholder-missing');
+    });
+
+    it('POST /api/tokens/qa-check-all should check all project tokens', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/tokens/qa-check-all')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ projectId })
+        .expect(201);
+
+      expect(res.body.summary).toBeDefined();
+      expect(res.body.summary.total).toBeGreaterThanOrEqual(1);
+      expect(res.body.results).toBeDefined();
+    });
+  });
+
+  // ─── Translation Status ────────────────────────────────────────────────
+
+  describe('Translation Status', () => {
+    it('PUT /api/tokens/status should update translation status', async () => {
+      const res = await request(app.getHttpServer())
+        .put('/api/tokens/status')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          tokenId,
+          status: { en: 'approved', 'zh-CN': 'translated' },
+        })
+        .expect(200);
+
+      expect(res.body).toBeDefined();
+    });
+
+    it('PUT /api/tokens/status should reject invalid status', async () => {
+      await request(app.getHttpServer())
+        .put('/api/tokens/status')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          tokenId,
+          status: { en: 'invalid_status' },
+        })
+        .expect(400);
+    });
+  });
+
+  // ─── Webhooks ──────────────────────────────────────────────────────────
+
+  let webhookId: string;
+
+  describe('Webhooks', () => {
+    it('POST /api/webhooks should create a webhook', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/webhooks')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          projectId,
+          url: 'https://example.com/webhook',
+          events: ['token.created', 'token.updated'],
+        })
+        .expect(201);
+
+      expect(res.body.id).toBeDefined();
+      expect(res.body.secret).toBeDefined();
+      expect(res.body.secret.length).toBe(64); // 32 bytes hex
+      webhookId = res.body.id;
+    });
+
+    it('GET /api/webhooks/:projectId should list webhooks with masked secret', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/webhooks/${projectId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body[0].secret).toContain('****');
+    });
+
+    it('PUT /api/webhooks/:id should update webhook', async () => {
+      const res = await request(app.getHttpServer())
+        .put(`/api/webhooks/${webhookId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ active: false })
+        .expect(200);
+
+      expect(res.body.active).toBe(false);
+    });
+
+    it('DELETE /api/webhooks/:id should delete webhook', async () => {
+      const res = await request(app.getHttpServer())
+        .delete(`/api/webhooks/${webhookId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+    });
+  });
+
+  // ─── Badge ─────────────────────────────────────────────────────────────
+
+  describe('Badge', () => {
+    it('GET /api/badge/:projectId should return SVG without auth', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/badge/${projectId}`)
+        .expect(200);
+
+      expect(res.headers['content-type']).toContain('image/svg+xml');
+      expect(res.text).toContain('<svg');
+      expect(res.text).toContain('translations');
+    });
+  });
+
+  // ─── Glossary Cleanup ──────────────────────────────────────────────────
+
+  describe('Glossary Cleanup', () => {
+    it('DELETE /api/glossary/:id should delete entry', async () => {
+      await request(app.getHttpServer())
+        .delete(`/api/glossary/${glossaryEntryId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+    });
+  });
+
   // ─── Cleanup ─────────────────────────────────────────────────────────────
 
   describe('Cleanup', () => {
