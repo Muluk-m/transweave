@@ -1,3 +1,5 @@
+import { apiClient } from "../lib/api";
+
 export interface AgentEvent {
   type: 'text' | 'tool_call' | 'tool_result' | 'done' | 'error';
   content?: string;
@@ -5,6 +7,7 @@ export interface AgentEvent {
   toolArgs?: any;
   toolResult?: any;
   toolCallId?: string;
+  sessionId?: string;
 }
 
 export interface ChatMessage {
@@ -18,16 +21,26 @@ export interface ChatMessage {
   }>;
 }
 
+export interface AgentSession {
+  id: string;
+  projectId: string;
+  userId: string;
+  title?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function agentChat(
   message: string,
   projectId: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }>,
   onEvent: (event: AgentEvent) => void,
+  sessionId?: string,
 ): Promise<void> {
   const response = await fetch('/api/agent/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, projectId, history }),
+    body: JSON.stringify({ message, projectId, history, sessionId }),
   });
 
   if (!response.ok) {
@@ -57,4 +70,16 @@ export async function agentChat(
       }
     }
   }
+}
+
+export async function listAgentSessions(projectId: string): Promise<AgentSession[]> {
+  return apiClient.get<AgentSession[]>(`/api/agent/sessions/${projectId}`);
+}
+
+export async function getSessionMessages(sessionId: string): Promise<ChatMessage[]> {
+  return apiClient.get<ChatMessage[]>(`/api/agent/session/${sessionId}/messages`);
+}
+
+export async function deleteAgentSession(sessionId: string): Promise<void> {
+  await apiClient.delete(`/api/agent/session/${sessionId}`);
 }

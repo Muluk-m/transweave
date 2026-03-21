@@ -1,6 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
+  Param,
   Post,
   Res,
   UseGuards,
@@ -21,6 +24,7 @@ export class AgentController {
     data: {
       message: string;
       projectId: string;
+      sessionId?: string;
       history?: Array<{
         role: 'user' | 'assistant';
         content: string;
@@ -38,6 +42,7 @@ export class AgentController {
       for await (const event of this.agentService.chat({
         message: data.message,
         projectId: data.projectId,
+        sessionId: data.sessionId,
         history: data.history,
         userId: user.userId,
       })) {
@@ -53,5 +58,24 @@ export class AgentController {
     }
 
     res.end();
+  }
+
+  @Get('sessions/:projectId')
+  async listSessions(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.agentService.listSessions(projectId, user.userId);
+  }
+
+  @Get('session/:sessionId/messages')
+  async getSessionMessages(@Param('sessionId') sessionId: string) {
+    return this.agentService.getSessionMessages(sessionId);
+  }
+
+  @Delete('session/:sessionId')
+  async deleteSession(@Param('sessionId') sessionId: string) {
+    await this.agentService.deleteSession(sessionId);
+    return { success: true };
   }
 }

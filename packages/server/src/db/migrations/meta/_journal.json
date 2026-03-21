@@ -71,6 +71,13 @@
       "when": 1774339200000,
       "tag": "0009_webhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774425600000,
+      "tag": "0010_agent_sessions",
+      "breakpoints": true
     }
   ]
 }

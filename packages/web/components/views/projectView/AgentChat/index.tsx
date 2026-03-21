@@ -70,6 +70,7 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [sessionId, setSessionId] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,6 +109,9 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
 
     try {
       await agentChat(text, projectId, history.slice(0, -1), (event: AgentEvent) => {
+        if (event.type === 'done' && event.sessionId) {
+          setSessionId(event.sessionId);
+        }
         setMessages((prev) => {
           const updated = [...prev];
           const last = { ...updated[updated.length - 1] };
@@ -142,7 +146,7 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
           updated[updated.length - 1] = last;
           return updated;
         });
-      });
+      }, sessionId);
     } catch (err) {
       setMessages((prev) => {
         const updated = [...prev];

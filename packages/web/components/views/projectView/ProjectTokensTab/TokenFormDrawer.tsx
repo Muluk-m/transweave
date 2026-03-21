@@ -141,6 +141,30 @@ export function TokenFormDrawer({
     return () => clearTimeout(qaTimerRef.current);
   }, [isEditing, projectId, currentToken, defaultLang, formData.translations]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handler = (e: KeyboardEvent) => {
+      const isMod = e.metaKey || e.ctrlKey;
+
+      // Cmd+Enter → Save
+      if (isMod && e.key === 'Enter') {
+        e.preventDefault();
+        if (!isLoading) onSubmit();
+      }
+
+      // Cmd+Shift+T → AI Translate
+      if (isMod && e.shiftKey && (e.key === 't' || e.key === 'T')) {
+        e.preventDefault();
+        if (aiConfigured && !isTranslating) onTranslate();
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, isLoading, isTranslating, aiConfigured, onSubmit, onTranslate]);
+
   const form = useTokenForm({
     formData,
     onInputChange,

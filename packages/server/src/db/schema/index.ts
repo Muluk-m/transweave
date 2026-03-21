@@ -10,4 +10,5 @@ export * from './files';
 export * from './glossary';
 export * from './translation-memory';
 export * from './webhooks';
+export * from './agent-sessions';
 export * from './relations';

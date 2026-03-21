@@ -1,11 +1,14 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { eq, desc } from 'drizzle-orm';
+import { DRIZZLE } from '../db/drizzle.provider';
+import type { DrizzleDB } from '../db/drizzle.types';
+import { agentSessions, agentMessages } from '../db/schema';
 import { AiService } from '../ai/ai.service';
 import { ProjectService } from './project.service';
 import { TokenService } from './token.service';
 import { GlossaryService } from './glossary.service';
 import { QaCheckService } from './qa-check.service';
 import type { ProviderConfig } from '../ai/providers/translation-provider.interface';
-import { createTranslationProvider } from '../ai/providers/provider-factory';
 
 interface AgentMessage {
   role: 'user' | 'assistant' | 'tool';
@@ -25,6 +28,7 @@ interface AgentEvent {
   toolArgs?: any;
   toolResult?: any;
   toolCallId?: string;
+  sessionId?: string;
 }
 
 const AGENT_TOOLS = [
@@ -172,6 +176,7 @@ export class AgentService {
   private readonly logger = new Logger(AgentService.name);
 
   constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
     private readonly aiService: AiService,
     private readonly projectService: ProjectService,
     private readonly tokenService: TokenService,
@@ -179,9 +184,62 @@ export class AgentService {
     private readonly qaCheckService: QaCheckService,
   ) {}
 
+  // --- Session persistence ---
+
+  async listSessions(projectId: string, userId: string) {
+    return this.db
+      .select()
+      .from(agentSessions)
+      .where(
+        eq(agentSessions.projectId, projectId),
+      )
+      .orderBy(desc(agentSessions.updatedAt))
+      .limit(50);
+  }
+
+  async getSessionMessages(sessionId: string) {
+    return this.db
+      .select()
+      .from(agentMessages)
+      .where(eq(agentMessages.sessionId, sessionId))
+      .orderBy(agentMessages.createdAt);
+  }
+
+  async createSession(projectId: string, userId: string, title?: string) {
+    const [session] = await this.db
+      .insert(agentSessions)
+      .values({ projectId, userId, title })
+      .returning();
+    return session;
+  }
+
+  async deleteSession(sessionId: string) {
+    await this.db.delete(agentSessions).where(eq(agentSessions.id, sessionId));
+  }
+
+  private async persistMessage(
+    sessionId: string,
+    role: 'user' | 'assistant',
+    content: string,
+    toolCalls?: any[],
+  ) {
+    await this.db.insert(agentMessages).values({
+      sessionId,
+      role,
+      content,
+      toolCalls: toolCalls?.length ? toolCalls : undefined,
+    });
+    // Touch session updatedAt
+    await this.db
+      .update(agentSessions)
+      .set({ updatedAt: new Date() })
+      .where(eq(agentSessions.id, sessionId));
+  }
+
   async *chat(params: {
     message: string;
     projectId: string;
+    sessionId?: string;
     history?: AgentMessage[];
     userId: string;
   }): AsyncGenerator<AgentEvent> {
@@ -200,6 +258,20 @@ export class AgentService {
 
     const systemPrompt = this.buildSystemPrompt(project);
 
+    // Auto-create session if not provided
+    let sessionId = params.sessionId;
+    if (!sessionId) {
+      const session = await this.createSession(
+        params.projectId,
+        params.userId,
+        params.message.slice(0, 100),
+      );
+      sessionId = session.id;
+    }
+
+    // Persist user message
+    await this.persistMessage(sessionId, 'user', params.message);
+
     const messages: any[] = [
       { role: 'system', content: systemPrompt },
       ...(params.history || []),
@@ -207,6 +279,7 @@ export class AgentService {
     ];
 
     // Agent loop: call LLM, execute tools, repeat until no more tool calls
+    const collectedToolCalls: Array<{ name: string; args: any; result?: any; id: string }> = [];
     const maxIterations = 10;
     for (let i = 0; i < maxIterations; i++) {
       const response = await this.callLLM(config, messages);
@@ -240,6 +313,13 @@ export class AgentService {
             };
           }
 
+          collectedToolCalls.push({
+            name: fn.name,
+            args: JSON.parse(fn.arguments),
+            result,
+            id: toolCall.id,
+          });
+
           yield {
             type: 'tool_result',
             toolName: fn.name,
@@ -259,11 +339,18 @@ export class AgentService {
       // No tool calls — this is the final text response
       if (assistantMessage.content) {
         yield { type: 'text', content: assistantMessage.content };
+        // Persist assistant message
+        await this.persistMessage(
+          sessionId!,
+          'assistant',
+          assistantMessage.content,
+          collectedToolCalls.length ? collectedToolCalls : undefined,
+        );
       }
       break;
     }
 
-    yield { type: 'done' };
+    yield { type: 'done', sessionId };
   }
 
   private async callLLM(config: ProviderConfig, messages: any[]): Promise<any> {
