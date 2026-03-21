@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://transweave-server.fly.dev/api/:path*" },
     { "source": "/project/:projectId/settings/ai", "destination": "/project/_/settings/ai" },
     { "source": "/project/:projectId", "destination": "/project/_" },
     { "source": "/user/:userId", "destination": "/user/_" },
