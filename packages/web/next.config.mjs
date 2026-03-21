@@ -1,25 +1,17 @@
 /** @type {import('next').NextConfig} */
+const isVercel = !!process.env.VERCEL;
+
 const nextConfig = {
-  // standalone is for Docker; skip it on Vercel so pages can be static (CDN-served)
-  ...(process.env.VERCEL ? {} : { output: 'standalone' }),
+  // Vercel Hobby plan: use static export (zero serverless functions)
+  // Docker: use standalone for self-contained server
+  output: isVercel ? 'export' : 'standalone',
 
-  async redirects() {
-    return [
-      {
-        source: '/team/:teamId',
-        destination: '/',
-        permanent: false,
-      },
-    ];
-  },
-
+  // rewrites only work in dev (ignored with output: 'export')
   async rewrites() {
-    const apiUrl = process.env.NEXT_INTERNAL_API_URL || 'http://127.0.0.1:3001';
-    const destination = apiUrl.startsWith('http') ? apiUrl : `https://${apiUrl}`;
     return [
       {
         source: '/api/:path*',
-        destination: `${destination}/api/:path*`,
+        destination: 'http://127.0.0.1:3001/api/:path*',
       },
     ];
   },

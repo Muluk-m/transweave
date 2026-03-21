@@ -25,7 +25,7 @@ export async function apiFetch<T = any>(
 ): Promise<ApiResponse<T>> {
   const {
     requireAuth = true,
-    baseUrl = '',
+    baseUrl = process.env.NEXT_PUBLIC_API_URL || '',
     headers = {},
     responseType = 'json',
     ...restOptions

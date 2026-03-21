@@ -1,7 +1,9 @@
-"use client";
+import { UserPage } from "./client-page";
 
-import UserView from '@/components/views/userView';
+export function generateStaticParams() {
+  return [{ userId: '_' }];
+}
 
-export default function UserPage() {
-  return <UserView />;
+export default function Page() {
+  return <UserPage />;
 }
