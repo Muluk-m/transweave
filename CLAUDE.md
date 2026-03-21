@@ -113,3 +113,30 @@ Commander-based CLI: `init`, `login`, `pull`, `push` commands for syncing transl
 - AI providers share a common interface (`translation-provider.interface.ts`) with a factory pattern
 - MCP (Model Context Protocol) server is built-in for AI assistant integration
 - Export formats: JSON, YAML, CSV, XLIFF, Gettext (.po)
+
+## gstack
+
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+
+Available gstack skills:
+- `/office-hours` — Brainstorm a new idea
+- `/plan-ceo-review` — Review a plan (strategy)
+- `/plan-eng-review` — Review a plan (architecture)
+- `/plan-design-review` — Review a plan (design)
+- `/design-consultation` — Create a design system
+- `/review` — Code review before merge
+- `/ship` — Ready to deploy / create PR
+- `/browse` — Fast headless browser for QA testing and site dogfooding
+- `/qa` — Testing the app
+- `/qa-only` — Run QA only
+- `/design-review` — Visual design audit
+- `/setup-browser-cookies` — Set up browser cookies
+- `/retro` — Weekly retrospective
+- `/investigate` — Debugging errors
+- `/document-release` — Post-ship doc updates
+- `/codex` — Second opinion or adversarial code review
+- `/careful` — Working with production or live systems
+- `/freeze` — Scope edits to one module/directory
+- `/guard` — Maximum safety mode
+- `/unfreeze` — Remove edit restrictions
+- `/gstack-upgrade` — Upgrade gstack to latest version
