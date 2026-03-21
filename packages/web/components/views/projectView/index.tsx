@@ -8,12 +8,24 @@ import { ProjectFilesTab } from "@/components/views/projectView/ProjectFilesTab"
 import { ProjectModulesTab } from "@/components/views/projectView/ProjectModulesTab";
 import { ProjectSettingTab } from "@/components/views/projectView/ProjectSettingTab";
 import { ProjectGlossaryTab } from "@/components/views/projectView/ProjectGlossaryTab";
+import { AgentChat } from "@/components/views/projectView/AgentChat";
 import { useTranslations } from "next-intl";
 import { BarChart3, BookOpen, FileText, FolderOpen, Package, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getAiConfigStatus } from "@/api/ai";
 
 export function ProjectView() {
   const [nowProject] = useAtom(nowProjectAtom);
   const t = useTranslations();
+  const [aiConfigured, setAiConfigured] = useState(false);
+
+  useEffect(() => {
+    if (nowProject?.id) {
+      getAiConfigStatus(nowProject.id)
+        .then((status) => setAiConfigured(status.configured))
+        .catch(() => setAiConfigured(false));
+    }
+  }, [nowProject?.id]);
 
   const tabs = [
     { value: "overview", label: t("project.tabs.overview"), icon: BarChart3 },
@@ -91,6 +103,10 @@ export function ProjectView() {
           </TabsContent>
         </div>
       </Tabs>
+
+      {nowProject?.id && (
+        <AgentChat projectId={nowProject.id} aiConfigured={aiConfigured} />
+      )}
     </div>
   );
 }

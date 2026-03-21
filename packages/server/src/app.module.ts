@@ -32,6 +32,8 @@ import { TokenController } from './controller/token.controller';
 import { ApiKeyController } from './controller/api-key.controller';
 import { SeedController } from './controller/seed.controller';
 import { SeedService } from './service/seed.service';
+import { AgentService } from './service/agent.service';
+import { AgentController } from './controller/agent.controller';
 import { QaCheckService } from './service/qa-check.service';
 import { GlossaryService } from './service/glossary.service';
 import { GlossaryRepository } from './repository/glossary.repository';
@@ -68,6 +70,7 @@ import { requireEnv } from './config/env';
     TokenController,
     ApiKeyController,
     SeedController,
+    AgentController,
     GlossaryController,
     TranslationMemoryController,
   ],
@@ -86,6 +89,7 @@ import { requireEnv } from './config/env';
     TokenHistoryService,
     ProjectExportService,
     SeedService,
+    AgentService,
     QaCheckService,
     GlossaryService,
     GlossaryRepository,
