@@ -2,7 +2,7 @@
 
 import { useAuth } from "../../../lib/auth/auth-context";
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LoadingView } from "../../../components/views/loadingView";
 import { nowProjectAtom, nowTeamAtom } from "@/jotai";
 import { useAtom } from "jotai";
@@ -17,18 +17,17 @@ export function ProjectPage() {
   const [, setNowTeam] = useAtom(nowTeamAtom);
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const params = useParams();
+  const pathname = usePathname();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isCheckingPermission, setIsCheckingPermission] = useState(true);
   const t = useTranslations();
 
-  const projectId = (params.projectId as string) || "";
-
-  // Skip placeholder '_' used by generateStaticParams for static export
-  const isValidProjectId = projectId && projectId !== "_";
+  // Extract projectId from URL path instead of useParams(),
+  // because static export + Vercel rewrite makes useParams() return '_'
+  const projectId = pathname.match(/\/project\/([^/]+)/)?.[1] || "";
 
   const check = async () => {
-    if (user && isValidProjectId) {
+    if (user && projectId) {
       try {
         // Get project details and restore team context from URL
         const project = await getProject(projectId);
@@ -58,15 +57,14 @@ export function ProjectPage() {
     if (!isLoading && !user) {
       router.replace("/");
     }
-    if (isValidProjectId) {
-      // Reset state when projectId changes to avoid stale permission results
+    if (projectId) {
       setHasPermission(null);
       setIsCheckingPermission(true);
       check();
     }
   }, [user, isLoading, projectId, setNowProject]);
 
-  if (isLoading || isCheckingPermission || !isValidProjectId) {
+  if (isLoading || isCheckingPermission) {
     return <LoadingView />;
   }
 

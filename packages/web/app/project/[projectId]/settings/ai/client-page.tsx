@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getProject } from "@/api/project";
 import { Project } from "@/jotai/types";
@@ -14,9 +14,11 @@ import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 export function ProjectAiSettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const params = useParams();
+  const pathname = usePathname();
   const t = useTranslations("aiSettings");
-  const projectId = params.projectId as string;
+  // Extract projectId from URL path instead of useParams(),
+  // because static export + Vercel rewrite makes useParams() return '_'
+  const projectId = pathname.match(/\/project\/([^/]+)/)?.[1] || "";
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,7 @@ export function ProjectAiSettingsPage() {
       return;
     }
 
-    // Skip placeholder '_' used by generateStaticParams for static export
-    if (projectId && projectId !== "_" && user) {
+    if (projectId && user) {
       getProject(projectId)
         .then((p) => {
           setProject(p);
@@ -42,7 +43,7 @@ export function ProjectAiSettingsPage() {
     }
   }, [projectId, user, authLoading, router]);
 
-  if (authLoading || loading || projectId === "_") {
+  if (authLoading || loading) {
     return <LoadingView />;
   }
 

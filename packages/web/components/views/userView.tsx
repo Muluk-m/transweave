@@ -29,12 +29,15 @@ import {
   Users
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Lock, Bell, User } from "lucide-react";
 
 export default function UserView() {
-  const { userId } = useParams();
+  const pathname = usePathname();
+  // Extract userId from URL path instead of useParams(),
+  // because static export + Vercel rewrite makes useParams() return '_'
+  const userId = pathname.match(/\/user\/([^/]+)/)?.[1] || "";
   const router = useRouter();
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<UserType | null>(null);
