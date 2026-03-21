@@ -27,13 +27,14 @@ export function ProjectAiSettingsPage() {
       return;
     }
 
-    if (projectId && user) {
+    // Skip placeholder '_' used by generateStaticParams for static export
+    if (projectId && projectId !== "_" && user) {
       getProject(projectId)
         .then((p) => {
           setProject(p);
         })
         .catch(() => {
-          router.replace("/teams");
+          router.replace("/");
         })
         .finally(() => {
           setLoading(false);
@@ -41,7 +42,7 @@ export function ProjectAiSettingsPage() {
     }
   }, [projectId, user, authLoading, router]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || projectId === "_") {
     return <LoadingView />;
   }
 

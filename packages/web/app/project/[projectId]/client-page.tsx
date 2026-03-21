@@ -24,8 +24,11 @@ export function ProjectPage() {
 
   const projectId = (params.projectId as string) || "";
 
+  // Skip placeholder '_' used by generateStaticParams for static export
+  const isValidProjectId = projectId && projectId !== "_";
+
   const check = async () => {
-    if (user && projectId) {
+    if (user && isValidProjectId) {
       try {
         // Get project details and restore team context from URL
         const project = await getProject(projectId);
@@ -55,10 +58,15 @@ export function ProjectPage() {
     if (!isLoading && !user) {
       router.replace("/");
     }
-    check();
+    if (isValidProjectId) {
+      // Reset state when projectId changes to avoid stale permission results
+      setHasPermission(null);
+      setIsCheckingPermission(true);
+      check();
+    }
   }, [user, isLoading, projectId, setNowProject]);
 
-  if (isLoading || isCheckingPermission) {
+  if (isLoading || isCheckingPermission || !isValidProjectId) {
     return <LoadingView />;
   }
 

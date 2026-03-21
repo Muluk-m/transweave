@@ -4,6 +4,7 @@
     { "source": "/project/:projectId/settings/ai", "destination": "/project/_/settings/ai" },
     { "source": "/project/:projectId", "destination": "/project/_" },
     { "source": "/user/:userId", "destination": "/user/_" },
-    { "source": "/team/:teamId", "destination": "/" }
+    { "source": "/team/:teamId", "destination": "/" },
+    { "source": "/teams", "destination": "/" }
   ]
 }

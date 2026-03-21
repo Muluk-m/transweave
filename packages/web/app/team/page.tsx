@@ -7,7 +7,7 @@ export default function TeamPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/teams");
+    router.replace("/");
   }, []);
 
   return null;
