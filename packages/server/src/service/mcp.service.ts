@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ProjectService } from './project.service';
 import { TokenService } from './token.service';
+import { AiService } from '../ai/ai.service';
+import { QaCheckService } from './qa-check.service';
+import { GlossaryService } from './glossary.service';
 import { z } from 'zod';
 
 type ListProjectsParams = Record<string, any>;
@@ -19,6 +22,9 @@ export class McpService {
   constructor(
     private readonly projectService: ProjectService,
     private readonly tokenService: TokenService,
+    private readonly aiService: AiService,
+    private readonly qaCheckService: QaCheckService,
+    private readonly glossaryService: GlossaryService,
   ) {
     this.server = new McpServer({
       name: 'transweave-mcp-server',
@@ -169,6 +175,213 @@ export class McpService {
         const token = await this.updateToken(params as any);
         return {
           content: [{ type: 'text', text: JSON.stringify(token, null, 2) }],
+        };
+      },
+    );
+
+    // Register translate_token tool
+    const translateTokenSchema: z.ZodTypeAny = z.object({
+      text: z.string().describe('Source text to translate'),
+      from: z.string().describe('Source language code (e.g., "en")'),
+      to: z.array(z.string()).describe('Target language codes (e.g., ["zh", "ja"])'),
+      projectId: z.string().describe('Project ID (for AI config and context)'),
+    });
+
+    registerTool(
+      'translate_token',
+      {
+        title: 'Translate Text',
+        description: 'Translate text using AI with glossary and translation memory context',
+        inputSchema: translateTokenSchema,
+      },
+      async (params: any) => {
+        const result = await this.aiService.translate(params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        };
+      },
+    );
+
+    // Register search_tokens tool
+    const searchTokensSchema: z.ZodTypeAny = z.object({
+      projectId: z.string().describe('Project ID'),
+      query: z.string().optional().describe('Search query (matches key or translation text)'),
+      module: z.string().optional().describe('Filter by module code'),
+      status: z.enum(['all', 'completed', 'incomplete']).optional().describe('Filter by completion status'),
+      tags: z.array(z.string()).optional().describe('Filter by tags'),
+      page: z.number().optional().describe('Page number (default: 1)'),
+      perPage: z.number().optional().describe('Items per page (default: 50, max: 200)'),
+    });
+
+    registerTool(
+      'search_tokens',
+      {
+        title: 'Search Tokens',
+        description: 'Search and filter tokens in a project with pagination',
+        inputSchema: searchTokensSchema,
+      },
+      async (params: any) => {
+        const result = await this.tokenService.search(params.projectId, {
+          query: params.query,
+          module: params.module,
+          status: params.status || 'all',
+          tags: params.tags,
+          page: params.page || 1,
+          perPage: Math.min(params.perPage || 50, 200),
+          sortBy: 'createdAt',
+          sortOrder: 'desc',
+        });
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              tokens: result.tokens.map((t: any) => ({
+                id: t.id,
+                key: t.key,
+                module: t.module,
+                translations: t.translations,
+                tags: t.tags,
+              })),
+              total: result.total,
+            }, null, 2),
+          }],
+        };
+      },
+    );
+
+    // Register qa_check_token tool
+    const qaCheckTokenSchema: z.ZodTypeAny = z.object({
+      tokenId: z.string().describe('Token ID to check'),
+      projectId: z.string().describe('Project ID'),
+    });
+
+    registerTool(
+      'qa_check_token',
+      {
+        title: 'QA Check Token',
+        description: 'Run quality assurance checks on a token (placeholders, HTML tags, length, glossary)',
+        inputSchema: qaCheckTokenSchema,
+      },
+      async (params: any) => {
+        const token = await this.tokenService.findById(params.tokenId);
+        const project = await this.projectService.findProjectById(params.projectId);
+        if (!project) throw new Error('Project not found');
+
+        const sourceLang = project.defaultLang || project.languages?.[0] || '';
+        const sourceText = (token.translations as Record<string, string>)?.[sourceLang] || '';
+
+        let glossaryTerms;
+        try {
+          const allTerms = await this.glossaryService.resolveForProject(params.projectId, project.teamId);
+          glossaryTerms = this.glossaryService.filterMatchingTerms(allTerms, sourceText);
+        } catch { /* continue without glossary */ }
+
+        const result = this.qaCheckService.checkToken({
+          tokenId: params.tokenId,
+          sourceText,
+          sourceLang,
+          translations: (token.translations as Record<string, string>) || {},
+          glossaryTerms,
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        };
+      },
+    );
+
+    // Register qa_check_project tool
+    const qaCheckProjectSchema: z.ZodTypeAny = z.object({
+      projectId: z.string().describe('Project ID to run QA on all tokens'),
+    });
+
+    registerTool(
+      'qa_check_project',
+      {
+        title: 'QA Check Project',
+        description: 'Run quality assurance checks on all tokens in a project, returns summary and issues',
+        inputSchema: qaCheckProjectSchema,
+      },
+      async (params: any) => {
+        const project = await this.projectService.findProjectById(params.projectId);
+        if (!project) throw new Error('Project not found');
+
+        const tokens = await this.tokenService.findByProject(params.projectId);
+        const sourceLang = project.defaultLang || project.languages?.[0] || '';
+
+        let glossaryTerms;
+        try {
+          glossaryTerms = await this.glossaryService.resolveForProject(params.projectId, project.teamId);
+        } catch { /* continue without glossary */ }
+
+        const results = tokens.map((token: any) => {
+          const sourceText = token.translations?.[sourceLang] || '';
+          const matchingTerms = glossaryTerms
+            ? this.glossaryService.filterMatchingTerms(glossaryTerms, sourceText)
+            : undefined;
+          return this.qaCheckService.checkToken({
+            tokenId: token.id,
+            sourceText,
+            sourceLang,
+            translations: token.translations || {},
+            glossaryTerms: matchingTerms,
+          });
+        });
+
+        const failed = results.filter((r) => !r.passed);
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              summary: { total: results.length, passed: results.length - failed.length, failed: failed.length },
+              issues: failed,
+            }, null, 2),
+          }],
+        };
+      },
+    );
+
+    // Register list_glossary tool
+    const listGlossarySchema: z.ZodTypeAny = z.object({
+      projectId: z.string().describe('Project ID to get resolved glossary for'),
+    });
+
+    registerTool(
+      'list_glossary',
+      {
+        title: 'List Glossary',
+        description: 'Get resolved glossary terms for a project (merged team + project level)',
+        inputSchema: listGlossarySchema,
+      },
+      async (params: any) => {
+        const project = await this.projectService.findProjectById(params.projectId);
+        if (!project) throw new Error('Project not found');
+        const terms = await this.glossaryService.resolveForProject(params.projectId, project.teamId);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(terms, null, 2) }],
+        };
+      },
+    );
+
+    // Register delete_token tool
+    const deleteTokenSchema: z.ZodTypeAny = z.object({
+      tokenId: z.string().describe('Token ID to delete'),
+    });
+
+    registerTool(
+      'delete_token',
+      {
+        title: 'Delete Token',
+        description: 'Delete a translation token by ID',
+        inputSchema: deleteTokenSchema,
+      },
+      async (params: any) => {
+        const sessionId = params._meta?.sessionId;
+        const userId = sessionId
+          ? this.getSessionUser(sessionId)
+          : this.getFallbackUserId();
+        await this.tokenService.delete(params.tokenId, userId || this.getFallbackUserId());
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, tokenId: params.tokenId }) }],
         };
       },
     );
