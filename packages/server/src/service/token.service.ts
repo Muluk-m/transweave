@@ -577,7 +577,9 @@ export class TokenService {
     // Single query: compute all language completions at once
     const selectObj: Record<string, any> = {};
     languages.forEach((lang, i) => {
-      selectObj[`lang_${i}`] = sql<number>`COUNT(CASE WHEN ${tokens.translations}->>${lang} IS NOT NULL AND ${tokens.translations}->>${lang} != '' THEN 1 END)`;
+      // Use sql.raw() for the JSON key since ->> requires a literal string, not a bound parameter
+      const langKey = sql.raw(`'${lang.replace(/'/g, "''")}'`);
+      selectObj[`lang_${i}`] = sql<number>`COUNT(CASE WHEN ${tokens.translations}->>${langKey} IS NOT NULL AND ${tokens.translations}->>${langKey} != '' THEN 1 END)`;
     });
 
     const [result] = await (this.db as any)
