@@ -127,7 +127,7 @@ export function ScreenshotCell({
                 </span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="p-2">
+            <TooltipContent side="right" sideOffset={8} className="p-2 pointer-events-none">
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap gap-2 max-w-[300px]">
                   {screenshots.slice(0, 3).map((screenshot: string, index: number) => (
