@@ -116,9 +116,37 @@
 ## Layout
 - **Approach:** Grid-disciplined — strict columns, predictable alignment
 - **Max content width:** 1080px
-- **Sidebar width:** 200-220px, collapsible
+- **Sidebar width:** 220px, collapsible to 52px icon rail
 - **Border radius:** sm(3px) md(6px) lg(8px) full(9999px) — sharp, tool-like
 - **Card treatment:** `border: 1px solid var(--border-1)` — single-pixel ring, no drop shadow. Hover: `border-color: var(--border-2)`
+
+### Surface Hierarchy
+Depth is communicated through background luminance steps, not shadows. Each level is ~2-4% brighter than the one below.
+
+| Layer | Dark Mode | Light Mode | Usage |
+|-------|-----------|------------|-------|
+| bg-0 (page) | `#09090b` | `#ffffff` | Page background, deepest layer |
+| Sidebar | `#0c0c0e` | `#fafafa` | Navigation sidebar — visually distinct from both page and content |
+| bg-1 (surface) | `#111113` | `#fafafa` | Cards, panels, content containers |
+| bg-2 (elevated) | `#18181b` | `#f4f4f5` | Table headers, code blocks, nested surfaces |
+| bg-3 (active) | `#1f1f23` | `#e4e4e7` | Active/pressed states, selected rows |
+
+The sidebar MUST be visually distinct from the main content area. It sits between bg-0 and bg-1 — slightly lighter than the page but not as bright as content cards.
+
+### Page Layout Patterns
+All app pages (behind auth) share this structure:
+- **Sidebar** (220px) on the left with team/project tree
+- **Main content** fills remaining width, scrolls independently
+- Content uses `max-w-5xl` (1024px) with `px-6 lg:px-10` padding
+- Page title: `text-2xl font-semibold tracking-tight` — always the first element, left-aligned
+- Subtitle/count: `text-sm text-muted-foreground mt-1`
+
+### Page Title Convention
+Every page has ONE clear page title that serves as the visual anchor:
+- Teams page: team name (2xl) — since sidebar already shows the nav tree
+- Project page: project name (2xl) with breadcrumb
+- Settings page: "Settings" (2xl)
+- Never smaller than text-xl for page titles
 
 ## Motion
 - **Approach:** Minimal-functional — only transitions that aid comprehension
@@ -146,3 +174,5 @@
 | 2026-03-21 | Zinc neutrals (not blue-gray) | Pure gray scale (#09090b→#fafafa) instead of blue-tinted grays. Feels more premium and tool-like. |
 | 2026-03-21 | Border rings, no shadows | Cards use 1px border ring instead of drop-shadow. Cleaner, more engineering-grade aesthetic. |
 | 2026-03-21 | White primary button | Vercel-style inverted button for primary actions. Blue button reserved for AI/translation-specific operations. |
+| 2026-03-22 | Surface hierarchy via luminance | bg-0→sidebar→bg-1→bg-2 layering through background brightness, not shadows. Sidebar gets its own distinct luminance step between page and card. |
+| 2026-03-22 | Page layout patterns | All app pages use max-w-5xl (1024px), text-2xl page titles, and consistent padding. Sidebar provides navigation; main content provides detail. |

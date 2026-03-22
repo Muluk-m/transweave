@@ -56,14 +56,14 @@ export function ProjectsView() {
   ];
 
   return (
-    <div className="page-container section-spacing animate-fade-in-up">
+    <div className="max-w-5xl mx-auto px-6 lg:px-10 py-8 animate-fade-in-up">
       {/* Team Header */}
       {nowTeam && (
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {nowTeam.name}
           </h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             管理团队项目和设置
           </p>
         </div>
@@ -94,7 +94,7 @@ export function ProjectsView() {
         </div>
 
         {/* Tab Contents */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <div className="rounded-lg overflow-hidden">
           <TabsContent value="projects" className="m-0 p-6 animate-fade-in">
             <ProjectsList
               projects={projects}

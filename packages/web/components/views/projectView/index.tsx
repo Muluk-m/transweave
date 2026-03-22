@@ -37,15 +37,15 @@ export function ProjectView() {
   ];
 
   return (
-    <div className="page-container py-4 animate-fade-in-up">
+    <div className="max-w-5xl mx-auto px-6 lg:px-10 py-6 animate-fade-in-up">
       {/* Project Header */}
       {nowProject && (
-        <div className="mb-3">
-          <h1 className="text-2xl font-bold text-foreground">
+        <div className="mb-4">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {nowProject.name}
           </h1>
           {nowProject.description && (
-            <p className="mt-1 text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {nowProject.description}
             </p>
           )}

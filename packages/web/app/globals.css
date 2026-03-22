@@ -77,25 +77,26 @@
 
   .dark {
     /* Precision Dark Design System — Dark Mode (default) */
-    /* Zinc neutrals from DESIGN.md */
+    /* bg-0: #09090b — deepest page background */
     --background: 240 6% 3.3%;
     --foreground: 0 0% 98%;
 
-    --card: 240 5% 5.9%;
+    /* bg-1: #111113 — cards, panels, content surfaces */
+    --card: 240 5% 6.7%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 5% 5.9%;
+    --popover: 240 5% 6.7%;
     --popover-foreground: 0 0% 98%;
 
-    /* Brand Primary — Blue #3b82f6 (brighter #60a5fa for dark) */
+    /* Brand Primary — Blue #3b82f6 */
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
+    /* Secondary — bg-2 level (#18181b) */
     --secondary: 240 4% 10%;
     --secondary-foreground: 0 0% 98%;
 
-    /* Muted */
+    /* Muted — bg-2 level */
     --muted: 240 4% 10%;
     --muted-foreground: 240 5% 65%;
 
@@ -116,7 +117,7 @@
     --info: 199 89% 65%;
     --info-foreground: 0 0% 100%;
 
-    /* Border & Input — subtle white-alpha per DESIGN.md */
+    /* Border & Input */
     --border: 240 4% 16%;
     --input: 240 4% 13%;
     --ring: 217 91% 60%;
@@ -128,8 +129,8 @@
     --chart-4: 0 72% 51%;
     --chart-5: 199 89% 65%;
 
-    /* Sidebar */
-    --sidebar-background: 240 6% 3.3%;
+    /* Sidebar — #0c0c0e: between bg-0 and bg-1 for visual distinction */
+    --sidebar-background: 240 5% 4.3%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;

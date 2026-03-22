@@ -97,9 +97,9 @@ export function TeamView(props: {
         <>
             <div>
                 {/* Team section header */}
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
                             {team.name}
                         </h2>
                         {isCurrent && (
@@ -171,7 +171,7 @@ export function TeamView(props: {
                 </div>
 
                 {/* Project list */}
-                <div className="border border-border/60 rounded-lg overflow-hidden">
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
                     {/* Loading */}
                     {isLoading && (
                         <div className="px-4 py-8 flex items-center justify-center text-sm text-muted-foreground">
