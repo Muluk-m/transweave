@@ -58,11 +58,13 @@ export async function batchTranslateWithAi(
   tokens: Array<{ id: string; text: string; from: string; to: string[] }>,
   projectId: string,
   onEvent: (event: BatchTranslateEvent) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const response = await fetch('/api/ai/batch-translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tokens, projectId }),
+    signal,
   });
 
   if (!response.ok) {

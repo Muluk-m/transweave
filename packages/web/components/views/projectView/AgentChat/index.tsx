@@ -74,6 +74,7 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -84,6 +85,12 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -106,6 +113,10 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
       toolCalls: [],
     };
     setMessages((prev) => [...prev, assistantMsg]);
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       await agentChat(text, projectId, history.slice(0, -1), (event: AgentEvent) => {
@@ -146,7 +157,7 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
           updated[updated.length - 1] = last;
           return updated;
         });
-      }, sessionId);
+      }, sessionId, controller.signal);
     } catch (err) {
       setMessages((prev) => {
         const updated = [...prev];
@@ -164,7 +175,10 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   if (!aiConfigured) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet open={isOpen} onOpenChange={(open) => {
+        if (!open) abortRef.current?.abort();
+        setIsOpen(open);
+      }}>
       <SheetTrigger asChild>
         <Button
           variant="outline"

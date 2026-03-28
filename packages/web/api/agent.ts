@@ -36,11 +36,13 @@ export async function agentChat(
   history: Array<{ role: 'user' | 'assistant'; content: string }>,
   onEvent: (event: AgentEvent) => void,
   sessionId?: string,
+  signal?: AbortSignal,
 ): Promise<void> {
   const response = await fetch('/api/agent/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, projectId, history, sessionId }),
+    signal,
   });
 
   if (!response.ok) {

@@ -33,6 +33,7 @@ import { ApiKeyController } from './controller/api-key.controller';
 import { SeedController } from './controller/seed.controller';
 import { SeedService } from './service/seed.service';
 import { AgentService } from './service/agent.service';
+import { ToolExecutorService } from './service/tool-executor.service';
 import { AgentController } from './controller/agent.controller';
 import { WebhookService } from './service/webhook.service';
 import { WebhookController } from './controller/webhook.controller';
@@ -95,6 +96,7 @@ import { requireEnv } from './config/env';
     ProjectExportService,
     SeedService,
     AgentService,
+    ToolExecutorService,
     WebhookService,
     QaCheckService,
     GlossaryService,
