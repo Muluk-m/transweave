@@ -34,8 +34,8 @@ describe('buildTranslationPrompt', () => {
         },
       ],
     });
-    expect(prompt).toContain('keep as-is');
-    expect(prompt).toContain('do not translate');
+    expect(prompt).toContain('DO NOT TRANSLATE');
+    expect(prompt).toContain('Transweave');
   });
 
   it('should include TM matches when provided', () => {
