@@ -36,12 +36,14 @@ export abstract class BaseOpenAICompatibleProvider
     from: string;
     to: string[];
     context?: import('./translation-provider.interface').TranslationContext;
+    promptOverride?: string;
   }): Promise<TranslationResult> {
     const client = await this.getClient();
-    const prompt = buildTranslationPrompt(params.text, params.from, params.to, {
-      glossaryTerms: params.context?.glossaryTerms,
-      tmMatches: params.context?.tmMatches,
-    });
+    const prompt = params.promptOverride
+      ?? buildTranslationPrompt(params.text, params.from, params.to, {
+        glossaryTerms: params.context?.glossaryTerms,
+        tmMatches: params.context?.tmMatches,
+      });
 
     const response = await client.chat.completions.create({
       model: this.model,

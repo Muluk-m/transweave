@@ -200,10 +200,12 @@ export class TokenController {
     @Body()
     data: {
       tokenIds: string[];
-      operation: 'delete' | 'set-tags' | 'set-module';
+      operation: 'delete' | 'set-tags' | 'set-module' | 'set-status';
       payload?: {
         tags?: string[];
         module?: string | null;
+        languages?: string[];
+        status?: 'draft' | 'translated' | 'reviewed' | 'approved' | 'rejected';
       };
     },
     @CurrentUser() user: UserPayload,
@@ -232,6 +234,18 @@ export class TokenController {
         return this.tokenService.bulkUpdateModule(
           data.tokenIds,
           data.payload?.module ?? null,
+          user.userId,
+        );
+      case 'set-status':
+        if (!data.payload?.languages?.length || !data.payload?.status) {
+          throw new BadRequestException(
+            'languages (non-empty) and status are required for set-status',
+          );
+        }
+        return this.tokenService.bulkUpdateStatus(
+          data.tokenIds,
+          data.payload.languages,
+          data.payload.status,
           user.userId,
         );
       default:
@@ -371,6 +385,7 @@ export class TokenController {
     @Query('perPage') perPage?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('presets') presets?: string,
     @CurrentUser() user?: UserPayload,
   ) {
     await this.checkPermission(projectId, user!.userId);
@@ -385,6 +400,7 @@ export class TokenController {
       perPage: perPage ? Math.min(parseInt(perPage, 10), 200) : 50,
       sortBy: sortBy || 'createdAt',
       sortOrder: sortOrder || 'desc',
+      presets: presets ? presets.split(',').map((p) => p.trim()).filter(Boolean) : undefined,
     });
 
     const parsedPerPage = perPage ? Math.min(parseInt(perPage, 10), 200) : 50;

@@ -19,7 +19,14 @@ export function useTokensManager(project: Project | null) {
 
   useEffect(() => {
     pagination.setPage(1);
-  }, [filters.debouncedSearch, filters.selectedModule, filters.selectedStatus, filters.selectedTag, pagination.setPage]);
+  }, [
+    filters.debouncedSearch,
+    filters.selectedModule,
+    filters.selectedStatus,
+    filters.selectedTag,
+    filters.presets,
+    pagination.setPage,
+  ]);
 
   const fetchTokens = useCallback(async () => {
     if (!project?.id) return;
@@ -34,6 +41,7 @@ export function useTokensManager(project: Project | null) {
         sortOrder: sortField?.desc ? "desc" : "asc",
         page: pagination.page,
         perPage: pagination.perPage,
+        presets: filters.presets.length ? filters.presets : undefined,
       });
       setTokens(result.tokens);
       setTotalTokens(result.total);
@@ -47,6 +55,7 @@ export function useTokensManager(project: Project | null) {
     filters.selectedModule,
     filters.selectedStatus,
     filters.selectedTag,
+    filters.presets,
     pagination.sorting,
     pagination.page,
     pagination.perPage,
@@ -68,6 +77,8 @@ export function useTokensManager(project: Project | null) {
     setSelectedStatus: filters.setSelectedStatus,
     searchTerm: filters.searchTerm,
     allTags: filters.allTags,
+    presets: filters.presets,
+    togglePreset: filters.togglePreset,
 
     // Data
     tokens,
@@ -91,6 +102,7 @@ export function useTokensManager(project: Project | null) {
     translateProgress: batch.translateProgress,
     isBatchSettingModule: batch.isBatchSettingModule,
     batchModuleProgress: batch.batchModuleProgress,
+    isBatchSettingStatus: batch.isBatchSettingStatus,
 
     // AI
     aiConfigured: formState.aiConfigured,
@@ -111,6 +123,7 @@ export function useTokensManager(project: Project | null) {
     handleBatchSubmit: batch.handleBatchSubmit,
     handleBatchTranslateSelected: batch.handleBatchTranslateSelected,
     handleBatchSetModule: batch.handleBatchSetModule,
+    handleBatchSetStatus: batch.handleBatchSetStatus,
     handleBatchSetTags: batch.handleBatchSetTags,
     handleRestoreVersion: formState.handleRestoreVersion,
   };

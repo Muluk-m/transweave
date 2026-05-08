@@ -11,6 +11,7 @@ export type WebhookEvent =
   | 'token.deleted'
   | 'token.translated'
   | 'token.status_changed'
+  | 'tokens.batch_completed'
   | 'project.exported'
   | 'project.imported';
 
@@ -67,6 +68,25 @@ export class WebhookService {
     }
   }
 
+  /**
+   * Fire-and-forget emit. Wraps payload with a common envelope so callers
+   * don't repeat `projectId / actorId / occurredAt` boilerplate. Failures
+   * are logged inside `deliver` and never propagate.
+   */
+  emitAsync(
+    projectId: string,
+    event: WebhookEvent,
+    actorId: string,
+    payload: Record<string, unknown> = {},
+  ): void {
+    this.deliver(projectId, event, {
+      projectId,
+      actorId,
+      occurredAt: new Date().toISOString(),
+      ...payload,
+    }).catch(() => {});
+  }
+
   private async sendWebhook(
     webhook: Webhook,
     event: WebhookEvent,
@@ -91,8 +111,12 @@ export class WebhookService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // Spec: HMAC-SHA256 with sha256= prefix
+          'X-Transweave-Signature': `sha256=${signature}`,
+          // Legacy header retained for transitional compatibility
           'X-Webhook-Signature': signature,
           'X-Webhook-Event': event,
+          'X-Transweave-Event': event,
         },
         body,
         signal: controller.signal,

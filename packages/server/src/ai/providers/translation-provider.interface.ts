@@ -39,6 +39,12 @@ export interface TranslationProvider {
     from: string;
     to: string[];
     context?: TranslationContext;
+    /**
+     * Override the provider's internal prompt with a fully-rendered string.
+     * When set, providers using LLM chat completions SHALL send this as the
+     * user message. `context` is ignored under override (caller embeds it).
+     */
+    promptOverride?: string;
   }): Promise<TranslationResult>;
 
   validateApiKey(): Promise<boolean>;

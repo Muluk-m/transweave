@@ -8,9 +8,10 @@ import { ProjectFilesTab } from "@/components/views/projectView/ProjectFilesTab"
 import { ProjectModulesTab } from "@/components/views/projectView/ProjectModulesTab";
 import { ProjectSettingTab } from "@/components/views/projectView/ProjectSettingTab";
 import { ProjectGlossaryTab } from "@/components/views/projectView/ProjectGlossaryTab";
+import { ProjectActivityTab } from "@/components/views/projectView/ProjectActivityTab";
 import { AgentChat } from "@/components/views/projectView/AgentChat";
 import { useTranslations } from "next-intl";
-import { BarChart3, BookOpen, FileText, FolderOpen, Package, Settings } from "lucide-react";
+import { Activity, BarChart3, BookOpen, FileText, FolderOpen, Package, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getAiConfigStatus } from "@/api/ai";
 
@@ -33,6 +34,7 @@ export function ProjectView() {
     { value: "glossary", label: t("project.tabs.glossary"), icon: BookOpen },
     { value: "modules", label: t("project.tabs.modules"), icon: Package },
     { value: "files", label: t("project.tabs.files"), icon: FolderOpen },
+    { value: "activity", label: t("project.tabs.activity"), icon: Activity },
     { value: "setting", label: t("project.tabs.setting"), icon: Settings },
   ];
 
@@ -96,6 +98,10 @@ export function ProjectView() {
 
           <TabsContent value="files" className="m-0 p-6 animate-fade-in">
             <ProjectFilesTab project={nowProject} />
+          </TabsContent>
+
+          <TabsContent value="activity" className="m-0 p-6 animate-fade-in">
+            <ProjectActivityTab project={nowProject} />
           </TabsContent>
 
           <TabsContent value="setting" className="m-0 p-6 animate-fade-in">

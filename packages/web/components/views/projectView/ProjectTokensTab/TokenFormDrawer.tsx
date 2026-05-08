@@ -363,6 +363,9 @@ export function TokenFormDrawer({
                 history={currentToken?.history || []}
                 onTranslationChange={onTranslationChange}
                 onRestoreVersion={onRestoreVersion}
+                projectId={projectId}
+                aiConfigured={aiConfigured}
+                defaultLang={defaultLang}
               />
 
               {/* QA Check Results */}

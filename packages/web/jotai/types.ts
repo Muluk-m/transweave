@@ -62,7 +62,14 @@ export interface TokenHistory {
   createdAt: string;
 }
 
-export type TranslationStatus = 'draft' | 'translated' | 'reviewed' | 'approved' | 'rejected';
+export const TRANSLATION_STATUSES = [
+  'draft',
+  'translated',
+  'reviewed',
+  'approved',
+  'rejected',
+] as const;
+export type TranslationStatus = (typeof TRANSLATION_STATUSES)[number];
 
 export interface Token {
   id: string;

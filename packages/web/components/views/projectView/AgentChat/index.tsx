@@ -13,6 +13,8 @@ import {
 import { Bot, Send, Loader2, Wrench, ChevronDown, ChevronRight } from "lucide-react";
 import { agentChat } from "@/api/agent";
 import type { ChatMessage, AgentEvent } from "@/api/agent";
+import { useAtom } from "jotai";
+import { agentChatTokenContextAtom } from "@/jotai";
 
 interface AgentChatProps {
   projectId: string;
@@ -75,6 +77,36 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [tokenContext, setTokenContext] = useAtom(agentChatTokenContextAtom);
+  const lastNonceRef = useRef<number | null>(null);
+
+  // When a token context arrives via the global atom (row-level Ask Agent),
+  // open the sheet, reset the conversation, and seed it with token context.
+  useEffect(() => {
+    if (!tokenContext) return;
+    if (tokenContext.nonce === lastNonceRef.current) return;
+    lastNonceRef.current = tokenContext.nonce;
+    abortRef.current?.abort();
+    const seed: ChatMessage = {
+      role: "assistant",
+      content: [
+        `已加载 token 上下文：`,
+        `- key: \`${tokenContext.key}\``,
+        tokenContext.module ? `- module: \`${tokenContext.module}\`` : null,
+        `- 当前译文: ${JSON.stringify(tokenContext.translations)}`,
+        tokenContext.screenshots.length > 0
+          ? `- 截图: ${tokenContext.screenshots.length} 张已附加`
+          : null,
+        ``,
+        `你可以直接问我关于这条 token 的任何问题：建议译文、QA、改 key 等。`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    };
+    setMessages([seed]);
+    setSessionId(undefined);
+    setIsOpen(true);
+  }, [tokenContext]);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -176,7 +208,12 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => {
-        if (!open) abortRef.current?.abort();
+        if (!open) {
+          abortRef.current?.abort();
+          // Closing also clears the token context so a future row-click
+          // re-opens with fresh state.
+          setTokenContext(null);
+        }
         setIsOpen(open);
       }}>
       <SheetTrigger asChild>

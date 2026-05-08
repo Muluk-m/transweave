@@ -654,6 +654,8 @@
     "batchModuleFailed": "批量更新模块失败",
     "batchTagsSuccess": "批量更新标签成功",
     "batchTagsFailed": "批量更新标签失败",
+    "batchStatusSuccess": "已批量更新 {count} 个文案的状态",
+    "batchStatusFailed": "批量更新状态失败",
     "versionRestored": "版本已恢复",
     "batchTranslating": "批量翻译进行中...",
     "batchModuleUpdating": "批量更新模块进行中...",
@@ -774,7 +776,43 @@
       "files": "文件",
       "import": "导入",
       "export": "导出",
-      "glossary": "术语表"
+      "glossary": "术语表",
+      "activity": "动态"
+    },
+    "status": {
+      "draft": "草稿",
+      "translated": "已翻译",
+      "reviewed": "已审校",
+      "approved": "已批准",
+      "rejected": "已驳回",
+      "draftDesc": "尚未翻译或仅初稿",
+      "translatedDesc": "翻译完成，待审校",
+      "reviewedDesc": "已通过审校",
+      "approvedDesc": "翻译已批准，可发布",
+      "rejectedDesc": "翻译被驳回，需修订"
+    },
+    "toneAdjust": {
+      "trigger": "AI 调优",
+      "hint": "将调用 AI 生成 3 个候选",
+      "tones": {
+        "formal": "更正式",
+        "casual": "更口语",
+        "shorter": "更简短",
+        "rephrase": "改写",
+        "polish": "润色"
+      },
+      "customLabel": "自定义指令…",
+      "customDialogTitle": "自定义调优指令",
+      "customDialogDesc": "简短描述你想要的语气或风格，例如：更亲切、去掉敬语、技术文档风格。",
+      "customPlaceholder": "自定义指令",
+      "cancel": "取消",
+      "generate": "生成候选",
+      "candidatesTitle": "选择一个候选译文",
+      "candidatesDescCurrent": "当前 ({language})：",
+      "loading": "生成中…",
+      "noCandidates": "AI 没返回候选，请重试或换一种 tone。",
+      "adopt": "采用",
+      "failedTitle": "调优失败"
     },
     "import": {
       "title": "导入翻译文案",

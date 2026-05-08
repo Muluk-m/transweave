@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Project, Token } from "@/jotai/types";
+import { Project, Token, type TranslationStatus } from "@/jotai/types";
 import {
   createToken,
   updateToken,
@@ -37,6 +37,7 @@ export function useBatchOperations(
   const [translateProgress, setTranslateProgress] = useState<number>(0);
   const [isBatchSettingModule, setIsBatchSettingModule] = useState<boolean>(false);
   const [batchModuleProgress, setBatchModuleProgress] = useState<number>(0);
+  const [isBatchSettingStatus, setIsBatchSettingStatus] = useState<boolean>(false);
 
   const handleDeleteSelected = async (selected: string[]) => {
     try {
@@ -66,6 +67,27 @@ export function useBatchOperations(
     } finally {
       setIsBatchSettingModule(false);
       setBatchModuleProgress(0);
+    }
+  };
+
+  const handleBatchSetStatus = async (
+    selectedTokens: Token[],
+    languages: string[],
+    status: TranslationStatus,
+  ) => {
+    if (!project?.id) return;
+    if (selectedTokens.length === 0 || languages.length === 0) return;
+    try {
+      setIsBatchSettingStatus(true);
+      const tokenIds = selectedTokens.map((tk) => tk.id);
+      await bulkTokenOperation(tokenIds, "set-status", { languages, status });
+      await fetchTokens();
+      toast({ title: t("batchStatusSuccess", { count: tokenIds.length }) });
+    } catch (error) {
+      console.error("Batch set status error:", error);
+      toast({ title: t("batchStatusFailed"), variant: "destructive" });
+    } finally {
+      setIsBatchSettingStatus(false);
     }
   };
 
@@ -222,8 +244,10 @@ export function useBatchOperations(
     translateProgress,
     isBatchSettingModule,
     batchModuleProgress,
+    isBatchSettingStatus,
     handleDeleteSelected,
     handleBatchSetModule,
+    handleBatchSetStatus,
     handleBatchSetTags,
     handleBatchSubmit,
     handleBatchTranslateSelected,

@@ -653,6 +653,8 @@
     "batchModuleSuccess": "Batch module update successful",
     "batchModuleFailed": "Batch module update failed",
     "batchTagsSuccess": "Batch tags update successful",
+    "batchStatusSuccess": "Updated status for {count} tokens",
+    "batchStatusFailed": "Batch status update failed",
     "batchTagsFailed": "Batch tags update failed",
     "versionRestored": "Version restored",
     "batchTranslating": "Batch translation in progress...",
@@ -774,7 +776,43 @@
       "files": "Files",
       "import": "Import",
       "export": "Export",
-      "glossary": "Glossary"
+      "glossary": "Glossary",
+      "activity": "Activity"
+    },
+    "status": {
+      "draft": "Draft",
+      "translated": "Translated",
+      "reviewed": "Reviewed",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "draftDesc": "Not translated or initial draft",
+      "translatedDesc": "Translation complete, awaiting review",
+      "reviewedDesc": "Passed review",
+      "approvedDesc": "Approved and ready to publish",
+      "rejectedDesc": "Rejected, needs revision"
+    },
+    "toneAdjust": {
+      "trigger": "AI tone-adjust",
+      "hint": "Calls AI for 3 candidates",
+      "tones": {
+        "formal": "More formal",
+        "casual": "More casual",
+        "shorter": "Shorter",
+        "rephrase": "Rephrase",
+        "polish": "Polish"
+      },
+      "customLabel": "Custom instruction…",
+      "customDialogTitle": "Custom tone instruction",
+      "customDialogDesc": "Briefly describe the tone or style you want, e.g. friendlier, less formal, technical-doc voice.",
+      "customPlaceholder": "Custom instruction",
+      "cancel": "Cancel",
+      "generate": "Generate",
+      "candidatesTitle": "Pick a candidate",
+      "candidatesDescCurrent": "Current ({language}):",
+      "loading": "Generating…",
+      "noCandidates": "AI returned no candidates. Try again or pick a different tone.",
+      "adopt": "Adopt",
+      "failedTitle": "Tone adjust failed"
     },
     "import": {
       "title": "Import Translations",

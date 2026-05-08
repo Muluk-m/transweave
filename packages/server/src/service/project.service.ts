@@ -8,6 +8,7 @@ import { ProjectRepository } from '../repository/project.repository';
 import { TokenRepository } from '../repository/token.repository';
 import { MembershipService } from './membership.service';
 import { ActivityLogService } from './activity-log.service';
+import { GlossaryService } from './glossary.service';
 import { ActivityType } from '../db/schema/activity-logs';
 import { type Project, type NewProject, type ProjectModule } from '../db/schema/projects';
 import { DRIZZLE } from '../db/drizzle.provider';
@@ -21,6 +22,7 @@ export class ProjectService {
     private readonly tokenRepository: TokenRepository,
     private readonly membershipService: MembershipService,
     private readonly activityLogService: ActivityLogService,
+    private readonly glossaryService: GlossaryService,
   ) {}
 
   async createProject(data: {
@@ -226,6 +228,12 @@ export class ProjectService {
       ipAddress,
       userAgent,
     });
+
+    // Backfill empty translation slots for any auto-sync glossary entries
+    // scoped to this project. Best-effort — never block the language add.
+    this.glossaryService
+      .backfillForLanguage({ projectId: id }, language)
+      .catch(() => {});
 
     return updated;
   }

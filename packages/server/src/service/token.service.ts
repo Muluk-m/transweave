@@ -7,13 +7,14 @@ import {
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
-import { tokens, tokenHistory, type Token } from '../db/schema';
+import { tokens, tokenHistory, type Token, type TranslationStatus } from '../db/schema';
 import { TokenRepository } from '../repository/token.repository';
 import { TokenHistoryRepository } from '../repository/token-history.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { ActivityLogService } from './activity-log.service';
 import { TokenHistoryService } from './token-history.service';
 import { TranslationMemoryService } from './translation-memory.service';
+import { WebhookService } from './webhook.service';
 import { ActivityType } from '../db/schema';
 
 // --- Search & Progress Types ---
@@ -28,6 +29,8 @@ export interface TokenSearchOptions {
   perPage?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  /** Preset filter chips composed with AND. Supported: 'low-confidence' (any language confidence < 70). */
+  presets?: string[];
 }
 
 export interface LanguageProgress {
@@ -46,8 +49,10 @@ export class TokenService {
     private readonly tokenHistoryService: TokenHistoryService,
     private readonly projectRepository: ProjectRepository,
     private readonly translationMemoryService: TranslationMemoryService,
+    private readonly webhookService: WebhookService,
     @Inject(DRIZZLE) private readonly db: DrizzleDB,
   ) {}
+
 
   /**
    * Get all tokens for a project, including history with user details.
@@ -187,6 +192,12 @@ export class TokenService {
         }).catch(() => {});
       }
     }
+
+    this.webhookService.emitAsync(data.projectId, 'token.created', data.userId, {
+      tokenId,
+      key: data.key,
+      module: data.module || '',
+    });
 
     // Return token with populated history
     return this.findById(tokenId);
@@ -347,7 +358,23 @@ export class TokenService {
       }
     }
 
-    // Return updated token with history
+    if (changes.length > 0) {
+      this.webhookService.emitAsync(
+        token.projectId,
+        data.translations ? 'token.translated' : 'token.updated',
+        data.userId,
+        {
+          tokenId,
+          key: updatedToken?.key || token.key,
+          module: token.module || '',
+          changedFields: changes.map((c) => c.field),
+          languagesUpdated: data.translations
+            ? Object.keys(data.translations)
+            : undefined,
+        },
+      );
+    }
+
     return this.findById(tokenId);
   }
 
@@ -390,6 +417,12 @@ export class TokenService {
       },
       ipAddress,
       userAgent,
+    });
+
+    this.webhookService.emitAsync(token.projectId, 'token.deleted', userId, {
+      tokenId,
+      key: token.key,
+      module: token.module || '',
     });
 
     return token;
@@ -497,6 +530,12 @@ export class TokenService {
     if (options.tags && options.tags.length > 0) {
       conditions.push(
         sql`${tokens.tags} @> ${JSON.stringify(options.tags)}::jsonb`,
+      );
+    }
+
+    if (options.presets?.includes('low-confidence')) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM jsonb_each(COALESCE(${tokens.translationMeta}, '{}'::jsonb)) AS m(lang, val) WHERE (val->>'confidence') ~ '^[0-9]+$' AND (val->>'confidence')::int < 70)`,
       );
     }
 
@@ -696,6 +735,12 @@ export class TokenService {
       });
     });
 
+    this.webhookService.emitAsync(projectId, 'tokens.batch_completed', userId, {
+      mode: 'delete',
+      count: tokenIds.length,
+      keys: deletedKeys,
+    });
+
     return { deleted: tokenIds.length };
   }
 
@@ -761,6 +806,12 @@ export class TokenService {
       });
 
       return updated;
+    });
+
+    this.webhookService.emitAsync(projectId, 'tokens.batch_completed', userId, {
+      mode: 'set-tags',
+      count: tokenIds.length,
+      tags,
     });
 
     return updatedTokens;
@@ -829,7 +880,84 @@ export class TokenService {
       return updated;
     });
 
+    this.webhookService.emitAsync(projectId, 'tokens.batch_completed', userId, {
+      mode: 'set-module',
+      count: tokenIds.length,
+      moduleCode,
+    });
+
     return updatedTokens;
+  }
+
+  async bulkUpdateStatus(
+    tokenIds: string[],
+    languages: string[],
+    status: TranslationStatus,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<Token[]> {
+    const MAX_BULK_SIZE = 500;
+    if (tokenIds.length > MAX_BULK_SIZE) {
+      throw new BadRequestException(`Maximum ${MAX_BULK_SIZE} tokens per bulk operation`);
+    }
+    if (tokenIds.length === 0 || languages.length === 0) {
+      throw new BadRequestException('tokenIds and languages must be non-empty');
+    }
+
+    const existingTokens: Token[] = await (this.db as any)
+      .select()
+      .from(tokens)
+      .where(inArray(tokens.id, tokenIds));
+
+    if (existingTokens.length !== tokenIds.length) {
+      throw new NotFoundException('One or more tokens not found');
+    }
+
+    const projectIds = new Set(existingTokens.map((t) => t.projectId));
+    if (projectIds.size > 1) {
+      throw new BadRequestException('All tokens must belong to the same project');
+    }
+
+    const projectId = existingTokens[0].projectId;
+
+    const updated: Token[] = await (this.db as any).transaction(async (tx: any) => {
+      const rows = await Promise.all(
+        existingTokens.map((t) => {
+          const next = { ...((t.translationStatus as Record<string, TranslationStatus>) || {}) };
+          for (const lang of languages) next[lang] = status;
+          return tx
+            .update(tokens)
+            .set({ translationStatus: next, updatedAt: new Date() })
+            .where(eq(tokens.id, t.id))
+            .returning()
+            .then(([row]: Token[]) => row);
+        }),
+      );
+
+      await this.activityLogService.create({
+        type: ActivityType.TOKEN_BATCH_UPDATE,
+        projectId,
+        userId,
+        details: {
+          entityType: 'token',
+          metadata: { operation: 'bulk-set-status', count: tokenIds.length, languages, status },
+        },
+        ipAddress,
+        userAgent,
+      });
+
+      return rows;
+    });
+
+    this.webhookService.emitAsync(projectId, 'tokens.batch_completed', userId, {
+      mode: 'set-status',
+      count: tokenIds.length,
+      languages,
+      status,
+    });
+
+    return updated;
   }
 
   async updateTranslationStatus(
@@ -845,9 +973,28 @@ export class TokenService {
     const currentStatus = (token.translationStatus as Record<string, string>) || {};
     const mergedStatus = { ...currentStatus, ...status };
 
-    return this.tokenRepository.update(tokenId, {
+    const result = await this.tokenRepository.update(tokenId, {
       translationStatus: mergedStatus,
     } as any);
+
+    const transitions = Object.entries(status)
+      .filter(([lang, next]) => currentStatus[lang] !== next)
+      .map(([language, toStatus]) => ({
+        language,
+        fromStatus: currentStatus[language] ?? null,
+        toStatus,
+      }));
+
+    if (transitions.length > 0) {
+      this.webhookService.emitAsync(token.projectId, 'token.status_changed', userId, {
+        tokenId,
+        key: token.key,
+        module: token.module || '',
+        transitions,
+      });
+    }
+
+    return result;
   }
 
   async updateTranslationMeta(

@@ -65,6 +65,26 @@ export class AiController {
     res.end();
   }
 
+  @Post('tone-adjust')
+  async toneAdjust(
+    @Body()
+    data: {
+      projectId: string;
+      currentTranslation: string;
+      targetLang: string;
+      tone: 'formal' | 'casual' | 'shorter' | 'rephrase' | 'polish' | 'custom';
+      customInstruction?: string;
+    },
+  ) {
+    if (!data.projectId || !data.currentTranslation || !data.targetLang || !data.tone) {
+      throw new HttpException(
+        'projectId, currentTranslation, targetLang and tone are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.aiService.adjustTone(data);
+  }
+
   @Post('generate/key')
   async generateKey(
     @Body()

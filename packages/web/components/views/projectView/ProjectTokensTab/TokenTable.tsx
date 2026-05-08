@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Token } from "@/jotai/types";
+import { Token, TRANSLATION_STATUSES, type TranslationStatus } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Package, TagIcon, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Package, TagIcon, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,7 +57,10 @@ interface TokenTableProps {
   onBatchTranslate?: (tokens: Token[]) => Promise<void>;
   onBatchSetModule?: (tokens: Token[], moduleCode: string | null) => Promise<void>;
   onBatchSetTags?: (tokens: Token[], tags: string[]) => Promise<void>;
+  onBatchSetStatus?: (tokens: Token[], languages: string[], status: TranslationStatus) => Promise<void>;
   isBatchTranslating?: boolean;
+  isBatchSettingStatus?: boolean;
+  aiConfigured?: boolean;
   toolBar: React.ReactNode;
 }
 
@@ -74,9 +78,13 @@ export function TokenTable({
   onBatchTranslate,
   onBatchSetModule,
   onBatchSetTags,
+  onBatchSetStatus,
   isBatchTranslating = false,
+  isBatchSettingStatus = false,
+  aiConfigured = false,
 }: TokenTableProps) {
   const t = useTranslations("tokenTable");
+  const tStatus = useTranslations("project.status");
   const [previewImages, setPreviewImages] = useState<{
     urls: string[];
     currentIndex: number;
@@ -89,6 +97,13 @@ export function TokenTable({
   const [isBatchTagDialogOpen, setIsBatchTagDialogOpen] = useState(false);
   const [batchTagTargetTokens, setBatchTagTargetTokens] = useState<Token[]>([]);
   const [batchTagInput, setBatchTagInput] = useState<string>("");
+
+  const [isBatchStatusDialogOpen, setIsBatchStatusDialogOpen] = useState(false);
+  const [batchStatusTargetTokens, setBatchStatusTargetTokens] = useState<Token[]>([]);
+  const [batchSelectedStatus, setBatchSelectedStatus] = useState<
+    TranslationStatus
+  >("approved");
+  const [batchSelectedLanguages, setBatchSelectedLanguages] = useState<string[]>([]);
 
   const getLocalizedLanguageName = (langCode: string): string =>
     formatLanguageDisplay(langCode, languageLabels);
@@ -142,9 +157,10 @@ export function TokenTable({
         onDelete,
         onPreviewImages: handlePreviewImages,
         t,
+        aiConfigured,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languages, modules, tokens]
+    [languages, modules, tokens, aiConfigured]
   );
 
   const { table } = useDataTable({
@@ -294,6 +310,103 @@ export function TokenTable({
         </DialogContent>
       </Dialog>
 
+      {/* Batch set status dialog */}
+      <Dialog
+        open={isBatchStatusDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsBatchStatusDialogOpen(false);
+            setBatchStatusTargetTokens([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量设置状态</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              已选择 {batchStatusTargetTokens.length} 个词条。
+            </p>
+
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-1.5">状态</div>
+              <Select
+                value={batchSelectedStatus}
+                onValueChange={(v) => setBatchSelectedStatus(v as TranslationStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSLATION_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {tStatus(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                应用到语言（默认全选）
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {languages.map((lang) => {
+                  const checked = batchSelectedLanguages.includes(lang);
+                  return (
+                    <label
+                      key={lang}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-border cursor-pointer hover:bg-muted text-xs"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          setBatchSelectedLanguages((prev) =>
+                            v
+                              ? Array.from(new Set([...prev, lang]))
+                              : prev.filter((l) => l !== lang),
+                          );
+                        }}
+                      />
+                      {getLocalizedLanguageName(lang)}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsBatchStatusDialogOpen(false);
+                  setBatchStatusTargetTokens([]);
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                disabled={batchSelectedLanguages.length === 0 || isBatchSettingStatus}
+                onClick={async () => {
+                  if (!onBatchSetStatus) return;
+                  await onBatchSetStatus(
+                    batchStatusTargetTokens,
+                    batchSelectedLanguages,
+                    batchSelectedStatus,
+                  );
+                  setIsBatchStatusDialogOpen(false);
+                  setBatchStatusTargetTokens([]);
+                }}
+              >
+                {isBatchSettingStatus ? "应用中..." : "确认应用"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Image preview dialog */}
       <Dialog open={!!previewImages} onOpenChange={(open) => !open && setPreviewImages(null)}>
         <DialogContent className="max-w-4xl w-full">
@@ -399,6 +512,26 @@ export function TokenTable({
                     disabled={isBatchTranslating || !hasSelection}
                   >
                     <TagIcon />
+                  </DataTableActionBarAction>
+                )}
+                {onBatchSetStatus && (
+                  <DataTableActionBarAction
+                    size="icon"
+                    tooltip="批量设置状态"
+                    onClick={() => {
+                      const selectedTokens = table
+                        .getFilteredSelectedRowModel()
+                        .rows.map((row) => getToken(row.id)!)
+                        .filter(Boolean);
+                      if (selectedTokens.length === 0) return;
+                      setBatchStatusTargetTokens(selectedTokens);
+                      setBatchSelectedStatus("approved");
+                      setBatchSelectedLanguages(languages);
+                      setIsBatchStatusDialogOpen(true);
+                    }}
+                    disabled={isBatchTranslating || isBatchSettingStatus || !hasSelection}
+                  >
+                    <CheckCircle2 className={isBatchSettingStatus ? "animate-pulse" : ""} />
                   </DataTableActionBarAction>
                 )}
                 <AlertDialog>
