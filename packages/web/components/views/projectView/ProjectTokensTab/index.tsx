@@ -6,9 +6,16 @@ import { TokenTable } from "./TokenTable";
 import { BatchAddDialog } from "./BatchAddDialog";
 import { TokenToolbar } from "./TokenToolbar";
 import { useTokensManager } from "./useTokensManager";
-import { Plus, FileText } from "lucide-react";
+import { useTokenKeyboardShortcuts } from "./useTokenKeyboardShortcuts";
+import { Plus, FileText, Keyboard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ProjectTokensTabProps {
   project: Project | null;
@@ -17,6 +24,8 @@ interface ProjectTokensTabProps {
 export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
   const t = useTranslations("projectTokens");
   const mgr = useTokensManager(project);
+  const { searchInputRef, cheatsheetOpen, setCheatsheetOpen } =
+    useTokenKeyboardShortcuts({ disabled: mgr.isDrawerOpen });
 
   return (
     <div className="bg-card rounded-lg">
@@ -89,6 +98,43 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         </div>
       )}
 
+      <div className="flex justify-end -mb-2 pr-1">
+        <button
+          type="button"
+          onClick={() => setCheatsheetOpen(true)}
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          title="键盘快捷键"
+        >
+          <Keyboard className="w-3 h-3" />
+          ?
+        </button>
+      </div>
+
+      <Dialog open={cheatsheetOpen} onOpenChange={setCheatsheetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>键盘快捷键</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">聚焦搜索框</span>
+              <kbd className="px-2 py-0.5 rounded border border-border bg-muted/40 font-mono text-xs">/</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">显示/隐藏快捷键面板</span>
+              <kbd className="px-2 py-0.5 rounded border border-border bg-muted/40 font-mono text-xs">?</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">关闭面板</span>
+              <kbd className="px-2 py-0.5 rounded border border-border bg-muted/40 font-mono text-xs">Esc</kbd>
+            </div>
+            <p className="pt-2 text-xs text-muted-foreground">
+              输入框 / 编辑抽屉打开时快捷键自动禁用，避免与文字输入冲突。
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <TokenTable
         tokens={mgr.tokens}
         totalPages={mgr.totalPages}
@@ -101,12 +147,16 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
         onDeleteSelected={mgr.handleDeleteSelected}
         onBatchSetModule={mgr.handleBatchSetModule}
         onBatchSetTags={mgr.handleBatchSetTags}
+        onBatchSetStatus={mgr.handleBatchSetStatus}
         onBatchTranslate={mgr.aiConfigured ? mgr.handleBatchTranslateSelected : undefined}
         isBatchTranslating={mgr.isBatchTranslating || mgr.isBatchSettingModule}
+        isBatchSettingStatus={mgr.isBatchSettingStatus}
+        aiConfigured={mgr.aiConfigured}
         toolBar={
           <TokenToolbar
             searchTerm={mgr.searchTerm}
             onSearchChange={mgr.handleSearchChange}
+            searchInputRef={searchInputRef}
             selectedStatus={mgr.selectedStatus}
             onStatusChange={mgr.setSelectedStatus}
             selectedModule={mgr.selectedModule}
@@ -115,6 +165,8 @@ export function ProjectTokensTab({ project }: ProjectTokensTabProps) {
             onTagChange={mgr.handleTagChange}
             modules={project?.modules || []}
             allTags={mgr.allTags}
+            presets={mgr.presets}
+            onTogglePreset={mgr.togglePreset}
           />
         }
       />

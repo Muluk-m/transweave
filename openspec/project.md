@@ -11,11 +11,12 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 
 ### Backend (packages/server)
 - **框架**: NestJS 11.x
-- **数据库**: MongoDB + Mongoose 8.x (副本集模式)
+- **数据库**: PostgreSQL（生产）/ PGlite（本地开发，`DATABASE_URL` 未设置时自动启用）
+- **ORM**: Drizzle ORM + drizzle-kit
 - **认证**: JWT + Passport
 - **运行时**: Node.js + TypeScript 5.x
 - **HTTP 客户端**: Axios
-- **其他**: dotenv, jszip, uuid
+- **其他**: dotenv, jszip, uuid, @modelcontextprotocol/sdk
 
 ### Frontend (packages/web)
 - **框架**: Next.js 15.2 + React 19
@@ -30,7 +31,7 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 
 ### 基础设施
 - **容器化**: Docker + Docker Compose
-- **数据库部署**: MongoDB 副本集 (需要 keyfile 认证)
+- **数据库部署**: PostgreSQL（容器或外部托管）；本地开发可零配置使用 PGlite 嵌入式数据库
 
 ## Project Conventions
 
@@ -48,11 +49,11 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 ### Architecture Patterns
 - **Monorepo**: pnpm workspace 管理多包
 - **Backend**: NestJS 模块化架构
-  - Controller → Service → Schema 分层
-  - Mongoose 作为 ODM
+  - Controller → Service → Repository 分层（Drizzle 作为 ORM，schema 定义在 `db/schema/`）
   - JWT 认证守卫
   - 请求 ID 中间件
   - 日志拦截器
+  - 全局异常过滤器统一错误响应
 - **Frontend**: Next.js App Router
   - Server Components + Client Components
   - API 路由统一管理在 `api/` 目录
@@ -97,7 +98,7 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 ## Important Constraints
 
 ### 技术限制
-- MongoDB 必须以副本集模式运行 (用于事务支持)
+- 生产环境需 PostgreSQL 14+；本地开发 PGlite 嵌入式数据库零配置
 - Node.js 版本必须 >= 18.18.0
 - 使用 pnpm 而非 npm/yarn
 
@@ -108,8 +109,9 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 
 ### 安全要求
 - API 端点需 JWT 认证
-- MongoDB 使用 keyfile 认证
+- 数据库连接通过 `DATABASE_URL` 配置（含密码），生产环境强制使用 TLS
 - 敏感配置通过环境变量管理
+- 限流：100 req/60s（NestJS Throttler）
 
 ## External Dependencies
 
@@ -118,7 +120,7 @@ Transweave 是一个多语言资源管理平台,帮助开发团队高效地管�
 - **AI 服务**: 用于生成翻译 key (具体 API 待确认)
 
 ### 开发依赖
-- **MongoDB**: 副本集部署,需配置 `conf/mongo-keyfile`
+- **PostgreSQL** 或 **PGlite**：生产用 PostgreSQL，本地开发 `DATABASE_URL` 未设置时自动使用 PGlite
 - **Docker**: 用于本地开发环境
 
 ### API 集成

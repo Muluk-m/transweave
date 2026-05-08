@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import { Token } from "@/jotai/types";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Pencil, Trash2 } from "lucide-react";
+import { Bot, Check, Copy, Pencil, Trash2 } from "lucide-react";
+import { useSetAtom } from "jotai";
+import { agentChatTokenContextAtom } from "@/jotai";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { TokenStatusBadge } from "./TokenStatusBadge";
 
 // --- Reusable cell components ---
 
@@ -163,14 +166,37 @@ export function ActionsCell({
   onEdit,
   onDelete,
   t,
+  aiConfigured,
 }: {
   token: Token;
   onEdit: (token: Token) => void;
   onDelete: (tokenId: string) => void;
   t: (key: string) => string;
+  aiConfigured?: boolean;
 }) {
+  const setAgentContext = useSetAtom(agentChatTokenContextAtom);
   return (
     <div className="flex items-center space-x-2">
+      {aiConfigured && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setAgentContext({
+              tokenId: token.id,
+              key: token.key,
+              module: token.module || undefined,
+              translations: token.translations || {},
+              screenshots: token.screenshots || [],
+              nonce: Date.now(),
+            });
+          }}
+          className="p-1"
+          title="询问 AI"
+        >
+          <Bot size={16} className="text-primary" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -218,6 +244,7 @@ interface CreateColumnsOptions {
   onDelete: (tokenId: string) => void;
   onPreviewImages: (screenshots: string[]) => void;
   t: (key: string) => string;
+  aiConfigured?: boolean;
 }
 
 export function createColumns({
@@ -229,6 +256,7 @@ export function createColumns({
   onDelete,
   onPreviewImages,
   t,
+  aiConfigured,
 }: CreateColumnsOptions): ColumnDef<Token>[] {
   return [
     {
@@ -319,13 +347,23 @@ export function createColumns({
           title={getLocalizedLanguageName(lang)}
         />
       ),
-      cell: ({ row }) => (
-        <div className="line-clamp-2 text-foreground">
-          <TipsCopyableCell value={row.original.translations?.[lang]}>
-            <span>{row.original.translations?.[lang]}</span>
-          </TipsCopyableCell>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const translation = row.original.translations?.[lang];
+        if (!translation) {
+          return <span className="text-muted-foreground text-sm">-</span>;
+        }
+        const status = row.original.translationStatus?.[lang];
+        return (
+          <div className="flex items-start gap-2">
+            <div className="line-clamp-2 text-foreground flex-1 min-w-0">
+              <TipsCopyableCell value={translation}>
+                <span>{translation}</span>
+              </TipsCopyableCell>
+            </div>
+            {status && <TokenStatusBadge status={status} className="shrink-0 mt-0.5" />}
+          </div>
+        );
+      },
       meta: {
         label: getLocalizedLanguageName(lang),
         icon: Text,
@@ -373,10 +411,16 @@ export function createColumns({
         const token = getToken(row.id);
         if (!token) return null;
         return (
-          <ActionsCell token={token} onEdit={onEdit} onDelete={onDelete} t={t} />
+          <ActionsCell
+            token={token}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            t={t}
+            aiConfigured={aiConfigured}
+          />
         );
       },
-      size: 100,
+      size: 130,
     },
   ] as ColumnDef<Token>[];
 }

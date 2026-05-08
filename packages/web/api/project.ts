@@ -82,6 +82,7 @@ export async function searchTokens(projectId: string, options?: {
   perPage?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  presets?: string[];
 }): Promise<{
   tokens: Token[];
   total: number;
@@ -99,6 +100,7 @@ export async function searchTokens(projectId: string, options?: {
   if (options?.perPage) params.append('perPage', options.perPage.toString());
   if (options?.sortBy) params.append('sortBy', options.sortBy);
   if (options?.sortOrder) params.append('sortOrder', options.sortOrder);
+  if (options?.presets?.length) params.append('presets', options.presets.join(','));
   const qs = params.toString();
   return apiClient.get(`${TOKEN_API_BASE}/${projectId}/search${qs ? `?${qs}` : ''}`);
 }
@@ -155,11 +157,16 @@ export async function restoreTokenVersion(tokenId: string, historyId: string): P
   return apiClient.post(`${TOKEN_API_BASE}/${tokenId}/restore/${historyId}`, {});
 }
 
-// Bulk operation (delete, set-tags, set-module)
+// Bulk operation (delete, set-tags, set-module, set-status)
 export async function bulkTokenOperation(
   tokenIds: string[],
-  operation: 'delete' | 'set-tags' | 'set-module',
-  payload?: { tags?: string[]; module?: string | null },
+  operation: 'delete' | 'set-tags' | 'set-module' | 'set-status',
+  payload?: {
+    tags?: string[];
+    module?: string | null;
+    languages?: string[];
+    status?: import('@/jotai/types').TranslationStatus;
+  },
 ): Promise<any> {
   return apiClient.post(`${TOKEN_API_BASE}/bulk`, { tokenIds, operation, payload });
 }

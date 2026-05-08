@@ -114,6 +114,21 @@ export async function generateTokenKeyWithAi(
 }
 
 /**
+ * Tone-adjust an existing translation, returning up to 3 candidates.
+ */
+export type Tone = 'formal' | 'casual' | 'shorter' | 'rephrase' | 'polish' | 'custom';
+
+export async function adjustTone(params: {
+  projectId: string;
+  currentTranslation: string;
+  targetLang: string;
+  tone: Tone;
+  customInstruction?: string;
+}): Promise<{ candidates: string[] }> {
+  return apiClient.post<{ candidates: string[] }>(`${API_BASE}/tone-adjust`, params);
+}
+
+/**
  * Get AI configuration status for a project (resolves fallback chain)
  */
 export async function getAiConfigStatus(

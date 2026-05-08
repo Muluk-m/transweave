@@ -14,6 +14,12 @@ export const glossaryEntries = pgTable(
     description: text('description'),
     caseSensitive: boolean('case_sensitive').default(false).notNull(),
     doNotTranslate: boolean('do_not_translate').default(false).notNull(),
+    /**
+     * When true, creating this entry (or adding a new language to its scope)
+     * backfills empty translation slots for every configured language. This
+     * keeps terminology consistent across languages for translators to fill in.
+     */
+    autoSyncToAllLanguages: boolean('auto_sync_to_all_languages').default(false).notNull(),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

@@ -46,6 +46,7 @@ import { TranslationMemoryService } from './service/translation-memory.service';
 import { TranslationMemoryRepository } from './repository/translation-memory.repository';
 import { TranslationMemoryController } from './controller/translation-memory.controller';
 import { HealthModule } from './health/health.module';
+import { LintController } from './controller/lint.controller';
 import { requireEnv } from './config/env';
 
 @Module({
@@ -79,6 +80,7 @@ import { requireEnv } from './config/env';
     BadgeController,
     GlossaryController,
     TranslationMemoryController,
+    LintController,
   ],
   providers: [
     AppService,

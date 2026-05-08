@@ -11,4 +11,5 @@ export * from './glossary';
 export * from './translation-memory';
 export * from './webhooks';
 export * from './agent-sessions';
+export * from './ai-prompt-templates';
 export * from './relations';

@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 interface TokenToolbarProps {
   searchTerm: string;
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  searchInputRef?: React.Ref<HTMLInputElement>;
   selectedStatus: string;
   onStatusChange: (value: string) => void;
   selectedModule: string | null;
@@ -20,11 +21,18 @@ interface TokenToolbarProps {
   onTagChange: (tag: string) => void;
   modules: Array<{ code: string; description?: string }>;
   allTags: string[];
+  presets?: string[];
+  onTogglePreset?: (preset: string) => void;
 }
+
+const AVAILABLE_PRESETS: Array<{ id: string; label: string }> = [
+  { id: "low-confidence", label: "低置信度" },
+];
 
 export function TokenToolbar({
   searchTerm,
   onSearchChange,
+  searchInputRef,
   selectedStatus,
   onStatusChange,
   selectedModule,
@@ -33,13 +41,17 @@ export function TokenToolbar({
   onTagChange,
   modules,
   allTags,
+  presets = [],
+  onTogglePreset,
 }: TokenToolbarProps) {
   const t = useTranslations("projectTokens");
 
   return (
-    <div className="flex gap-2 items-center justify-between w-full">
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex gap-2 items-center justify-between w-full">
       <div className="flex-1">
         <Input
+          ref={searchInputRef}
           className="w-[400px]"
           placeholder={t("searchPlaceholder")}
           value={searchTerm}
@@ -93,6 +105,28 @@ export function TokenToolbar({
           </SelectContent>
         </Select>
       </div>
+      </div>
+      {onTogglePreset && (
+        <div className="flex flex-wrap gap-1.5">
+          {AVAILABLE_PRESETS.map((preset) => {
+            const active = presets.includes(preset.id);
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onTogglePreset(preset.id)}
+                className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${
+                  active
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

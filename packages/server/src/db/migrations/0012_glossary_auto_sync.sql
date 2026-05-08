@@ -1,0 +1,1 @@
+ALTER TABLE "glossary_entries" ADD COLUMN "auto_sync_to_all_languages" boolean DEFAULT false NOT NULL;

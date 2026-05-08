@@ -11,6 +11,13 @@ export function useTokenFilters(projectId: string | undefined) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [presets, setPresets] = useState<string[]>([]);
+
+  const togglePreset = useCallback((preset: string) => {
+    setPresets((prev) =>
+      prev.includes(preset) ? prev.filter((p) => p !== preset) : [...prev, preset],
+    );
+  }, []);
 
   const fetchTags = useCallback(async () => {
     if (!projectId) return;
@@ -57,6 +64,8 @@ export function useTokenFilters(projectId: string | undefined) {
     searchTerm,
     allTags,
     debouncedSearch,
+    presets,
+    togglePreset,
     fetchTags,
     handleTagChange,
     handleSearchChange,

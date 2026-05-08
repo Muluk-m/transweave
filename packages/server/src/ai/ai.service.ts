@@ -17,6 +17,13 @@ import {
 } from './providers/provider-factory';
 import { buildKeyGenerationPrompt } from './providers/prompt';
 import type { ResolvedGlossaryTerm } from '../service/glossary.service';
+import { AiPromptTemplateService } from '../service/ai-prompt-template.service';
+import {
+  renderTemplate,
+  renderGlossarySection,
+  renderTmSection,
+  renderOutputFormat,
+} from './prompts/render';
 
 @Injectable()
 export class AiService {
@@ -28,7 +35,29 @@ export class AiService {
     private readonly teamRepository: TeamRepository,
     private readonly glossaryService: GlossaryService,
     private readonly translationMemoryService: TranslationMemoryService,
+    private readonly promptTemplateService: AiPromptTemplateService,
   ) {}
+
+  private renderTranslatePrompt(
+    resolved: { body: string; templateId?: string; kind: string },
+    text: string,
+    from: string,
+    to: string[],
+    context: TranslationContext | undefined,
+  ): string {
+    return renderTemplate(
+      resolved.body,
+      {
+        sourceText: text,
+        sourceLang: from,
+        targetLangs: to.join(', '),
+        glossarySection: renderGlossarySection(context?.glossaryTerms ?? [], to),
+        tmSection: renderTmSection(context?.tmMatches ?? []),
+        outputFormat: renderOutputFormat(to),
+      },
+      { templateId: resolved.templateId, kind: resolved.kind },
+    );
+  }
 
   async resolveProviderConfig(
     projectId: string,
@@ -122,27 +151,38 @@ export class AiService {
       this.logger.warn(`Failed to load glossary/TM context: ${err}`);
     }
 
+    let promptOverride: string | undefined;
+    if (isLLMProvider(config.provider)) {
+      try {
+        const resolved = await this.promptTemplateService.resolve(params.projectId, 'translate');
+        promptOverride = this.renderTranslatePrompt(
+          resolved,
+          params.text,
+          params.from,
+          params.to,
+          context,
+        );
+      } catch (err) {
+        this.logger.warn(`Falling back to legacy prompt: ${err}`);
+      }
+    }
+
+    const callArgs = {
+      text: params.text,
+      from: params.from,
+      to: params.to,
+      context,
+      promptOverride,
+    };
+
     try {
-      const result = await provider.translate({
-        text: params.text,
-        from: params.from,
-        to: params.to,
-        context,
-      });
-      return result;
+      return await provider.translate(callArgs);
     } catch (error) {
-      // For LLM providers, retry once on failure (JSON parse errors etc.)
       if (isLLMProvider(config.provider)) {
         this.logger.warn(
           `Translation failed with ${config.provider}, retrying once: ${error}`,
         );
-        const retryResult = await provider.translate({
-          text: params.text,
-          from: params.from,
-          to: params.to,
-          context,
-        });
-        return retryResult;
+        return provider.translate(callArgs);
       }
       throw error;
     }
@@ -176,24 +216,65 @@ export class AiService {
     let completed = 0;
     let failed = 0;
 
-    // Pre-resolve glossary once for the whole batch
+    const project = await this.projectRepository.findById(params.projectId).catch(() => null);
+
     let glossaryTerms: ResolvedGlossaryTerm[] | undefined;
-    try {
-      const project = await this.projectRepository.findById(params.projectId);
-      if (project) {
-        const allTerms = await this.glossaryService.resolveForProject(
-          params.projectId,
-          project.teamId,
-        );
-        if (allTerms.length > 0) {
-          glossaryTerms = allTerms;
-        }
-      }
-    } catch (err) {
-      this.logger.warn(`Failed to load glossary context for batch: ${err}`);
+    if (project) {
+      const allTerms = await this.glossaryService
+        .resolveForProject(params.projectId, project.teamId)
+        .catch((err) => {
+          this.logger.warn(`Failed to load glossary context for batch: ${err}`);
+          return [] as ResolvedGlossaryTerm[];
+        });
+      if (allTerms.length > 0) glossaryTerms = allTerms;
     }
 
-    // Use a shared results queue for yielding
+    // Pre-fetch TM matches concurrently. One query per (token, lang) — call
+    // sites limited by the batch's existing 5-way concurrency on translate.
+    const tmCache = new Map<string, TranslationContext['tmMatches']>();
+    if (project?.defaultLang) {
+      await Promise.all(
+        params.tokens.map(async (token) => {
+          const matches = (
+            await Promise.all(
+              token.to.map((lang) =>
+                this.translationMemoryService
+                  .querySuggestions({
+                    projectId: params.projectId,
+                    sourceText: token.text,
+                    sourceLanguage: token.from,
+                    targetLanguage: lang,
+                    minSimilarity: 80,
+                    maxResults: 3,
+                  })
+                  .catch(() => [])
+                  .then((rows: any[]) =>
+                    rows.map((m) => ({
+                      sourceText: m.sourceText,
+                      targetText: m.targetText,
+                      targetLanguage: m.targetLanguage || lang,
+                      similarity: m.similarity,
+                    })),
+                  ),
+              ),
+            )
+          ).flat();
+          if (matches.length > 0) tmCache.set(token.id, matches);
+        }),
+      );
+    }
+
+    // Resolve the batch template once for the whole batch (LLM providers only).
+    const isLLM = isLLMProvider(config.provider);
+    const resolvedTemplate = isLLM
+      ? await this.promptTemplateService
+          .resolve(params.projectId, 'translate_batch')
+          .catch((err) => {
+            this.logger.warn(`Falling back to legacy prompt for batch: ${err}`);
+            return null;
+          })
+      : null;
+
     const results: Array<{
       type: 'progress' | 'result' | 'error';
       tokenId?: string;
@@ -208,15 +289,28 @@ export class AiService {
     const tasks = params.tokens.map((token) =>
       limit(async () => {
         try {
-          // Build per-token context (TM is text-specific)
-          let context: TranslationContext | undefined;
           const matchingTerms = glossaryTerms
             ? this.glossaryService.filterMatchingTerms(glossaryTerms, token.text)
             : [];
+          const tmMatches = tmCache.get(token.id) ?? [];
 
-          if (matchingTerms.length > 0) {
-            context = { glossaryTerms: matchingTerms };
-          }
+          const context: TranslationContext | undefined =
+            matchingTerms.length > 0 || tmMatches.length > 0
+              ? {
+                  glossaryTerms: matchingTerms.length > 0 ? matchingTerms : undefined,
+                  tmMatches: tmMatches.length > 0 ? tmMatches : undefined,
+                }
+              : undefined;
+
+          const promptOverride = resolvedTemplate
+            ? this.renderTranslatePrompt(
+                resolvedTemplate,
+                token.text,
+                token.from,
+                token.to,
+                context,
+              )
+            : undefined;
 
           const provider = createTranslationProvider(config);
           const result = await provider.translate({
@@ -224,6 +318,7 @@ export class AiService {
             from: token.from,
             to: token.to,
             context,
+            promptOverride,
           });
 
           completed++;
@@ -261,6 +356,68 @@ export class AiService {
     }
 
     yield { type: 'done', completed, total, failed };
+  }
+
+  /**
+   * Generate 3 candidate rewrites of an existing translation in a different
+   * tone. Uses the `tone_adjust` prompt kind via the cascade resolver.
+   */
+  async adjustTone(params: {
+    projectId: string;
+    currentTranslation: string;
+    targetLang: string;
+    tone: 'formal' | 'casual' | 'shorter' | 'rephrase' | 'polish' | 'custom';
+    customInstruction?: string;
+  }): Promise<{ candidates: string[] }> {
+    const config = await this.resolveProviderConfig(params.projectId);
+    if (!config) {
+      throw new HttpException(
+        'No AI provider configured. Configure one in team or project settings.',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+    if (!isLLMProvider(config.provider)) {
+      throw new HttpException(
+        'Tone adjustment requires an LLM provider (OpenAI / Claude / Gemini / Deepseek)',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const resolved = await this.promptTemplateService.resolve(
+      params.projectId,
+      'tone_adjust',
+    );
+
+    const prompt = renderTemplate(
+      resolved.body,
+      {
+        sourceText: params.currentTranslation,
+        targetLang: params.targetLang,
+        toneStyle: params.tone,
+        customInstruction: params.customInstruction
+          ? `Additional instruction: ${params.customInstruction}`
+          : '',
+      },
+      { templateId: resolved.templateId, kind: 'tone_adjust' },
+    );
+
+    const provider = createTranslationProvider(config);
+    const raw = await (provider as any).generateText(prompt);
+
+    // Parse the expected `{ "candidates": [...] }` JSON.
+    let parsed: any;
+    try {
+      const cleaned = raw.replace(/```json\s*|```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Fallback: treat the raw text as a single candidate.
+      return { candidates: [raw.trim()] };
+    }
+    const candidates = Array.isArray(parsed.candidates) ? parsed.candidates : [];
+    if (candidates.length === 0) {
+      return { candidates: [raw.trim()] };
+    }
+    return { candidates: candidates.slice(0, 3).map(String) };
   }
 
   async generateTokenKey(params: {

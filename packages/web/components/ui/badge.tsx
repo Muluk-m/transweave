@@ -15,6 +15,18 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Translation-status variants — colours track DESIGN.md semantic palette
+        // at 8-10% opacity background per the badge convention.
+        "status-draft":
+          "border-border/60 bg-muted/40 text-muted-foreground",
+        "status-translated":
+          "border-sky-500/20 bg-sky-500/10 text-sky-500",
+        "status-reviewed":
+          "border-yellow-500/20 bg-yellow-500/10 text-yellow-500",
+        "status-approved":
+          "border-green-500/20 bg-green-500/10 text-green-500",
+        "status-rejected":
+          "border-red-500/20 bg-red-500/10 text-red-500",
       },
     },
     defaultVariants: {
