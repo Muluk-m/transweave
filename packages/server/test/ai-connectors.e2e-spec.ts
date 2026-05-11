@@ -17,6 +17,7 @@ class SilentLogger implements LoggerService {
 
 describe('AiConnectors (e2e)', () => {
   let app: INestApplication<App>;
+  let moduleFixture: TestingModule;
   let ownerToken: string;
   let memberToken: string;
   let teamId: string;
@@ -34,7 +35,7 @@ describe('AiConnectors (e2e)', () => {
     // Dynamic import so env vars are set before module evaluation
     const { AppModule } = await import('../src/app.module');
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
       .setLogger(new SilentLogger())
@@ -366,6 +367,60 @@ describe('AiConnectors (e2e)', () => {
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(200);
       expect(resolveRes.body.configured).toBe(false);
+    });
+  });
+
+  describe('legacy /api/ai/config compatibility', () => {
+    // The legacy PUT /api/ai/config/team/:teamId calls validateApiKey() which
+    // would make a real network call to the upstream provider. We spy on the
+    // private method to bypass that in e2e tests, while still exercising the
+    // rest of the upsert-without-delete-siblings logic.
+    let validateSpy: jest.SpyInstance;
+
+    beforeAll(async () => {
+      const { AiConfigService } = await import('../src/ai/ai-config.service');
+      const aiConfigService = moduleFixture.get<InstanceType<typeof AiConfigService>>(AiConfigService);
+      // Cast to any to access the private method for spying
+      validateSpy = jest
+        .spyOn(aiConfigService as any, 'validateApiKey')
+        .mockResolvedValue(undefined);
+    });
+
+    afterAll(() => {
+      validateSpy?.mockRestore();
+    });
+
+    it('upserts Default connector without deleting siblings', async () => {
+      // 1. add Sibling connector via new endpoint (no validation, just encrypts)
+      await request(app.getHttpServer())
+        .post('/api/ai/connectors')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          scope: 'team',
+          teamId,
+          displayName: 'Sibling',
+          provider: 'claude',
+          apiKey: 'sk-ant-x',
+          enabledModels: [{ modelId: 'claude-sonnet-4-6', addedManually: false }],
+        })
+        .expect(201);
+
+      // 2. legacy PUT (validateApiKey is spied to resolve immediately, skipping real upstream call)
+      await request(app.getHttpServer())
+        .put(`/api/ai/config/team/${teamId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ provider: 'openai', apiKey: 'sk-test', model: 'gpt-5.5' })
+        .expect(200);
+
+      // 3. assert: both Default and Sibling connectors are present (siblings not deleted)
+      const res = await request(app.getHttpServer())
+        .get(`/api/ai/connectors?teamId=${teamId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const names: string[] = res.body.map((c: any) => c.displayName).sort();
+      expect(names).toContain('Default');
+      expect(names).toContain('Sibling');
     });
   });
 });
