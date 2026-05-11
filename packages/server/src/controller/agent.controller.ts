@@ -29,6 +29,8 @@ export class AgentController {
         role: 'user' | 'assistant';
         content: string;
       }>;
+      connectorId?: string;
+      model?: string;
     },
     @CurrentUser() user: UserPayload,
     @Res() res: Response,
@@ -45,6 +47,7 @@ export class AgentController {
         sessionId: data.sessionId,
         history: data.history,
         userId: user.userId,
+        options: { connectorId: data.connectorId, model: data.model },
       })) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
       }

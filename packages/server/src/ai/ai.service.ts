@@ -85,21 +85,6 @@ export class AiService {
     }
   }
 
-  /**
-   * @deprecated Use resolveActiveConfig internally. Kept for backward-compat
-   * until agent.service.ts is migrated (Task 11).
-   */
-  async resolveProviderConfig(projectId: string): Promise<ProviderConfig | null> {
-    try {
-      return await this.resolveActiveConfig(projectId);
-    } catch (err) {
-      if (err instanceof HttpException && err.getStatus() === HttpStatus.SERVICE_UNAVAILABLE) {
-        return null;
-      }
-      throw err;
-    }
-  }
-
   async translate(params: {
     text: string;
     from: string;
