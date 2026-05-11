@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ProjectRepository } from '../repository/project.repository';
 import { TeamRepository } from '../repository/team.repository';
+import { AiConnectorRepository } from '../repository/ai-connector.repository';
 import type {
   AiConfigDto,
   AiConfigStored,
@@ -15,6 +16,7 @@ import {
   createTranslationProvider,
   isLLMProvider,
 } from './providers/provider-factory';
+import type { EnabledModel } from '../db/schema/ai-connectors';
 
 @Injectable()
 export class AiConfigService {
@@ -23,16 +25,23 @@ export class AiConfigService {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly teamRepository: TeamRepository,
+    private readonly connectorRepo: AiConnectorRepository,
   ) {}
 
   async getTeamConfig(teamId: string): Promise<AiConfigStored | null> {
     const team = await this.teamRepository.findById(teamId);
-    return (team?.aiConfig as AiConfigStored) ?? null;
+    if (!team?.defaultConnectorId) return null;
+    const c = await this.connectorRepo.findById(team.defaultConnectorId);
+    if (!c) return null;
+    return {
+      provider: c.provider as any,
+      apiKey: c.apiKey,
+      model: team.defaultModel ?? undefined,
+      baseUrl: c.baseUrl ?? undefined,
+    };
   }
 
-  private async validateAndEncrypt(
-    config: AiConfigDto,
-  ): Promise<AiConfigStored> {
+  private async validateApiKey(config: AiConfigDto): Promise<void> {
     const provider = createTranslationProvider({
       provider: config.provider,
       apiKey: config.apiKey,
@@ -54,17 +63,24 @@ export class AiConfigService {
         'Failed to validate API key. Please check your key and try again.',
       );
     }
+  }
 
-    let encryptedKey: string;
+  private encryptKey(apiKey: string): string {
     try {
-      encryptedKey = encryptApiKey(config.apiKey);
+      return encryptApiKey(apiKey);
     } catch (error) {
       this.logger.error(`API key encryption failed: ${error.message}`);
       throw new InternalServerErrorException(
         'AI_ENCRYPTION_KEY is not configured on the server. Please contact your administrator.',
       );
     }
+  }
 
+  private async validateAndEncrypt(
+    config: AiConfigDto,
+  ): Promise<AiConfigStored> {
+    await this.validateApiKey(config);
+    const encryptedKey = this.encryptKey(config.apiKey);
     return {
       provider: config.provider,
       apiKey: encryptedKey,
@@ -73,9 +89,50 @@ export class AiConfigService {
     };
   }
 
+  private upsertModelIntoList(list: EnabledModel[], model?: string): EnabledModel[] {
+    if (!model) return list;
+    if (list.some((m) => m.modelId === model)) return list;
+    return [...list, { modelId: model, addedManually: true }];
+  }
+
   async setTeamConfig(teamId: string, config: AiConfigDto): Promise<void> {
-    const stored = await this.validateAndEncrypt(config);
-    await this.teamRepository.update(teamId, { aiConfig: stored } as any);
+    await this.validateApiKey(config);
+    const encryptedKey = this.encryptKey(config.apiKey);
+
+    const existing = await this.connectorRepo.findDefaultForTeam(teamId);
+    let connectorId: string;
+
+    if (existing) {
+      const updatedModels = this.upsertModelIntoList(
+        existing.enabledModels ?? [],
+        config.model,
+      );
+      await this.connectorRepo.update(existing.id, {
+        provider: config.provider,
+        apiKey: encryptedKey,
+        baseUrl: config.baseUrl ?? null,
+        enabledModels: updatedModels,
+      });
+      connectorId = existing.id;
+    } else {
+      const created = await this.connectorRepo.create({
+        scope: 'team',
+        teamId,
+        projectId: null,
+        displayName: 'Default',
+        provider: config.provider,
+        apiKey: encryptedKey,
+        baseUrl: config.baseUrl ?? null,
+        enabledModels: this.upsertModelIntoList([], config.model),
+      } as any);
+      connectorId = created.id;
+    }
+
+    await this.teamRepository.update(teamId, {
+      defaultConnectorId: connectorId,
+      defaultModel: config.model ?? null,
+    } as any);
+
     this.logger.log(
       `AI config set for team ${teamId}: provider=${config.provider}`,
     );
@@ -83,29 +140,81 @@ export class AiConfigService {
 
   async getProjectConfig(projectId: string): Promise<AiConfigStored | null> {
     const project = await this.projectRepository.findById(projectId);
-    return (project?.aiConfig as AiConfigStored) ?? null;
+    if (!project?.defaultConnectorId) return null;
+    const c = await this.connectorRepo.findById(project.defaultConnectorId);
+    if (!c) return null;
+    return {
+      provider: c.provider as any,
+      apiKey: c.apiKey,
+      model: project.defaultModel ?? undefined,
+      baseUrl: c.baseUrl ?? undefined,
+    };
   }
 
   async setProjectConfig(
     projectId: string,
     config: AiConfigDto,
   ): Promise<void> {
-    const stored = await this.validateAndEncrypt(config);
+    await this.validateApiKey(config);
+    const encryptedKey = this.encryptKey(config.apiKey);
+
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) {
+      throw new BadRequestException('Project not found');
+    }
+
+    const existing = await this.connectorRepo.findDefaultForProject(projectId);
+    let connectorId: string;
+
+    if (existing) {
+      const updatedModels = this.upsertModelIntoList(
+        existing.enabledModels ?? [],
+        config.model,
+      );
+      await this.connectorRepo.update(existing.id, {
+        provider: config.provider,
+        apiKey: encryptedKey,
+        baseUrl: config.baseUrl ?? null,
+        enabledModels: updatedModels,
+      });
+      connectorId = existing.id;
+    } else {
+      const created = await this.connectorRepo.create({
+        scope: 'project',
+        teamId: project.teamId,
+        projectId,
+        displayName: 'Default',
+        provider: config.provider,
+        apiKey: encryptedKey,
+        baseUrl: config.baseUrl ?? null,
+        enabledModels: this.upsertModelIntoList([], config.model),
+      } as any);
+      connectorId = created.id;
+    }
+
     await this.projectRepository.update(projectId, {
-      aiConfig: stored,
+      defaultConnectorId: connectorId,
+      defaultModel: config.model ?? null,
     } as any);
+
     this.logger.log(
       `AI config set for project ${projectId}: provider=${config.provider}`,
     );
   }
 
   async removeTeamConfig(teamId: string): Promise<void> {
-    await this.teamRepository.update(teamId, { aiConfig: null } as any);
+    await this.teamRepository.update(teamId, {
+      defaultConnectorId: null,
+      defaultModel: null,
+    } as any);
     this.logger.log(`AI config removed for team ${teamId}`);
   }
 
   async removeProjectConfig(projectId: string): Promise<void> {
-    await this.projectRepository.update(projectId, { aiConfig: null } as any);
+    await this.projectRepository.update(projectId, {
+      defaultConnectorId: null,
+      defaultModel: null,
+    } as any);
     this.logger.log(`AI config removed for project ${projectId}`);
   }
 
@@ -137,32 +246,36 @@ export class AiConfigService {
     level?: 'project' | 'team';
     keyHint?: string;
   }> {
-    // Check project-level config first
     const project = await this.projectRepository.findById(projectId);
     if (!project) {
       return { configured: false };
     }
 
-    const projectConfig = project.aiConfig as AiConfigStored | null;
-    if (projectConfig?.provider && projectConfig?.apiKey) {
-      return {
-        configured: true,
-        provider: projectConfig.provider,
-        level: 'project',
-        keyHint: maskApiKey(projectConfig.apiKey),
-      };
+    // Check project-level connector first
+    if (project.defaultConnectorId) {
+      const c = await this.connectorRepo.findById(project.defaultConnectorId);
+      if (c?.provider && c?.apiKey) {
+        return {
+          configured: true,
+          provider: c.provider,
+          level: 'project',
+          keyHint: maskApiKey(c.apiKey),
+        };
+      }
     }
 
-    // Fall back to team-level config
+    // Fall back to team-level connector
     const team = await this.teamRepository.findById(project.teamId);
-    const teamConfig = (team?.aiConfig as AiConfigStored) ?? null;
-    if (teamConfig?.provider && teamConfig?.apiKey) {
-      return {
-        configured: true,
-        provider: teamConfig.provider,
-        level: 'team',
-        keyHint: maskApiKey(teamConfig.apiKey),
-      };
+    if (team?.defaultConnectorId) {
+      const c = await this.connectorRepo.findById(team.defaultConnectorId);
+      if (c?.provider && c?.apiKey) {
+        return {
+          configured: true,
+          provider: c.provider,
+          level: 'team',
+          keyHint: maskApiKey(c.apiKey),
+        };
+      }
     }
 
     return { configured: false };

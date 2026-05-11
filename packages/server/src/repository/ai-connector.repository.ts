@@ -40,6 +40,36 @@ export class AiConnectorRepository extends BaseRepository<
       );
   }
 
+  async findDefaultForTeam(teamId: string): Promise<AiConnector | null> {
+    const [row] = await this.db
+      .select()
+      .from(aiConnectors)
+      .where(
+        and(
+          eq(aiConnectors.teamId, teamId),
+          eq(aiConnectors.scope, 'team'),
+          eq(aiConnectors.displayName, 'Default'),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
+  async findDefaultForProject(projectId: string): Promise<AiConnector | null> {
+    const [row] = await this.db
+      .select()
+      .from(aiConnectors)
+      .where(
+        and(
+          eq(aiConnectors.projectId, projectId),
+          eq(aiConnectors.scope, 'project'),
+          eq(aiConnectors.displayName, 'Default'),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
   override async update(id: string, data: Partial<NewAiConnector>): Promise<AiConnector | null> {
     const [row] = await this.db
       .update(aiConnectors)
