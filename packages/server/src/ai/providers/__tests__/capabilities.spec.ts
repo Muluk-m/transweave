@@ -24,7 +24,7 @@ describe('PROVIDER_CAPABILITIES', () => {
 
   it('LLM providers (toolCalling=true) all have a non-empty defaultModel or an empty recommendedModels (openai-compatible)', () => {
     for (const [provider, cap] of Object.entries(PROVIDER_CAPABILITIES)) {
-      if (cap.toolCalling && provider !== 'openai-compatible') {
+      if (cap.toolCalling && !cap.requiresBaseUrl) {
         expect(cap.defaultModel).not.toBe('');
         expect(cap.recommendedModels.length).toBeGreaterThan(0);
       }

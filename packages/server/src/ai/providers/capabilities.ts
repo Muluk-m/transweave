@@ -8,8 +8,8 @@ export interface ProviderCapability {
   defaultModel: string;
 }
 
-// Current model snapshot (2026-05). Re-check this table on every release
-// against vendor docs (also mirrored in /Users/qiqian/openclaw/docs/providers).
+// Current model snapshot (2026-05). Re-check this table against vendor docs
+// on every release (release checklist entry pending).
 export const PROVIDER_CAPABILITIES: Record<ProviderType, ProviderCapability> = {
   openai: {
     toolCalling: true,

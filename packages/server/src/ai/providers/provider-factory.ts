@@ -27,6 +27,8 @@ export function createTranslationProvider(
       if (!config.baseUrl) {
         throw new Error('openai-compatible provider requires baseUrl');
       }
+      // No sensible default model for openai-compatible; caller is expected to set one.
+      // Empty string surfaces as an upstream API error rather than a silent default.
       return new OpenAICompatibleProvider(
         config.apiKey,
         config.model ?? '',
