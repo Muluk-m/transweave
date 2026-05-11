@@ -17,7 +17,8 @@ import { AiConnectorRepository } from '../repository/ai-connector.repository';
 import { MembershipRepository } from '../repository/membership.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { CreateConnectorDto, UpdateConnectorDto } from './dto/ai-connector.dto';
-import { encryptApiKey, maskApiKey } from './encryption.util';
+import { decryptApiKey, encryptApiKey, maskApiKey } from './encryption.util';
+import { createTranslationProvider, isLLMProvider } from './providers/provider-factory';
 import { PROVIDER_CAPABILITIES } from './providers/capabilities';
 import type { ProviderType } from './providers/translation-provider.interface';
 import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
@@ -93,6 +94,39 @@ export class AiConnectorsController {
     await this.assertTeamRole(user.userId, existing.teamId, ['owner', 'manager']);
     await this.connectors.delete(id);
     return { ok: true };
+  }
+
+  @Post('probe-models')
+  async probe(
+    @Body() body: { provider: string; apiKey: string; baseUrl?: string },
+    @CurrentUser() _user: UserPayload,
+  ) {
+    if (!isLLMProvider(body.provider)) return { models: [], source: 'static' };
+    const cap = PROVIDER_CAPABILITIES[body.provider as ProviderType];
+    if (!cap.listModels) return { models: cap.recommendedModels, source: 'recommended' };
+    const provider = createTranslationProvider({
+      provider: body.provider as any,
+      apiKey: body.apiKey,
+      baseUrl: body.baseUrl,
+    });
+    const models = provider.listModels ? await provider.listModels() : [];
+    return { models, source: 'upstream' };
+  }
+
+  @Post(':id/list-models')
+  async listModelsForConnector(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    const c = await this.connectors.findById(id);
+    if (!c) throw new NotFoundException();
+    await this.assertTeamMember(user.userId, c.teamId);
+    const cap = PROVIDER_CAPABILITIES[c.provider as ProviderType];
+    if (!cap?.listModels) return { models: cap?.recommendedModels ?? [], source: 'recommended' };
+    const provider = createTranslationProvider({
+      provider: c.provider as any,
+      apiKey: decryptApiKey(c.apiKey),
+      baseUrl: c.baseUrl ?? undefined,
+    });
+    const models = provider.listModels ? await provider.listModels() : [];
+    return { models, source: 'upstream' };
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────

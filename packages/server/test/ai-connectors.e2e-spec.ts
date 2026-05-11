@@ -253,6 +253,41 @@ describe('AiConnectors (e2e)', () => {
       });
   });
 
+  describe('probe-models', () => {
+    it('returns recommended models for claude (no network call)', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/ai/connectors/probe-models')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ provider: 'claude', apiKey: 'fake-key' })
+        .expect(201);
+
+      expect(res.body.source).toBe('recommended');
+      expect(Array.isArray(res.body.models)).toBe(true);
+      expect(res.body.models.length).toBeGreaterThan(0);
+      // Should contain at least one claude model
+      expect(res.body.models.some((m: string) => m.includes('claude'))).toBe(true);
+    });
+
+    it('returns static empty list for deepl (not an LLM provider)', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/ai/connectors/probe-models')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ provider: 'deepl', apiKey: 'fake-key' })
+        .expect(201);
+
+      expect(res.body.source).toBe('static');
+      expect(res.body.models).toEqual([]);
+    });
+
+    it('rejects unauthenticated requests', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/ai/connectors/probe-models')
+        .send({ provider: 'claude', apiKey: 'fake-key' });
+      // AuthGuard returns 401 or 403 depending on implementation
+      expect([401, 403]).toContain(res.status);
+    });
+  });
+
   describe('defaults', () => {
     let teamConnectorId: string;
 
