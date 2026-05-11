@@ -1,149 +1,70 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Router for Claude Code working in this repository. Keep this file short — details live next to the code they describe.
 
-## Project Overview
+## Hard rules (read first)
 
-Transweave is a self-hosted i18n management platform. pnpm monorepo with three packages:
+1. **DESIGN.md is binding.** Read it before any visual/UI change. Don't deviate without explicit user approval. In QA mode, flag any code that doesn't match.
+2. **i18n must stay in sync.** Both `zh-CN.json` and `en-US.json` get updated together. Manage keys via `pnpm --filter @transweave/web i18n`.
+3. **Web browsing uses the `/browse` gstack skill.** Never call `mcp__claude-in-chrome__*` tools.
+4. **Commits follow Conventional Commits:** `type(scope): description` — `feat(web):`, `fix(server):`, `refine(web):`, etc.
+5. **`JWT_SECRET` is required** for the server. Copy `.env.example` → `packages/server/.env` for local dev.
+6. **Don't add a second UI library.** Compose with `packages/web/components/ui/*` (shadcn/Radix).
 
-- **`packages/server`** — NestJS 11 API (authentication, teams, projects, translations, AI, MCP)
-- **`packages/web`** — Next.js 15 frontend (React 19, TailwindCSS, Radix UI, Jotai)
-- **`packages/cli`** — CLI tool (`transweave pull` / `transweave push`)
+## What this is
 
-Database: PostgreSQL (production) or PGlite (local dev, auto-selected when `DATABASE_URL` is unset).
+Transweave — self-hosted i18n management platform. pnpm 10.8+ monorepo:
 
-## Commands
+- `packages/server` — NestJS 11 API + MCP — see [packages/server/ARCHITECTURE.md](packages/server/ARCHITECTURE.md)
+- `packages/web` — Next.js 15 frontend — see [packages/web/ARCHITECTURE.md](packages/web/ARCHITECTURE.md)
+- `packages/cli` — `transweave` CLI — see [packages/cli/ARCHITECTURE.md](packages/cli/ARCHITECTURE.md)
 
-### Development
+DB: PostgreSQL in prod, PGlite locally (auto-selected when `DATABASE_URL` is unset — no install needed).
 
-```bash
-pnpm install                    # Install all dependencies
-pnpm dev:server                 # Start backend (NestJS watch mode, port 3001)
-pnpm dev:web                    # Start frontend (Next.js dev, port 3000)
-pnpm dev:cli                    # Run CLI in dev mode
-```
-
-### Build
+## Run / build / verify
 
 ```bash
-pnpm build:server               # Build backend
-pnpm build:web                  # Build frontend
-pnpm build:cli                  # Build CLI
+pnpm install
+pnpm dev:server                 # NestJS watch :3001
+pnpm dev:web                    # Next.js dev :3000
+pnpm dev:cli                    # CLI
+
+pnpm build:server | build:web | build:cli
+
+# Tests (see packages/server/ARCHITECTURE.md for the full list)
+pnpm --filter @transweave/server test
+pnpm --filter @transweave/server test:e2e
+
+# Lint / format
+pnpm --filter @transweave/server lint
+pnpm --filter @transweave/server format
+pnpm --filter @transweave/web    lint
+
+# DB GUI
+pnpm --filter @transweave/server drizzle-kit studio
+
+# Docker
+docker compose up -d                                # prod (pre-built)
+docker compose -f docker-compose.dev.yml up -d      # dev (builds from source)
 ```
 
-### Test
+A change is "verified" when: the relevant `lint` passes, server unit tests pass, and (for UI changes) the page has been exercised in a browser via `/browse` or `/qa`.
 
-```bash
-# Server tests (Jest, requires --experimental-vm-modules)
-pnpm --filter @transweave/server test              # Unit tests
-pnpm --filter @transweave/server test -- --testPathPattern=<pattern>  # Single test file
-pnpm --filter @transweave/server test:e2e          # E2E tests (--runInBand)
-pnpm --filter @transweave/server test:cov          # Coverage
-```
+## Where to look
 
-### Lint & Format
-
-```bash
-pnpm --filter @transweave/server lint              # ESLint with --fix
-pnpm --filter @transweave/server format            # Prettier
-pnpm --filter @transweave/web lint                 # Next.js ESLint
-```
-
-### Database
-
-```bash
-pnpm --filter @transweave/server drizzle-kit studio    # Browse DB in GUI
-# Migrations run automatically on server startup
-```
-
-### Docker
-
-```bash
-docker compose up -d                                   # Production (pre-built images)
-docker compose -f docker-compose.dev.yml up -d         # Dev (builds from source)
-```
-
-## Architecture
-
-### Backend (`packages/server/src/`)
-
-NestJS with controller → service → repository pattern:
-
-- **`controller/`** — Route handlers (auth, user, team, project, token, mcp, api-key, upload, seed)
-- **`service/`** — Business logic layer
-- **`repository/`** — Data access layer
-- **`db/schema/`** — Drizzle ORM table definitions (users, teams, memberships, projects, tokens, api-keys, activity-logs, files)
-- **`db/migrations/`** — Drizzle migrations
-- **`ai/`** — AI translation providers (OpenAI, Claude, DeepL, Google, Gemini, Deepseek) with pluggable provider pattern via `provider-factory.ts`
-- **`jwt/`** — Passport JWT strategy and guard
-- **`dto/`** — Request/response DTOs with class-validator decorators
-- **`health/`** — Health check endpoint
-
-Auth: JWT with Passport.js (15-day expiry). Rate limiting: 100 req/60s via NestJS Throttler.
-
-### Frontend (`packages/web/`)
-
-Next.js App Router structure:
-
-- **`app/`** — Pages (login, signup, setup, project, team, settings, profile)
-- **`api/`** — Client-side API layer (axios wrappers calling backend)
-- **`components/ui/`** — shadcn/ui components (Radix UI primitives)
-- **`components/views/`** — Page-level view components
-- **`i18n/`** — Translations: `zh-CN.json` (default), `en-US.json`. Library: `next-intl`
-- **`jotai/`** — Global state atoms
-- **`middleware.ts`** — Proxies `/api/*` requests to the backend
-
-First visit redirects to `/setup` for admin account creation.
-
-### CLI (`packages/cli/src/`)
-
-Commander-based CLI: `init`, `login`, `pull`, `push` commands for syncing translations with the server.
-
-## Conventions
-
-- **Commits**: Conventional Commits — `type(scope): description` (e.g., `feat(web):`, `fix(server):`, `refine(web):`)
-- **i18n**: Both zh-CN and en-US translations must be updated together. Run `pnpm --filter @transweave/web i18n` to manage translation keys.
-- **Environment**: Copy `.env.example` to `packages/server/.env` for local dev. `JWT_SECRET` is required.
-- **Package manager**: pnpm 10.8+ with workspaces. Use `pnpm --filter <package>` to target packages.
-
-## Key Technical Details
-
-- PGlite is used for zero-config local dev — no PostgreSQL install needed
-- The web `middleware.ts` acts as an API proxy, so frontend and backend can run on different ports without CORS issues in the browser
-- AI providers share a common interface (`translation-provider.interface.ts`) with a factory pattern
-- MCP (Model Context Protocol) server is built-in for AI assistant integration
-- Export formats: JSON, YAML, CSV, XLIFF, Gettext (.po)
+| You need… | Look at |
+|---|---|
+| Backend internals | `packages/server/ARCHITECTURE.md` |
+| Frontend internals | `packages/web/ARCHITECTURE.md` |
+| CLI commands | `packages/cli/ARCHITECTURE.md` |
+| Visual rules | `DESIGN.md` |
+| Project state / current phase | `.planning/STATE.md` |
+| Strategic plan | `.planning/PROJECT.md`, `.planning/ROADMAP.md` |
+| Backlog (open / parked) | `TODOS.md` |
+| Spec changes | `openspec/` |
+| API reference / webhooks | `docs/api-reference.md`, `docs/webhook-events.md` |
+| User-facing readme | `README.md` (zh) / `README.en.md` (en) |
 
 ## gstack
 
-Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
-
-Available gstack skills:
-- `/office-hours` — Brainstorm a new idea
-- `/plan-ceo-review` — Review a plan (strategy)
-- `/plan-eng-review` — Review a plan (architecture)
-- `/plan-design-review` — Review a plan (design)
-- `/design-consultation` — Create a design system
-- `/review` — Code review before merge
-- `/ship` — Ready to deploy / create PR
-- `/browse` — Fast headless browser for QA testing and site dogfooding
-- `/qa` — Testing the app
-- `/qa-only` — Run QA only
-- `/design-review` — Visual design audit
-- `/setup-browser-cookies` — Set up browser cookies
-- `/retro` — Weekly retrospective
-- `/investigate` — Debugging errors
-- `/document-release` — Post-ship doc updates
-- `/codex` — Second opinion or adversarial code review
-- `/careful` — Working with production or live systems
-- `/freeze` — Scope edits to one module/directory
-- `/guard` — Maximum safety mode
-- `/unfreeze` — Remove edit restrictions
-- `/gstack-upgrade` — Upgrade gstack to latest version
-
-## Design System
-
-Always read DESIGN.md before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
-In QA mode, flag any code that doesn't match DESIGN.md.
+A full list of gstack skills is in the user-scope `~/.claude/CLAUDE.md` — don't duplicate it here. Project-specific rule: always use `/browse`, never `mcp__claude-in-chrome__*`.
