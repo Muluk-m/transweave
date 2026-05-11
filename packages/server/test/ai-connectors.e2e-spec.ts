@@ -370,6 +370,16 @@ describe('AiConnectors (e2e)', () => {
     });
   });
 
+  describe('legacy /api/ai/config — role enforcement', () => {
+    it('member gets 403 on PUT /api/ai/config/team/:teamId', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/ai/config/team/${teamId}`)
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({ provider: 'openai', apiKey: 'sk-should-be-rejected', model: 'gpt-5.5' })
+        .expect(403);
+    });
+  });
+
   describe('legacy /api/ai/config compatibility', () => {
     // The legacy PUT /api/ai/config/team/:teamId calls validateApiKey() which
     // would make a real network call to the upstream provider. We spy on the

@@ -18,15 +18,16 @@ export const PROVIDER_CAPABILITIES: Record<ProviderType, ProviderCapability> = {
     recommendedModels: ['gpt-5.5', 'gpt-5.5-pro', 'gpt-5.5-thinking', 'gpt-5.5-instant'],
     defaultModel: 'gpt-5.5',
   },
+  // toolCalling=false until AgentService gets native Anthropic/Gemini tool-calling support.
   claude: {
-    toolCalling: true,
+    toolCalling: false,
     listModels: false,
     requiresBaseUrl: false,
     recommendedModels: ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
     defaultModel: 'claude-sonnet-4-6',
   },
   gemini: {
-    toolCalling: true,
+    toolCalling: false,
     listModels: true,
     requiresBaseUrl: false,
     recommendedModels: ['gemini-3-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite'],

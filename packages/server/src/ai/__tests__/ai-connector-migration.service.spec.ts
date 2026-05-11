@@ -1,5 +1,14 @@
 import { AiConnectorMigrationService } from '../ai-connector-migration.service';
 
+// Mock encryption.util so we can simulate decrypt failures
+jest.mock('../encryption.util', () => ({
+  ...jest.requireActual('../encryption.util'),
+  decryptApiKey: jest.fn((key: string) => {
+    if (key === 'BAD_CIPHERTEXT') throw new Error('Decryption failed');
+    return 'plaintext-key';
+  }),
+}));
+
 describe('AiConnectorMigrationService.runOnce', () => {
   const oldTeamConfig = { provider: 'openai', apiKey: 'enc:abc', model: 'gpt-5.5', baseUrl: null };
   const oldProjectConfig = { provider: 'claude', apiKey: 'enc:def', model: 'claude-sonnet-4-6', baseUrl: null };
@@ -54,5 +63,37 @@ describe('AiConnectorMigrationService.runOnce', () => {
     });
     await svc.runOnce();
     expect(created).toHaveLength(0);
+  });
+
+  it('skips rows whose apiKey is not decryptable and returns non-zero skipped counters', async () => {
+    const badTeamConfig = { provider: 'openai', apiKey: 'BAD_CIPHERTEXT', model: 'gpt-5.5', baseUrl: null };
+    const badProjectConfig = { provider: 'claude', apiKey: 'BAD_CIPHERTEXT', model: 'claude-sonnet-4-6', baseUrl: null };
+
+    const { svc, teams, projects, created } = makeService({
+      teams: [
+        { id: 't1', aiConfig: badTeamConfig, defaultConnectorId: null },
+        { id: 't2', aiConfig: oldTeamConfig, defaultConnectorId: null },
+      ],
+      projects: [
+        { id: 'p1', teamId: 't1', aiConfig: badProjectConfig, defaultConnectorId: null },
+      ],
+    });
+
+    const result = await svc.runOnce();
+
+    // Only t2 should have been migrated; t1 (bad key) and p1 (bad key) should be skipped
+    expect(result.migratedTeams).toBe(1);
+    expect(result.skippedTeams).toBe(1);
+    expect(result.migratedProjects).toBe(0);
+    expect(result.skippedProjects).toBe(1);
+
+    // Only one connector created (for t2)
+    expect(created).toHaveLength(1);
+    expect(created[0].teamId).toBe('t2');
+
+    // t1 must NOT have defaultConnectorId set
+    expect(teams.find((t) => t.id === 't1')?.defaultConnectorId).toBeNull();
+    // p1 must NOT have defaultConnectorId set
+    expect(projects.find((p) => p.id === 'p1')?.defaultConnectorId).toBeNull();
   });
 });
