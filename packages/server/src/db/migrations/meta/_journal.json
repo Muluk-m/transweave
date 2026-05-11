@@ -92,6 +92,13 @@
       "when": 1778236966648,
       "tag": "0012_glossary_auto_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778481642487,
+      "tag": "0013_ai_connectors",
+      "breakpoints": true
     }
   ]
 }
