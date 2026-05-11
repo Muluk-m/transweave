@@ -4,6 +4,7 @@ import { AiConfigService } from './ai-config.service';
 import { AiController } from './ai.controller';
 import { AiConfigController } from './ai-config.controller';
 import { AiConnectorsController } from './ai-connectors.controller';
+import { AiDefaultsController } from './ai-defaults.controller';
 import { AiPromptTemplateController } from '../controller/ai-prompt-template.controller';
 import { GlossaryService } from '../service/glossary.service';
 import { GlossaryRepository } from '../repository/glossary.repository';
@@ -16,7 +17,7 @@ import { AiConnectorMigrationService } from './ai-connector-migration.service';
 import { AiConnectorRepository } from '../repository/ai-connector.repository';
 
 @Module({
-  controllers: [AiController, AiConfigController, AiConnectorsController, AiPromptTemplateController],
+  controllers: [AiController, AiConfigController, AiConnectorsController, AiPromptTemplateController, AiDefaultsController],
   providers: [
     AiService,
     AiConfigService,

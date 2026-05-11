@@ -252,4 +252,85 @@ describe('AiConnectors (e2e)', () => {
         expect(res.body.ok).toBe(true);
       });
   });
+
+  describe('defaults', () => {
+    let teamConnectorId: string;
+
+    beforeAll(async () => {
+      // Create a team-scoped openai connector for defaults tests
+      const res = await request(app.getHttpServer())
+        .post('/api/ai/connectors')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          scope: 'team',
+          teamId,
+          displayName: 'OpenAI Defaults Test',
+          provider: 'openai',
+          apiKey: 'sk-defaults-test',
+          enabledModels: [{ modelId: 'gpt-5.5', addedManually: false }],
+        })
+        .expect(201);
+
+      teamConnectorId = res.body.id;
+    });
+
+    it('owner sets team default connector + model', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/ai/defaults/team/${teamId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ connectorId: teamConnectorId, model: 'gpt-5.5' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.ok).toBe(true);
+        });
+    });
+
+    it('resolve returns configured: true with source: team after setting team default', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/ai/defaults/resolve?projectId=${projectId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      expect(res.body.configured).toBe(true);
+      expect(res.body.source).toBe('team');
+      expect(res.body.toolCalling).toBe(true);
+      expect(res.body.connectorId).toBe(teamConnectorId);
+      expect(res.body.model).toBe('gpt-5.5');
+      expect(res.body.keyHint).toMatch(/^\.\.\./);
+    });
+
+    it('member can resolve but not set defaults', async () => {
+      // Member can resolve
+      const resolveRes = await request(app.getHttpServer())
+        .get(`/api/ai/defaults/resolve?projectId=${projectId}`)
+        .set('Authorization', `Bearer ${memberToken}`)
+        .expect(200);
+      expect(resolveRes.body.configured).toBe(true);
+
+      // Member cannot set team defaults
+      await request(app.getHttpServer())
+        .put(`/api/ai/defaults/team/${teamId}`)
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({ connectorId: teamConnectorId, model: 'gpt-5.5' })
+        .expect(403);
+    });
+
+    it('owner can clear team default by passing null', async () => {
+      await request(app.getHttpServer())
+        .put(`/api/ai/defaults/team/${teamId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ connectorId: null, model: null })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.ok).toBe(true);
+        });
+
+      // After clearing, resolve should return configured: false (no project default either)
+      const resolveRes = await request(app.getHttpServer())
+        .get(`/api/ai/defaults/resolve?projectId=${projectId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+      expect(resolveRes.body.configured).toBe(false);
+    });
+  });
 });
