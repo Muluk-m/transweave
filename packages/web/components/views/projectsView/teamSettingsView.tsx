@@ -50,7 +50,7 @@ import {
 } from "@/api/team";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/use-toast";
-import { AiProviderSettings } from "@/components/views/settings/AiProviderSettings";
+import { AiConnectorsSettings } from "@/components/views/settings/AiConnectorsSettings";
 
 interface TeamSettingsViewProps {
   teamId?: string;
@@ -433,7 +433,7 @@ export function TeamSettingsView({ teamId }: TeamSettingsViewProps) {
         </TabsContent>
 
         <TabsContent value="ai">
-          <AiProviderSettings scope="team" scopeId={currentTeam.id} />
+          <AiConnectorsSettings scope={{ kind: "team", teamId: currentTeam.id }} />
         </TabsContent>
 
         <TabsContent value="billing">
