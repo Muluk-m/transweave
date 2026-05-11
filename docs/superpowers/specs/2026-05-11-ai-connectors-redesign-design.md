@@ -112,33 +112,33 @@ defaultModel: varchar('default_model', { length: 100 }),
 
 ```ts
 // packages/server/src/ai/providers/capabilities.ts
-// 2026-05 当前主流模型 — 对照 /Users/qiqian/openclaw/docs/providers 维护
+// 当前主流模型快照（2026-05）— 单一源数据，唯一需要随发布更新的地方
 export const PROVIDER_CAPABILITIES: Record<ProviderType, {
   toolCalling: boolean;
   listModels: boolean;
   requiresBaseUrl: boolean;
-  recommendedModels: string[];
-  defaultModel: string;
+  recommendedModels: string[];   // picker 默认勾选项 / Add Manually 的下拉建议
+  defaultModel: string;          // connector 没指定 model 时的兜底
 }> = {
   openai: {
     toolCalling: true, listModels: true, requiresBaseUrl: false,
-    recommendedModels: ['gpt-5.2', 'gpt-5.1-codex'],
-    defaultModel: 'gpt-5.2',
+    recommendedModels: ['gpt-5.5', 'gpt-5.5-pro', 'gpt-5.5-thinking', 'gpt-5.5-instant'],
+    defaultModel: 'gpt-5.5',
   },
   claude: {
     toolCalling: true, listModels: false, requiresBaseUrl: false,
-    recommendedModels: ['claude-sonnet-4-5', 'claude-opus-4-6', 'claude-haiku-4'],
-    defaultModel: 'claude-sonnet-4-5',
+    recommendedModels: ['claude-opus-4-7', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+    defaultModel: 'claude-sonnet-4-6',   // sonnet 性价比，opus 给追求质量
   },
   gemini: {
     toolCalling: true, listModels: true, requiresBaseUrl: false,
-    recommendedModels: ['gemini-3-flash-preview', 'gemini-3-pro-preview'],
-    defaultModel: 'gemini-3-flash-preview',
+    recommendedModels: ['gemini-3-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite'],
+    defaultModel: 'gemini-3-flash',      // Google 自己的新默认
   },
   deepseek: {
     toolCalling: true, listModels: true, requiresBaseUrl: false,
-    recommendedModels: ['deepseek-v3.2'],
-    defaultModel: 'deepseek-v3.2',
+    recommendedModels: ['deepseek-v4-flash', 'deepseek-v4-pro'],
+    defaultModel: 'deepseek-v4-flash',
   },
   'openai-compatible': {
     toolCalling: true, listModels: true, requiresBaseUrl: true,
@@ -156,44 +156,30 @@ export const PROVIDER_CAPABILITIES: Record<ProviderType, {
 };
 ```
 
-注意：本设计 **新增** `openai-compatible` 作为一种独立的 `ProviderType`（当前 `SUPPORTED_PROVIDERS` 没有它）。`base-openai-compatible.provider.ts` 已经实现底层，本次只是把它显式提升为 picker 中的一类。
+注意：本设计**新增** `openai-compatible` 作为独立 `ProviderType`（当前 `SUPPORTED_PROVIDERS` 没有它）。`base-openai-compatible.provider.ts` 底层已实现，本次只是把它显式提升为 picker 一类。
 
-### 5.2 过期模型过滤
+### 5.2 过期模型治理 —— 不写 deny-list
 
-```ts
-// packages/server/src/ai/providers/deprecated-models.ts
-const DEPRECATED_MODEL_PATTERNS: RegExp[] = [
-  /^gpt-3(\.|-|$)/i, /^gpt-3\.5/i,
-  /^gpt-4(?!\.5)(\.|-|$)/i,                          // gpt-4 / gpt-4-turbo / gpt-4-32k
-  /^gpt-4o/i, /^gpt-4\.1/i,
-  /^o[1-3](-|$)/i,                                    // o1 / o2 / o3
-  /^claude-(instant|1|2|3)(-|$)/i,
-  /^claude-(opus|sonnet|haiku)-(3|4-0|4-2|4-20)/i,    // claude-sonnet-4-20250514 等
-  /^gemini-(1|2)(\.|-)/i,
-  /^deepseek-(chat|coder|reasoner)$/i,
-];
+不维护 regex 黑名单（型号迭代太快、维护代价大、且会误伤）。改用**白名单优先 + 上游事实源**两层：
 
-export const isDeprecatedModel = (modelId: string): boolean =>
-  DEPRECATED_MODEL_PATTERNS.some((p) => p.test(modelId));
-```
+1. **白名单**：`recommendedModels` 即是「我们承认的当前模型」。加 connector 的 picker 默认就给这份列表。
+2. **`listModels()` 返回什么用什么**：远端 API 自己会下架过期模型 —— OpenAI 的 `/v1/models`、Gemini 的 `ListModels`、DeepSeek 的 model API 都只返回当前可调用模型。我们不再二次过滤。
+3. **Add manually** 文本输入：不做正则校验、不弹"deprecated"警告。用户真要用罕见 / 内部模型，让它过；调用失败时上游会给出明确错误。
 
-应用：
-- 所有 provider 的 `listModels()` 在返回前内部过滤一次。
-- UI「Add manually」输入时如果命中，弹 warning 但允许保存（escape hatch）。
-- 静态 `recommendedModels` 在 dev 启动期断言「列表里没有 deprecated 项」（防御性测试）。
+唯一硬约束：`recommendedModels` / `defaultModel` 这份代码内常量随版本发布**例行 review**（写到 §10 风险章节作为流程提醒），保证默认值永远是当前。
 
 ### 5.3 老 default model 替换
 
 | 文件 | 旧值 | 新值 |
 |---|---|---|
-| `openai.provider.ts:9` | `gpt-4o-mini` | `gpt-5.2` |
-| `claude.provider.ts:8` | `claude-sonnet-4-20250514` | `claude-sonnet-4-5` |
-| `deepseek.provider.ts:9` | `deepseek-chat` | `deepseek-v3.2` |
-| `gemini.provider.ts:8` | `gemini-2.0-flash` | `gemini-3-flash-preview` |
-| `agent.service.ts:287` | `gpt-4o-mini` | `gpt-5.2` |
-| `AiProviderSettings.tsx:76-111` | 全旧 | 同步替换 |
+| `openai.provider.ts:9` | `gpt-4o-mini` | `gpt-5.5` |
+| `claude.provider.ts:8` | `claude-sonnet-4-20250514` | `claude-sonnet-4-6` |
+| `deepseek.provider.ts:9` | `deepseek-chat` | `deepseek-v4-flash` |
+| `gemini.provider.ts:8` | `gemini-2.0-flash` | `gemini-3-flash` |
+| `agent.service.ts:287` | `gpt-4o-mini` | `gpt-5.5` |
+| `AiProviderSettings.tsx:76-111` | 全旧 | 同步替换为上述 4 条 |
 
-后续 `defaultModel` 改为从 `PROVIDER_CAPABILITIES` 读，避免双源真相。
+后续 provider 文件里直接从 `PROVIDER_CAPABILITIES[this.provider].defaultModel` 读，移除散落的字面量，单一真相。
 
 ### 5.4 新 `ConnectorResolver` service
 
@@ -340,7 +326,7 @@ for each team where ai_config IS NOT NULL AND default_connector_id IS NULL:
 - `ConnectorResolver` 单测：四条解析路径 + project 引用 team connector + 越权拒绝。
 - `ai-connectors.controller.e2e-spec.ts`：CRUD + 权限 (`owner`/`manager`/`member`) + `list-models` + `probe-models`。
 - `agent.service.spec.ts`：`toolCallingCapable=false` 的 connector 被拒绝（如 deepl）。
-- `deprecated-models.spec.ts`：deny-list 正反例覆盖；assert 所有 `recommendedModels` 都不命中 deny-list。
+- `capabilities.spec.ts`：assert `defaultModel` 都在自己的 `recommendedModels` 里；assert `openai-compatible.requiresBaseUrl=true`、`deepl/google-translate.toolCalling=false`（结构约束，防误改）。
 - `ai-connector-migration.spec.ts`：fixture（老 team / project + `aiConfig`）→ 期望落地 connector + default 字段；二次运行 idempotent。
 
 ### Web
@@ -355,7 +341,7 @@ for each team where ai_config IS NOT NULL AND default_connector_id IS NULL:
 | 风险 | 对策 |
 |---|---|
 | 老用户升级后看不到原 AI 配置 | 迁移自动跑，并在 settings 顶部展示 banner "已迁移自 v1 配置" |
-| `recommendedModels` 跟不上 vendor 实际更新 | 1) 数据维护在 `capabilities.ts` 一处；2) listModels 是真实事实源；3) CI 加一个手动触发的 sanity check（可选） |
+| `recommendedModels` / `defaultModel` 滞后于 vendor 发布 | 1) 单一真相在 `capabilities.ts` 一处；2) `listModels()` 直通上游、不二次过滤；3) **流程约定**：每次开始 release 流程时去 vendor 官网 / openclaw `docs/providers/` 对一遍这份表（在 CONTRIBUTING / release checklist 里加一条） |
 | Project 引用了 team connector，team owner 删除该 connector | DB `ON DELETE SET NULL`；project 默认 fallback 回 team default 或抛 `AI_NOT_CONFIGURED` |
 | `apiKey` 误回明文 | 响应 DTO 显式只暴露 `keyHint`；加单测 |
 | 字段冗余（旧 `ai_config` + 新表并存一段时间） | 文档清楚标注「下个版本 drop」；resolver 始终读新表（旧列只用于回滚） |
