@@ -1,4 +1,4 @@
-import { boolean, index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { teams } from './teams';
 
 export interface ProjectModule {
@@ -23,6 +23,8 @@ export const projects = pgTable(
     enableVersioning: boolean('enable_versioning').default(true).notNull(),
     enableCrossProjectTM: boolean('enable_cross_project_tm').default(true).notNull(),
     aiConfig: jsonb('ai_config').$type<import('../../ai/providers/translation-provider.interface').AiConfigStored>(),
+    defaultConnectorId: uuid('default_connector_id'),
+    defaultModel: varchar('default_model', { length: 100 }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

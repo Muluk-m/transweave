@@ -37,6 +37,8 @@ export class ProjectRepository extends BaseRepository<
         enableVersioning: projects.enableVersioning,
         enableCrossProjectTM: projects.enableCrossProjectTM,
         aiConfig: projects.aiConfig,
+        defaultConnectorId: projects.defaultConnectorId,
+        defaultModel: projects.defaultModel,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
       })
