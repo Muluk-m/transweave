@@ -1285,5 +1285,30 @@
   "tm": {
     "suggestions": "Translation Memory Suggestions",
     "apply": "Apply"
+  },
+  "aiConnectors": {
+    "title": "AI Connectors",
+    "addConnector": "Add connector",
+    "edit": "Edit",
+    "displayName": "Display name",
+    "provider": "Provider",
+    "apiKey": "API key",
+    "keepBlankUnchanged": "leave blank to keep unchanged",
+    "baseUrl": "Base URL",
+    "fetchModels": "Fetch models",
+    "modelsSelected": "models enabled",
+    "addManually": "Add manually",
+    "addManuallyPlaceholder": "Enter model id",
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "removeConfirm": "Remove this connector? This cannot be undone.",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
+    "probeFailed": "Failed to probe models",
+    "selectOrAdd": "Select a connector on the left, or add a new one",
+    "setAsDefault": "Set as default",
+    "inheritedFromTeam": "Shared from team"
   }
 }
