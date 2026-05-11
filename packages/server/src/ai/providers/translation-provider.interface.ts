@@ -3,13 +3,20 @@ export const SUPPORTED_PROVIDERS = [
   'claude',
   'deepseek',
   'gemini',
+  'openai-compatible',
   'deepl',
   'google-translate',
 ] as const;
 
 export type ProviderType = (typeof SUPPORTED_PROVIDERS)[number];
 
-export const LLM_PROVIDERS = ['openai', 'claude', 'deepseek', 'gemini'] as const satisfies readonly ProviderType[];
+export const LLM_PROVIDERS = [
+  'openai',
+  'claude',
+  'deepseek',
+  'gemini',
+  'openai-compatible',
+] as const satisfies readonly ProviderType[];
 export type LLMProviderType = (typeof LLM_PROVIDERS)[number];
 
 export interface TranslationContext {
