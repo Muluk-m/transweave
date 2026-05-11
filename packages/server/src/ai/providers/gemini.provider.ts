@@ -5,7 +5,7 @@ export class GeminiProvider extends BaseOpenAICompatibleProvider {
 
   constructor(
     apiKey: string,
-    model: string = 'gemini-2.0-flash',
+    model: string = 'gemini-3-flash',
     baseUrl: string = 'https://generativelanguage.googleapis.com/v1beta/openai/',
   ) {
     super(apiKey, model, baseUrl);

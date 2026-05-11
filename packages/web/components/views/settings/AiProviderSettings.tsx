@@ -68,48 +68,13 @@ import {
 
 // Provider definitions
 const PROVIDERS = [
-  {
-    value: "openai",
-    label: "OpenAI",
-    keyHint: "sk-...",
-    isLLM: true,
-    defaultModel: "gpt-4o-mini",
-  },
-  {
-    value: "claude",
-    label: "Claude",
-    keyHint: "sk-ant-...",
-    isLLM: true,
-    defaultModel: "claude-sonnet-4-20250514",
-  },
-  {
-    value: "deepseek",
-    label: "Deepseek",
-    keyHint: "sk-...",
-    isLLM: true,
-    defaultModel: "deepseek-chat",
-  },
-  {
-    value: "gemini",
-    label: "Google Gemini",
-    keyHint: "AIza...",
-    isLLM: true,
-    defaultModel: "gemini-2.0-flash",
-  },
-  {
-    value: "deepl",
-    label: "DeepL",
-    keyHint: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx",
-    isLLM: false,
-    defaultModel: "",
-  },
-  {
-    value: "google-translate",
-    label: "Google Translate",
-    keyHint: "AIza...",
-    isLLM: false,
-    defaultModel: "",
-  },
+  { value: "openai",            label: "OpenAI",            keyHint: "sk-...",          isLLM: true,  defaultModel: "gpt-5.5" },
+  { value: "claude",            label: "Claude",            keyHint: "sk-ant-...",      isLLM: true,  defaultModel: "claude-sonnet-4-6" },
+  { value: "deepseek",          label: "DeepSeek",          keyHint: "sk-...",          isLLM: true,  defaultModel: "deepseek-v4-flash" },
+  { value: "gemini",            label: "Gemini",            keyHint: "AIza...",         isLLM: true,  defaultModel: "gemini-3-flash" },
+  { value: "openai-compatible", label: "OpenAI-Compatible", keyHint: "any provider",    isLLM: true,  defaultModel: "" },
+  { value: "deepl",             label: "DeepL",             keyHint: "...:fx",          isLLM: false, defaultModel: "" },
+  { value: "google-translate",  label: "Google Translate",  keyHint: "service-account", isLLM: false, defaultModel: "" },
 ] as const;
 
 interface AiProviderSettingsProps {

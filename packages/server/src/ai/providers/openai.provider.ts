@@ -6,7 +6,7 @@ export class OpenAIProvider extends BaseOpenAICompatibleProvider {
 
   constructor(
     apiKey: string,
-    model: string = 'gpt-4o-mini',
+    model: string = 'gpt-5.5',
     baseUrl?: string,
   ) {
     super(apiKey, model, baseUrl);

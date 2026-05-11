@@ -284,7 +284,7 @@ export class AgentService {
     }
 
     return this.llmClient.chat.completions.create({
-      model: config.model || 'gpt-4o-mini',
+      model: config.model || 'gpt-5.5',
       messages,
       tools: TOOL_DEFINITIONS,
       temperature: 0.3,
