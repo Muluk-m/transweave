@@ -62,14 +62,14 @@ completed: 2026-05-13
 
 **Command 1 (zero-match expected):**
 
-```
+```bash
 grep -rn "qlj-i18n\|@qlj/\|QLJ_I18N\|\"nextjs\"" ... .
 → 0 matches
 ```
 
 **Command 2 (was "must preserve" — now intentionally renamed):**
 
-```
+```bash
 grep -rn "qlji_\|qlj-i18n-ai-salt" --include="*.ts" .
 → 0 matches
 ```

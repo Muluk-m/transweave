@@ -4,7 +4,6 @@
 **Domain:** Next.js 15 marketing landing page — route restructuring, dynamic OG image, dark/light theming, SEO
 **Confidence:** HIGH
 
-<phase_requirements>
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -14,7 +13,6 @@
 | LAND-03 | Getting started section with docker-compose code block + copy button | `WelcomeView` quickstart section already covers this |
 | LAND-04 | OG meta tags + dynamic OG image via `next/og` | Static `/og-image.png` present; dynamic generation pending |
 | LAND-05 | Dark/light mode supported on landing | `layout.tsx` currently forces `<html className="dark">`; theme toggle missing |
-</phase_requirements>
 
 ---
 
@@ -26,7 +24,7 @@ Phase 12 is therefore not "build a landing page" but **"unconditionally expose t
 
 ## Current Architecture
 
-```
+```text
 app/
   layout.tsx       — forces .dark, wraps children with Auth/Header/Sidebar/I18n providers
   page.tsx         — auth gate: <WelcomeView /> if unauth, <TeamsView /> if auth

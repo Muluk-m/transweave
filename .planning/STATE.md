@@ -8,7 +8,7 @@ progress:
   total_phases: 13
   completed_phases: 11
   total_plans: 31
-  completed_plans: 31
+  completed_plans: 31  # v1.0: 21 + v1.1 Phase 10: 4 + v1.1 Phase 11: 6 = 31
 ---
 
 # Project State
@@ -86,4 +86,4 @@ None.
 
 Last session: 2026-05-13
 Stopped at: Phase 11 closed; scaffolding Phase 12 Landing Page
-Resume file: .planning/phases/12-landing-page/12-RESEARCH.md (to be created)
+Resume file: .planning/phases/12-landing-page/12-RESEARCH.md (created — Phase 12 plans 12-01..12-05 not yet written)
