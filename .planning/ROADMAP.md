@@ -39,7 +39,7 @@ Plans:
 - [ ] 10-04-PLAN.md -- Social preview images (1280x640 GitHub + 1200x630 OG) and GitHub upload checkpoint
 
 ### Phase 11: Project Rename
-**Goal**: Every user-visible and developer-facing reference says "Transweave" instead of "qlj-i18n", while preserving load-bearing infrastructure identifiers
+**Goal**: Every user-visible and developer-facing reference says "Transweave" instead of "qlj-i18n". Originally planned to preserve two load-bearing identifiers; the BREAKING CHANGE in commit `b314580` further retired them for a fully clean brand.
 **Depends on**: Phase 10
 **Requirements**: REN-01, REN-02, REN-03, REN-04, REN-05, REN-06, REN-07, REN-08, REN-09
 **Success Criteria** (what must be TRUE):
@@ -47,7 +47,7 @@ Plans:
   2. CLI binary is `transweave` (not qlj-i18n) with updated command names, config paths (~/.config/transweave), and env vars
   3. MCP server registers as transweave-mcp-server and web UI shows "Transweave" in all titles and strings
   4. Docker Compose service and volume names use explicit name fields reflecting the Transweave brand
-  5. A grep verification confirms zero remaining qlj-i18n/qlj_/nextjs references except the intentionally preserved `qlji_` API key prefix and `qlj-i18n-ai-salt` encryption salt
+  5. A grep verification confirms zero remaining qlj-i18n/qlj_/nextjs references. The originally-preserved `qlji_` API key prefix and `qlj-i18n-ai-salt` encryption salt were retired in BREAKING CHANGE `b314580` and replaced with `tw_` and `transweave-ai-salt` respectively (approved 2026-05-13)
 **Plans**: 6 plans
 Plans:
 - [x] 11-01-PLAN.md -- Package.json names (all 4 packages) and Dockerfile --filter flags (REN-01, REN-02)
