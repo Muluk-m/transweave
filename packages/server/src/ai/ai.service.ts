@@ -75,6 +75,11 @@ export class AiService {
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      if (msg.startsWith('AI provider API key could not be decrypted')) {
+        // Stale ciphertext (e.g. AI_ENCRYPTION_KEY rotated or qlj-i18n-ai-salt→transweave-ai-salt
+        // upgrade in b314580): surface as config error so the UI can prompt re-entry.
+        throw new HttpException(msg, HttpStatus.SERVICE_UNAVAILABLE);
+      }
       if (msg.startsWith('AI_NOT_CONFIGURED')) {
         throw new HttpException(
           'No AI provider configured. Configure one in team or project settings.',

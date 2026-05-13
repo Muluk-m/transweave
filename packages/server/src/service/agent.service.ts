@@ -132,7 +132,17 @@ export class AgentService {
         `AI provider "${provider}" does not support the Agent chat feature. Configure an LLM provider that supports tool calling.`,
       );
     }
-    const apiKey = decryptApiKey(resolved.connector.apiKey);
+    let apiKey: string;
+    try {
+      apiKey = decryptApiKey(resolved.connector.apiKey);
+    } catch (err) {
+      // Stale ciphertext (e.g. AI_ENCRYPTION_KEY rotated or salt upgrade in b314580):
+      // surface as 503 so the UI can prompt the user to re-enter the key.
+      throw new HttpException(
+        err instanceof Error ? err.message : 'Connector API key could not be decrypted',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
     const model = resolved.model || cap.defaultModel || 'gpt-5.5';
     const baseUrl = resolved.connector.baseUrl ?? undefined;
 

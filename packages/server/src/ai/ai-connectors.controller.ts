@@ -41,8 +41,18 @@ export class AiConnectorsController {
     if (!teamId && !projectId) {
       throw new BadRequestException('teamId or projectId required');
     }
-    const targetTeamId = teamId ?? (await this.projects.findById(projectId!))?.teamId;
-    if (!targetTeamId) throw new NotFoundException('project not found');
+    let targetTeamId: string;
+    if (projectId) {
+      const project = await this.projects.findById(projectId);
+      if (!project) throw new NotFoundException('project not found');
+      // Reject mixed params with foreign project — the team id can't override the project's true team.
+      if (teamId && teamId !== project.teamId) {
+        throw new BadRequestException('projectId does not belong to teamId');
+      }
+      targetTeamId = project.teamId;
+    } else {
+      targetTeamId = teamId!;
+    }
     await this.assertTeamMember(user.userId, targetTeamId);
     const rows = projectId
       ? await this.connectors.listForProject(projectId)
@@ -54,6 +64,13 @@ export class AiConnectorsController {
   async create(@Body() dto: CreateConnectorDto, @CurrentUser() user: UserPayload) {
     this.validateScope(dto);
     this.validateBaseUrlForProvider(dto);
+    if (dto.scope === 'project') {
+      const project = await this.projects.findById(dto.projectId!);
+      if (!project) throw new NotFoundException('project not found');
+      if (project.teamId !== dto.teamId) {
+        throw new BadRequestException('projectId does not belong to teamId');
+      }
+    }
     await this.assertTeamRole(user.userId, dto.teamId, ['owner', 'manager']);
     const row = await this.connectors.create({
       scope: dto.scope,
@@ -65,7 +82,7 @@ export class AiConnectorsController {
       baseUrl: dto.baseUrl ?? null,
       enabledModels: dto.enabledModels,
       createdBy: user.userId,
-    } as any);
+    });
     return this.maskRow(row);
   }
 

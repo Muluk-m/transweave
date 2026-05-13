@@ -45,7 +45,13 @@ export class AiDefaultsController {
     await this.assertOwnerOrManager(user.userId, project.teamId);
     if (dto.connectorId) {
       const c = await this.connectors.findById(dto.connectorId);
-      if (!c || c.teamId !== project.teamId) throw new BadRequestException('connector not in this project\'s team');
+      if (!c || c.teamId !== project.teamId) {
+        throw new BadRequestException('connector not in this project\'s team');
+      }
+      // Project-scoped connectors are private to a project — don't let project A point at B's connector.
+      if (c.scope === 'project' && c.projectId !== projectId) {
+        throw new BadRequestException('connector belongs to a different project');
+      }
     }
     await this.projects.update(projectId, { defaultConnectorId: dto.connectorId, defaultModel: dto.model } as any);
     return { ok: true };
@@ -70,8 +76,13 @@ export class AiDefaultsController {
         toolCalling: !!cap?.toolCalling,
         keyHint: maskApiKey(r.connector.apiKey),
       };
-    } catch {
-      return { configured: false };
+    } catch (err) {
+      // Only the "no connector configured / no model" sentinels should be downgraded —
+      // everything else (DB errors, decryption failures, etc.) must propagate.
+      if (err instanceof Error && err.message.startsWith('AI_NOT_CONFIGURED')) {
+        return { configured: false };
+      }
+      throw err;
     }
   }
 

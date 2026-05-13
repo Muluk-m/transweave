@@ -19,6 +19,7 @@ describe('AiConnectorMigrationService.runOnce', () => {
     const created: any[] = [];
     const connectors = {
       create: jest.fn(async (data) => { const row = { id: `c${created.length + 1}`, ...data }; created.push(row); return row; }),
+      delete: jest.fn(async () => undefined),
     };
     const teamRepo = {
       findAllWithLegacyConfig: jest.fn().mockResolvedValue(teams.filter((t) => t.aiConfig && !t.defaultConnectorId)),
@@ -28,8 +29,16 @@ describe('AiConnectorMigrationService.runOnce', () => {
       findAllWithLegacyConfig: jest.fn().mockResolvedValue(projects.filter((p) => p.aiConfig && !p.defaultConnectorId)),
       update: jest.fn(async (id, patch) => { Object.assign(projects.find((p) => p.id === id), patch); }),
     };
-    const svc = new AiConnectorMigrationService(connectors as any, teamRepo as any, projectRepo as any);
-    return { svc, teams, projects, created, connectors, teamRepo, projectRepo };
+    // Advisory-lock mock: report locked=true so the migration always proceeds in tests.
+    const db = {
+      execute: jest.fn(async (q: any) => {
+        const queryStr = String(q?.queryChunks ?? q);
+        if (queryStr.includes('pg_try_advisory_lock')) return [{ locked: true }];
+        return [];
+      }),
+    };
+    const svc = new AiConnectorMigrationService(connectors as any, teamRepo as any, projectRepo as any, db as any);
+    return { svc, teams, projects, created, connectors, teamRepo, projectRepo, db };
   }
 
   it('migrates team with legacy aiConfig into a Default connector + sets default', async () => {

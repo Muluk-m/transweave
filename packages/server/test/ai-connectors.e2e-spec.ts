@@ -5,6 +5,8 @@ import { App } from 'supertest/types';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { sql } from 'drizzle-orm';
+import { DRIZZLE } from '../src/db/drizzle.provider';
 
 // Suppress logs during tests
 class SilentLogger implements LoggerService {
@@ -46,6 +48,21 @@ describe('AiConnectors (e2e)', () => {
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
     await app.init();
+
+    // CI shares one PostgreSQL DB across e2e specs (service container).
+    // Wipe to honor the per-spec "fresh DB" assumption that PGlite gives us locally.
+    const db: any = moduleFixture.get(DRIZZLE);
+    await db.execute(sql`
+      TRUNCATE TABLE
+        ai_connectors, ai_prompt_templates,
+        agent_messages, agent_sessions,
+        webhooks, api_keys, activity_logs,
+        token_history, tokens,
+        translation_memory, glossary_entries,
+        files,
+        memberships, projects, teams, users
+      RESTART IDENTITY CASCADE
+    `);
 
     // ── Seed: owner (via /api/auth/setup) ─────────────────────────────────
     const setupRes = await request(app.getHttpServer())

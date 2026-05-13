@@ -1306,6 +1306,8 @@
     "removeConfirm": "Remove this connector? This cannot be undone.",
     "saved": "Saved",
     "saveFailed": "Save failed",
+    "removeFailed": "Delete failed",
+    "setDefaultFailed": "Failed to set as default",
     "probeFailed": "Failed to probe models",
     "selectOrAdd": "Select a connector on the left, or add a new one",
     "setAsDefault": "Set as default",

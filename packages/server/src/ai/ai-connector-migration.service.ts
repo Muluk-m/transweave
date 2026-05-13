@@ -1,10 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
+import { DRIZZLE } from '../db/drizzle.provider';
 import { AiConnectorRepository } from '../repository/ai-connector.repository';
 import { TeamRepository } from '../repository/team.repository';
 import { ProjectRepository } from '../repository/project.repository';
 import { PROVIDER_CAPABILITIES } from './providers/capabilities';
 import { decryptApiKey } from './encryption.util';
 import type { ProviderType, AiConfigStored } from './providers/translation-provider.interface';
+
+// Stable advisory-lock key for the legacy→connectors migration. Picked once and frozen
+// — changing this value reintroduces the multi-instance race.
+const MIGRATION_ADVISORY_LOCK_KEY = 723498237401n;
 
 @Injectable()
 export class AiConnectorMigrationService {
@@ -14,9 +20,39 @@ export class AiConnectorMigrationService {
     private readonly connectors: AiConnectorRepository,
     private readonly teams: TeamRepository,
     private readonly projects: ProjectRepository,
+    @Inject(DRIZZLE) private readonly db: any,
   ) {}
 
   async runOnce(): Promise<{ migratedTeams: number; migratedProjects: number; skippedTeams: number; skippedProjects: number }> {
+    // Block concurrent instances from racing the migration; auto-released at session end.
+    // pg_try_advisory_lock returns false if another connection holds it — we skip silently.
+    try {
+      const result: any = await this.db.execute(
+        sql`SELECT pg_try_advisory_lock(${MIGRATION_ADVISORY_LOCK_KEY}) AS locked`,
+      );
+      const locked = Array.isArray(result) ? result[0]?.locked : result?.rows?.[0]?.locked;
+      if (locked === false) {
+        this.logger.log('Another instance holds the migration lock — skipping this run.');
+        return { migratedTeams: 0, migratedProjects: 0, skippedTeams: 0, skippedProjects: 0 };
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Advisory lock unavailable (${e instanceof Error ? e.message : String(e)}); proceeding without it.`,
+      );
+    }
+
+    try {
+      return await this.runOnceLocked();
+    } finally {
+      try {
+        await this.db.execute(sql`SELECT pg_advisory_unlock(${MIGRATION_ADVISORY_LOCK_KEY})`);
+      } catch {
+        // Lock auto-releases on connection close; non-fatal.
+      }
+    }
+  }
+
+  private async runOnceLocked(): Promise<{ migratedTeams: number; migratedProjects: number; skippedTeams: number; skippedProjects: number }> {
     let migratedTeams = 0;
     let migratedProjects = 0;
     let skippedTeams = 0;
@@ -37,10 +73,20 @@ export class AiConnectorMigrationService {
         }
 
         const conn = await this.createMigratedConnector('team', team.id, null, team.aiConfig!);
-        await this.teams.update(team.id, {
-          defaultConnectorId: conn.id,
-          defaultModel: this.resolveModel(team.aiConfig!),
-        } as any);
+        try {
+          await this.teams.update(team.id, {
+            defaultConnectorId: conn.id,
+            defaultModel: this.resolveModel(team.aiConfig!),
+          } as any);
+        } catch (updateErr) {
+          // Roll back the orphaned connector so the next boot retries cleanly.
+          await this.connectors.delete(conn.id).catch((delErr) => {
+            this.logger.error(
+              `Failed to roll back orphan connector ${conn.id} for team ${team.id}: ${delErr instanceof Error ? delErr.message : String(delErr)}`,
+            );
+          });
+          throw updateErr;
+        }
         migratedTeams++;
       } catch (e) {
         this.logger.error(
@@ -64,10 +110,19 @@ export class AiConnectorMigrationService {
         }
 
         const conn = await this.createMigratedConnector('project', proj.teamId, proj.id, proj.aiConfig!);
-        await this.projects.update(proj.id, {
-          defaultConnectorId: conn.id,
-          defaultModel: this.resolveModel(proj.aiConfig!),
-        } as any);
+        try {
+          await this.projects.update(proj.id, {
+            defaultConnectorId: conn.id,
+            defaultModel: this.resolveModel(proj.aiConfig!),
+          } as any);
+        } catch (updateErr) {
+          await this.connectors.delete(conn.id).catch((delErr) => {
+            this.logger.error(
+              `Failed to roll back orphan connector ${conn.id} for project ${proj.id}: ${delErr instanceof Error ? delErr.message : String(delErr)}`,
+            );
+          });
+          throw updateErr;
+        }
         migratedProjects++;
       } catch (e) {
         this.logger.error(

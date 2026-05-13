@@ -113,18 +113,28 @@ export function AiConnectorsSettings({ scope }: { scope: Scope }) {
 
   async function remove(id: string) {
     if (!confirm(t("removeConfirm"))) return;
-    await deleteConnector(id);
-    if (selectedId === id) setSelectedId(null);
-    await reload();
+    try {
+      await deleteConnector(id);
+      if (selectedId === id) setSelectedId(null);
+      await reload();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: t("removeFailed"), description: msg, variant: "destructive" });
+    }
   }
 
   async function setAsDefault(connectorId: string, modelId: string) {
-    if (scope.kind === "team") {
-      await setTeamDefault(scope.teamId, { connectorId, model: modelId });
-    } else {
-      await setProjectDefault((scope as { kind: "project"; teamId: string; projectId: string }).projectId, { connectorId, model: modelId });
+    try {
+      if (scope.kind === "team") {
+        await setTeamDefault(scope.teamId, { connectorId, model: modelId });
+      } else {
+        await setProjectDefault((scope as { kind: "project"; teamId: string; projectId: string }).projectId, { connectorId, model: modelId });
+      }
+      await reload();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: t("setDefaultFailed"), description: msg, variant: "destructive" });
     }
-    await reload();
   }
 
   return (

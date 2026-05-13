@@ -1306,6 +1306,8 @@
     "removeConfirm": "删除该连接器？该操作不可撤销。",
     "saved": "已保存",
     "saveFailed": "保存失败",
+    "removeFailed": "删除失败",
+    "setDefaultFailed": "设为默认失败",
     "probeFailed": "模型探测失败",
     "selectOrAdd": "从左侧选择或新增连接器",
     "setAsDefault": "设为默认",

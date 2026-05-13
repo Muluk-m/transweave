@@ -22,7 +22,7 @@ export const aiConnectors = pgTable(
     apiKey: text('api_key').notNull(),
     baseUrl: varchar('base_url', { length: 500 }),
     enabledModels: jsonb('enabled_models').$type<EnabledModel[]>().notNull().default([]),
-    createdBy: uuid('created_by').references(() => users.id),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

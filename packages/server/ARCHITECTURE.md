@@ -31,11 +31,11 @@ lint/         Server-side i18n lint rules
 
 `auth`, `user`, `team`, `project`, `token`, `api-key`, `mcp`, `upload`, `file`, `seed`, `agent`, `ai-prompt-template`, `glossary`, `translation-memory`, `webhook`, `activity-log`, `badge`, `lint`, `index`.
 
-AI endpoints live separately under `src/ai/` (`ai.controller.ts`, `ai-config.controller.ts`).
+AI endpoints live separately under `src/ai/` (`ai.controller.ts`, `ai-config.controller.ts`, `ai-connectors.controller.ts`, `ai-defaults.controller.ts`).
 
 ## DB schema (`src/db/schema/`)
 
-`users`, `teams`, `memberships`, `projects`, `tokens`, `token-history`, `api-keys`, `activity-logs`, `files`, `glossary`, `translation-memory`, `ai-prompt-templates`, `agent-sessions`, `webhooks`, `relations`.
+`users`, `teams`, `memberships`, `projects`, `tokens`, `token-history`, `api-keys`, `activity-logs`, `files`, `glossary`, `translation-memory`, `ai-prompt-templates`, `ai-connectors`, `agent-sessions`, `webhooks`, `relations`.
 
 Drizzle migrations live in `db/migrations/` and run automatically on server startup. Browse with `pnpm --filter @transweave/server drizzle-kit studio`.
 
