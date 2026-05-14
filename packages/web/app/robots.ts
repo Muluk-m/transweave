@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Required for `output: export` (static export) — robots.txt is generated at build time.
+export const dynamic = "force-static";
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://transweave.dev";
 
 export default function robots(): MetadataRoute.Robots {
