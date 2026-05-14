@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNotNull, isNull } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
 import { memberships, projects, type NewProject, type Project } from '../db/schema';
@@ -13,6 +13,13 @@ export class ProjectRepository extends BaseRepository<
 > {
   constructor(@Inject(DRIZZLE) db: DrizzleDB) {
     super(db, projects);
+  }
+
+  async findAllWithLegacyConfig(): Promise<Project[]> {
+    return this.db
+      .select()
+      .from(projects)
+      .where(and(isNotNull(projects.aiConfig), isNull(projects.defaultConnectorId))) as Promise<Project[]>;
   }
 
   async findByTeamId(teamId: string): Promise<Project[]> {
@@ -37,6 +44,8 @@ export class ProjectRepository extends BaseRepository<
         enableVersioning: projects.enableVersioning,
         enableCrossProjectTM: projects.enableCrossProjectTM,
         aiConfig: projects.aiConfig,
+        defaultConnectorId: projects.defaultConnectorId,
+        defaultModel: projects.defaultModel,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
       })

@@ -5,8 +5,8 @@ import { TeamRepository } from '../repository/team.repository';
 import { GlossaryService } from '../service/glossary.service';
 import { TranslationMemoryService } from '../service/translation-memory.service';
 import type {
-  AiConfigStored,
   ProviderConfig,
+  ProviderType,
   TranslationContext,
   TranslationResult,
 } from './providers/translation-provider.interface';
@@ -24,6 +24,7 @@ import {
   renderTmSection,
   renderOutputFormat,
 } from './prompts/render';
+import { ConnectorResolver } from './connector-resolver.service';
 
 @Injectable()
 export class AiService {
@@ -36,6 +37,7 @@ export class AiService {
     private readonly glossaryService: GlossaryService,
     private readonly translationMemoryService: TranslationMemoryService,
     private readonly promptTemplateService: AiPromptTemplateService,
+    private readonly resolver: ConnectorResolver,
   ) {}
 
   private renderTranslatePrompt(
@@ -59,36 +61,33 @@ export class AiService {
     );
   }
 
-  async resolveProviderConfig(
+  private async resolveActiveConfig(
     projectId: string,
-  ): Promise<ProviderConfig | null> {
-    // 1. Check project-level config
-    const project = await this.projectRepository.findById(projectId);
-    if (!project) return null;
-
-    const projectConfig = project.aiConfig as AiConfigStored | null;
-    if (projectConfig?.provider && projectConfig?.apiKey) {
-      return this.decryptConfig(projectConfig);
+    override?: { connectorId?: string; model?: string },
+  ): Promise<ProviderConfig> {
+    try {
+      const r = await this.resolver.resolve(projectId, override);
+      return {
+        provider: r.connector.provider as ProviderType,
+        apiKey: decryptApiKey(r.connector.apiKey),
+        model: r.model,
+        baseUrl: r.connector.baseUrl ?? undefined,
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.startsWith('AI provider API key could not be decrypted')) {
+        // Stale ciphertext (e.g. AI_ENCRYPTION_KEY rotated or qlj-i18n-ai-salt→transweave-ai-salt
+        // upgrade in b314580): surface as config error so the UI can prompt re-entry.
+        throw new HttpException(msg, HttpStatus.SERVICE_UNAVAILABLE);
+      }
+      if (msg.startsWith('AI_NOT_CONFIGURED')) {
+        throw new HttpException(
+          'No AI provider configured. Configure one in team or project settings.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      throw err;
     }
-
-    // 2. Fall back to team-level config
-    const team = await this.teamRepository.findById(project.teamId);
-    const teamConfig = (team?.aiConfig as AiConfigStored) ?? null;
-    if (teamConfig?.provider && teamConfig?.apiKey) {
-      return this.decryptConfig(teamConfig);
-    }
-
-    // 3. No config found -- AI is disabled
-    return null;
-  }
-
-  private decryptConfig(stored: AiConfigStored): ProviderConfig {
-    return {
-      provider: stored.provider,
-      apiKey: decryptApiKey(stored.apiKey),
-      model: stored.model,
-      baseUrl: stored.baseUrl,
-    };
   }
 
   async translate(params: {
@@ -96,14 +95,9 @@ export class AiService {
     from: string;
     to: string[];
     projectId: string;
+    override?: { connectorId?: string; model?: string };
   }): Promise<TranslationResult> {
-    const config = await this.resolveProviderConfig(params.projectId);
-    if (!config) {
-      throw new HttpException(
-        'No AI provider configured. Configure one in team or project settings.',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+    const config = await this.resolveActiveConfig(params.projectId, params.override);
 
     const provider = createTranslationProvider(config);
 
@@ -191,6 +185,7 @@ export class AiService {
   async *batchTranslate(params: {
     tokens: Array<{ id: string; text: string; from: string; to: string[] }>;
     projectId: string;
+    override?: { connectorId?: string; model?: string };
   }): AsyncGenerator<{
     type: 'progress' | 'result' | 'error' | 'done';
     tokenId?: string;
@@ -201,13 +196,7 @@ export class AiService {
     failed?: number;
     error?: string;
   }> {
-    const config = await this.resolveProviderConfig(params.projectId);
-    if (!config) {
-      throw new HttpException(
-        'No AI provider configured. Configure one in team or project settings.',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+    const config = await this.resolveActiveConfig(params.projectId, params.override);
 
     const { default: pLimit } = await import('p-limit');
     const limit = pLimit(5);
@@ -368,14 +357,9 @@ export class AiService {
     targetLang: string;
     tone: 'formal' | 'casual' | 'shorter' | 'rephrase' | 'polish' | 'custom';
     customInstruction?: string;
+    override?: { connectorId?: string; model?: string };
   }): Promise<{ candidates: string[] }> {
-    const config = await this.resolveProviderConfig(params.projectId);
-    if (!config) {
-      throw new HttpException(
-        'No AI provider configured. Configure one in team or project settings.',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+    const config = await this.resolveActiveConfig(params.projectId, params.override);
     if (!isLLMProvider(config.provider)) {
       throw new HttpException(
         'Tone adjustment requires an LLM provider (OpenAI / Claude / Gemini / Deepseek)',
@@ -425,14 +409,9 @@ export class AiService {
     tag?: string;
     module?: string;
     projectId: string;
+    override?: { connectorId?: string; model?: string };
   }): Promise<string> {
-    const config = await this.resolveProviderConfig(params.projectId);
-    if (!config) {
-      throw new HttpException(
-        'No AI provider configured. Configure one in team or project settings.',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+    const config = await this.resolveActiveConfig(params.projectId, params.override);
 
     if (!isLLMProvider(config.provider)) {
       throw new HttpException(

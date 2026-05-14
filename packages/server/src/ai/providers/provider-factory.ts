@@ -9,6 +9,7 @@ import { DeepseekProvider } from './deepseek.provider';
 import { GeminiProvider } from './gemini.provider';
 import { DeepLProvider } from './deepl.provider';
 import { GoogleTranslateProvider } from './google-translate.provider';
+import { OpenAICompatibleProvider } from './openai-compatible.provider';
 
 export function createTranslationProvider(
   config: ProviderConfig,
@@ -22,6 +23,17 @@ export function createTranslationProvider(
       return new DeepseekProvider(config.apiKey, config.model, config.baseUrl);
     case 'gemini':
       return new GeminiProvider(config.apiKey, config.model, config.baseUrl);
+    case 'openai-compatible':
+      if (!config.baseUrl) {
+        throw new Error('openai-compatible provider requires baseUrl');
+      }
+      // No sensible default model for openai-compatible; caller is expected to set one.
+      // Empty string surfaces as an upstream API error rather than a silent default.
+      return new OpenAICompatibleProvider(
+        config.apiKey,
+        config.model ?? '',
+        config.baseUrl,
+      );
     case 'deepl':
       return new DeepLProvider(config.apiKey);
     case 'google-translate':

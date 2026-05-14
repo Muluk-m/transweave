@@ -5,7 +5,7 @@ export class ClaudeProvider extends BaseOpenAICompatibleProvider {
 
   constructor(
     apiKey: string,
-    model: string = 'claude-sonnet-4-20250514',
+    model: string = 'claude-sonnet-4-6',
     baseUrl: string = 'https://api.anthropic.com/v1/',
   ) {
     super(apiKey, model, baseUrl);

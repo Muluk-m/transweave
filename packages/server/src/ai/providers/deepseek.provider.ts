@@ -6,7 +6,7 @@ export class DeepseekProvider extends BaseOpenAICompatibleProvider {
 
   constructor(
     apiKey: string,
-    model: string = 'deepseek-chat',
+    model: string = 'deepseek-v4-flash',
     baseUrl: string = 'https://api.deepseek.com',
   ) {
     super(apiKey, model, baseUrl);

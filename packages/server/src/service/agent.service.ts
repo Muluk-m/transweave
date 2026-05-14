@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -9,14 +10,12 @@ import { eq, desc } from 'drizzle-orm';
 import { DRIZZLE } from '../db/drizzle.provider';
 import type { DrizzleDB } from '../db/drizzle.types';
 import { agentSessions, agentMessages } from '../db/schema';
-import { AiService } from '../ai/ai.service';
 import { ProjectService } from './project.service';
 import { ToolExecutorService, TOOL_DEFINITIONS } from './tool-executor.service';
-import {
-  LLM_PROVIDERS,
-  type ProviderConfig,
-  type LLMProviderType,
-} from '../ai/providers/translation-provider.interface';
+import { ConnectorResolver } from '../ai/connector-resolver.service';
+import { PROVIDER_CAPABILITIES } from '../ai/providers/capabilities';
+import { decryptApiKey } from '../ai/encryption.util';
+import type { ProviderType } from '../ai/providers/translation-provider.interface';
 
 interface AgentMessage {
   role: 'user' | 'assistant' | 'tool';
@@ -39,9 +38,6 @@ interface AgentEvent {
   sessionId?: string;
 }
 
-/** OpenAI-compatible providers that support tool calling */
-const TOOL_CALLING_PROVIDERS: readonly string[] = LLM_PROVIDERS;
-
 @Injectable()
 export class AgentService {
   private readonly logger = new Logger(AgentService.name);
@@ -50,7 +46,7 @@ export class AgentService {
 
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDB,
-    private readonly aiService: AiService,
+    private readonly resolver: ConnectorResolver,
     private readonly projectService: ProjectService,
     private readonly toolExecutor: ToolExecutorService,
   ) {}
@@ -113,25 +109,42 @@ export class AgentService {
     sessionId?: string;
     history?: AgentMessage[];
     userId: string;
+    options?: { connectorId?: string; model?: string };
   }): AsyncGenerator<AgentEvent> {
-    const config = await this.aiService.resolveProviderConfig(
-      params.projectId,
-    );
-    if (!config) {
+    let resolved: Awaited<ReturnType<ConnectorResolver['resolve']>>;
+    try {
+      resolved = await this.resolver.resolve(params.projectId, params.options);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.startsWith('AI_NOT_CONFIGURED')) {
+        throw new HttpException(
+          'No AI provider configured',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      throw err;
+    }
+
+    const provider = resolved.connector.provider as ProviderType;
+    const cap = PROVIDER_CAPABILITIES[provider];
+    if (!cap?.toolCalling) {
+      throw new BadRequestException(
+        `AI provider "${provider}" does not support the Agent chat feature. Configure an LLM provider that supports tool calling.`,
+      );
+    }
+    let apiKey: string;
+    try {
+      apiKey = decryptApiKey(resolved.connector.apiKey);
+    } catch (err) {
+      // Stale ciphertext (e.g. AI_ENCRYPTION_KEY rotated or salt upgrade in b314580):
+      // surface as 503 so the UI can prompt the user to re-enter the key.
       throw new HttpException(
-        'No AI provider configured',
+        err instanceof Error ? err.message : 'Connector API key could not be decrypted',
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
-
-    // Check that the provider supports tool calling (LLM only)
-    if (!TOOL_CALLING_PROVIDERS.includes(config.provider)) {
-      throw new HttpException(
-        `AI provider "${config.provider}" does not support the Agent chat feature. ` +
-          `Please configure an LLM provider (${TOOL_CALLING_PROVIDERS.join(', ')}).`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const model = resolved.model || cap.defaultModel || 'gpt-5.5';
+    const baseUrl = resolved.connector.baseUrl ?? undefined;
 
     const project = await this.projectService.findProjectById(
       params.projectId,
@@ -172,7 +185,7 @@ export class AgentService {
     const maxIterations = 10;
 
     for (let i = 0; i < maxIterations; i++) {
-      const response = await this.callLLM(config, messages);
+      const response = await this.callLLM({ apiKey, baseUrl, model }, messages);
 
       const assistantMessage = response.choices[0]?.message;
       if (!assistantMessage) break;
@@ -270,7 +283,7 @@ export class AgentService {
    * Reuses the OpenAI client instance when apiKey + baseUrl haven't changed.
    */
   private async callLLM(
-    config: ProviderConfig,
+    config: { apiKey: string; baseUrl?: string; model: string },
     messages: any[],
   ): Promise<any> {
     const clientKey = `${config.apiKey}:${config.baseUrl || ''}`;
@@ -284,7 +297,7 @@ export class AgentService {
     }
 
     return this.llmClient.chat.completions.create({
-      model: config.model || 'gpt-4o-mini',
+      model: config.model,
       messages,
       tools: TOOL_DEFINITIONS,
       temperature: 0.3,

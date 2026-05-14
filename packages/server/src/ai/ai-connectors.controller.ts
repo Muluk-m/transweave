@@ -1,0 +1,182 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { AuthGuard } from '../jwt/guard';
+import { AiConnectorRepository } from '../repository/ai-connector.repository';
+import { MembershipRepository } from '../repository/membership.repository';
+import { ProjectRepository } from '../repository/project.repository';
+import { CreateConnectorDto, UpdateConnectorDto } from './dto/ai-connector.dto';
+import { decryptApiKey, encryptApiKey, maskApiKey } from './encryption.util';
+import { createTranslationProvider, isLLMProvider } from './providers/provider-factory';
+import { PROVIDER_CAPABILITIES } from './providers/capabilities';
+import type { ProviderType } from './providers/translation-provider.interface';
+import { CurrentUser, UserPayload } from '../jwt/current-user.decorator';
+
+@Controller('api/ai/connectors')
+@UseGuards(AuthGuard)
+export class AiConnectorsController {
+  constructor(
+    private readonly connectors: AiConnectorRepository,
+    private readonly memberships: MembershipRepository,
+    private readonly projects: ProjectRepository,
+  ) {}
+
+  @Get()
+  async list(
+    @Query('teamId') teamId: string | undefined,
+    @Query('projectId') projectId: string | undefined,
+    @CurrentUser() user: UserPayload,
+  ) {
+    if (!teamId && !projectId) {
+      throw new BadRequestException('teamId or projectId required');
+    }
+    let targetTeamId: string;
+    if (projectId) {
+      const project = await this.projects.findById(projectId);
+      if (!project) throw new NotFoundException('project not found');
+      // Reject mixed params with foreign project — the team id can't override the project's true team.
+      if (teamId && teamId !== project.teamId) {
+        throw new BadRequestException('projectId does not belong to teamId');
+      }
+      targetTeamId = project.teamId;
+    } else {
+      targetTeamId = teamId!;
+    }
+    await this.assertTeamMember(user.userId, targetTeamId);
+    const rows = projectId
+      ? await this.connectors.listForProject(projectId)
+      : await this.connectors.listForTeam(teamId!);
+    return rows.map(this.maskRow);
+  }
+
+  @Post()
+  async create(@Body() dto: CreateConnectorDto, @CurrentUser() user: UserPayload) {
+    this.validateScope(dto);
+    this.validateBaseUrlForProvider(dto);
+    if (dto.scope === 'project') {
+      const project = await this.projects.findById(dto.projectId!);
+      if (!project) throw new NotFoundException('project not found');
+      if (project.teamId !== dto.teamId) {
+        throw new BadRequestException('projectId does not belong to teamId');
+      }
+    }
+    await this.assertTeamRole(user.userId, dto.teamId, ['owner', 'manager']);
+    const row = await this.connectors.create({
+      scope: dto.scope,
+      teamId: dto.teamId,
+      projectId: dto.scope === 'project' ? dto.projectId! : null,
+      displayName: dto.displayName,
+      provider: dto.provider,
+      apiKey: encryptApiKey(dto.apiKey),
+      baseUrl: dto.baseUrl ?? null,
+      enabledModels: dto.enabledModels,
+      createdBy: user.userId,
+    });
+    return this.maskRow(row);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateConnectorDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    const existing = await this.connectors.findById(id);
+    if (!existing) throw new NotFoundException();
+    await this.assertTeamRole(user.userId, existing.teamId, ['owner', 'manager']);
+    const patch: any = {};
+    if (dto.displayName !== undefined) patch.displayName = dto.displayName;
+    if (dto.apiKey) patch.apiKey = encryptApiKey(dto.apiKey);
+    if (dto.baseUrl !== undefined) patch.baseUrl = dto.baseUrl;
+    if (dto.enabledModels !== undefined) patch.enabledModels = dto.enabledModels;
+    const updated = await this.connectors.update(id, patch);
+    return this.maskRow(updated!);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    const existing = await this.connectors.findById(id);
+    if (!existing) throw new NotFoundException();
+    await this.assertTeamRole(user.userId, existing.teamId, ['owner', 'manager']);
+    await this.connectors.delete(id);
+    return { ok: true };
+  }
+
+  @Post('probe-models')
+  async probe(
+    @Body() body: { provider: string; apiKey: string; baseUrl?: string },
+    @CurrentUser() _user: UserPayload,
+  ) {
+    if (!isLLMProvider(body.provider)) return { models: [], source: 'static' };
+    const cap = PROVIDER_CAPABILITIES[body.provider as ProviderType];
+    if (!cap.listModels) return { models: cap.recommendedModels, source: 'recommended' };
+    const provider = createTranslationProvider({
+      provider: body.provider as any,
+      apiKey: body.apiKey,
+      baseUrl: body.baseUrl,
+    });
+    const models = provider.listModels ? await provider.listModels() : [];
+    return { models, source: 'upstream' };
+  }
+
+  @Post(':id/list-models')
+  async listModelsForConnector(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    const c = await this.connectors.findById(id);
+    if (!c) throw new NotFoundException();
+    await this.assertTeamMember(user.userId, c.teamId);
+    const cap = PROVIDER_CAPABILITIES[c.provider as ProviderType];
+    if (!cap?.listModels) return { models: cap?.recommendedModels ?? [], source: 'recommended' };
+    const provider = createTranslationProvider({
+      provider: c.provider as any,
+      apiKey: decryptApiKey(c.apiKey),
+      baseUrl: c.baseUrl ?? undefined,
+    });
+    const models = provider.listModels ? await provider.listModels() : [];
+    return { models, source: 'upstream' };
+  }
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  private validateScope(dto: CreateConnectorDto) {
+    if (dto.scope === 'project' && !dto.projectId) {
+      throw new BadRequestException('projectId required for project scope');
+    }
+    if (dto.scope === 'team' && dto.projectId) {
+      throw new BadRequestException('projectId must be null for team scope');
+    }
+  }
+
+  private validateBaseUrlForProvider(dto: CreateConnectorDto) {
+    const cap = PROVIDER_CAPABILITIES[dto.provider as ProviderType];
+    if (cap?.requiresBaseUrl && !dto.baseUrl) {
+      throw new BadRequestException(`${dto.provider} requires baseUrl`);
+    }
+  }
+
+  private async assertTeamMember(userId: string, teamId: string) {
+    const m = await this.memberships.findByUserAndTeam(userId, teamId);
+    if (!m) throw new ForbiddenException();
+  }
+
+  private async assertTeamRole(userId: string, teamId: string, roles: string[]) {
+    const m = await this.memberships.findByUserAndTeam(userId, teamId);
+    if (!m || !roles.includes(m.role)) throw new ForbiddenException();
+  }
+
+  private maskRow = (row: any) => ({
+    ...row,
+    apiKey: undefined,
+    keyHint: maskApiKey(row.apiKey),
+  });
+}

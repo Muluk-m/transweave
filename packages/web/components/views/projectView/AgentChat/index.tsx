@@ -10,11 +10,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { Bot, Send, Loader2, Wrench, ChevronDown, ChevronRight } from "lucide-react";
 import { agentChat } from "@/api/agent";
 import type { ChatMessage, AgentEvent } from "@/api/agent";
+import {
+  resolveDefault,
+  listConnectors,
+  setProjectDefault,
+  type ResolvedDefault,
+  type Connector,
+} from "@/api/connectors";
 import { useAtom } from "jotai";
 import { agentChatTokenContextAtom } from "@/jotai";
+
+const AGENT_PROVIDERS = ["openai", "claude", "deepseek", "gemini", "openai-compatible"];
 
 interface AgentChatProps {
   projectId: string;
@@ -79,6 +90,34 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
   const abortRef = useRef<AbortController | null>(null);
   const [tokenContext, setTokenContext] = useAtom(agentChatTokenContextAtom);
   const lastNonceRef = useRef<number | null>(null);
+
+  // Model chip selector state
+  const [resolved, setResolved] = useState<ResolvedDefault | null>(null);
+  const [allConnectors, setAllConnectors] = useState<Connector[]>([]);
+  const [selection, setSelection] = useState<{ connectorId: string; model: string } | null>(null);
+  const [chipPopoverOpen, setChipPopoverOpen] = useState(false);
+
+  // Fetch resolved default and connector list on mount / projectId change
+  useEffect(() => {
+    void (async () => {
+      const [r, c] = await Promise.all([
+        resolveDefault(projectId),
+        listConnectors({ projectId }),
+      ]);
+      setResolved(r);
+      setAllConnectors(c);
+    })();
+  }, [projectId]);
+
+  // Seed selection from resolved default (only once, don't override user picks)
+  useEffect(() => {
+    if (resolved?.configured && !selection) {
+      setSelection({
+        connectorId: resolved.connectorId!,
+        model: resolved.model!,
+      });
+    }
+  }, [resolved, selection]);
 
   // When a token context arrives via the global atom (row-level Ask Agent),
   // open the sheet, reset the conversation, and seed it with token context.
@@ -151,45 +190,53 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
     abortRef.current = controller;
 
     try {
-      await agentChat(text, projectId, history.slice(0, -1), (event: AgentEvent) => {
-        if (event.type === 'done' && event.sessionId) {
-          setSessionId(event.sessionId);
-        }
-        setMessages((prev) => {
-          const updated = [...prev];
-          const last = { ...updated[updated.length - 1] };
-
-          switch (event.type) {
-            case "text":
-              last.content += event.content || "";
-              break;
-            case "tool_call":
-              last.toolCalls = [
-                ...(last.toolCalls || []),
-                {
-                  name: event.toolName!,
-                  args: event.toolArgs,
-                  id: event.toolCallId!,
-                },
-              ];
-              break;
-            case "tool_result": {
-              last.toolCalls = (last.toolCalls || []).map((tc) =>
-                tc.id === event.toolCallId
-                  ? { ...tc, result: event.toolResult }
-                  : tc,
-              );
-              break;
-            }
-            case "error":
-              last.content += `\n\nError: ${event.content}`;
-              break;
+      await agentChat(
+        text,
+        projectId,
+        history.slice(0, -1),
+        selection ?? {},
+        (event: AgentEvent) => {
+          if (event.type === "done" && event.sessionId) {
+            setSessionId(event.sessionId);
           }
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = { ...updated[updated.length - 1] };
 
-          updated[updated.length - 1] = last;
-          return updated;
-        });
-      }, sessionId, controller.signal);
+            switch (event.type) {
+              case "text":
+                last.content += event.content || "";
+                break;
+              case "tool_call":
+                last.toolCalls = [
+                  ...(last.toolCalls || []),
+                  {
+                    name: event.toolName!,
+                    args: event.toolArgs,
+                    id: event.toolCallId!,
+                  },
+                ];
+                break;
+              case "tool_result": {
+                last.toolCalls = (last.toolCalls || []).map((tc) =>
+                  tc.id === event.toolCallId
+                    ? { ...tc, result: event.toolResult }
+                    : tc,
+                );
+                break;
+              }
+              case "error":
+                last.content += `\n\nError: ${event.content}`;
+                break;
+            }
+
+            updated[updated.length - 1] = last;
+            return updated;
+          });
+        },
+        sessionId,
+        controller.signal,
+      );
     } catch (err) {
       setMessages((prev) => {
         const updated = [...prev];
@@ -204,7 +251,21 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
     }
   };
 
-  if (!aiConfigured) return null;
+  // Guard: hide the floating button entirely if no AI connector is resolved.
+  // We use the legacy prop as an early gate before the async fetch completes,
+  // then switch to the resolved check once data is available.
+  if (!aiConfigured && !resolved?.configured) return null;
+  if (resolved !== null && !resolved.configured) return null;
+
+  const selectedConnector = allConnectors.find((c) => c.id === selection?.connectorId);
+
+  const handleSetProjectDefault = async () => {
+    if (!selection) return;
+    await setProjectDefault(projectId, selection);
+    const r = await resolveDefault(projectId);
+    setResolved(r);
+    setChipPopoverOpen(false);
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => {
@@ -232,6 +293,60 @@ export function AgentChat({ projectId, aiConfigured }: AgentChatProps) {
             AI Assistant
           </SheetTitle>
         </SheetHeader>
+
+        {/* Model chip selector */}
+        <div className="px-3 py-2 border-b flex items-center gap-2 text-xs">
+          <span className="opacity-60">Model:</span>
+          <Popover open={chipPopoverOpen} onOpenChange={setChipPopoverOpen}>
+            <PopoverTrigger className="px-2 py-0.5 rounded-full border hover:bg-accent flex items-center gap-1">
+              <span>
+                {selectedConnector?.displayName ?? selection?.connectorId ?? "—"} · {selection?.model ?? "—"}
+              </span>
+              <ChevronDown className="w-3 h-3" />
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-2">
+              {allConnectors
+                .filter((c) => AGENT_PROVIDERS.includes(c.provider))
+                .map((c) => (
+                  <div key={c.id} className="mb-2">
+                    <div className="text-[10px] uppercase opacity-60 mb-1 flex items-center gap-1">
+                      {c.displayName}
+                      {c.scope === "team" && (
+                        <Badge variant="outline" className="text-[9px]">
+                          team
+                        </Badge>
+                      )}
+                    </div>
+                    {c.enabledModels.map((m) => (
+                      <button
+                        key={m.modelId}
+                        onClick={() => {
+                          setSelection({ connectorId: c.id, model: m.modelId });
+                          setChipPopoverOpen(false);
+                        }}
+                        className={`w-full text-left px-2 py-1 text-sm rounded ${
+                          selection?.connectorId === c.id && selection?.model === m.modelId
+                            ? "bg-accent"
+                            : "hover:bg-accent/50"
+                        }`}
+                      >
+                        {m.modelId}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              {allConnectors.filter((c) => AGENT_PROVIDERS.includes(c.provider)).length === 0 && (
+                <p className="text-xs text-muted-foreground px-2 py-1">No connectors configured.</p>
+              )}
+              <button
+                onClick={handleSetProjectDefault}
+                className="w-full mt-2 text-xs text-primary hover:underline text-left px-2 py-1"
+              >
+                Set as project default
+              </button>
+            </PopoverContent>
+          </Popover>
+        </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (

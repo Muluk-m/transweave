@@ -13,3 +13,4 @@ export * from './webhooks';
 export * from './agent-sessions';
 export * from './ai-prompt-templates';
 export * from './relations';
+export * from './ai-connectors';

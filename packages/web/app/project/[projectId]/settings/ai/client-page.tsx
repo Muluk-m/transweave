@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getProject } from "@/api/project";
 import { Project } from "@/jotai/types";
 import { LoadingView } from "@/components/views/loadingView";
-import { AiProviderSettings } from "@/components/views/settings/AiProviderSettings";
+import { AiConnectorsSettings } from "@/components/views/settings/AiConnectorsSettings";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export function ProjectAiSettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -69,41 +69,13 @@ export function ProjectAiSettingsPage() {
 
       <div className="space-y-6">
         {/* Project-level AI config */}
-        <AiProviderSettings
-          scope="project"
-          scopeId={project.id}
-          projectId={project.id}
-        />
-
-        {/* Team-level AI config (collapsed by default) */}
         {project.teamId && (
-          <TeamAiConfigSection teamId={project.teamId} projectId={project.id} />
+          <AiConnectorsSettings
+            scope={{ kind: "project", teamId: project.teamId, projectId: project.id }}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function TeamAiConfigSection({ teamId, projectId }: { teamId: string; projectId: string }) {
-  const t = useTranslations("aiSettings");
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="space-y-2">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-1"
-      >
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        {t("teamDefaultHint")}
-      </button>
-      {expanded && (
-        <AiProviderSettings
-          scope="team"
-          scopeId={teamId}
-          projectId={projectId}
-        />
-      )}
-    </div>
-  );
-}

@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import type { AiConfigStored } from '../../ai/providers/translation-provider.interface';
 
 export const teams = pgTable('teams', {
@@ -6,6 +6,8 @@ export const teams = pgTable('teams', {
   name: text('name').notNull(),
   url: text('url').notNull(),
   aiConfig: jsonb('ai_config').$type<AiConfigStored>(),
+  defaultConnectorId: uuid('default_connector_id'),
+  defaultModel: varchar('default_model', { length: 100 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
