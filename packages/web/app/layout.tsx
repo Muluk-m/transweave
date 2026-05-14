@@ -9,21 +9,38 @@ import { SidebarManager } from "@/components/views/sidebar-manager";
 import { I18nClientProvider } from "@/components/i18n/client-provider";
 import { QueryProvider } from "@/lib/query-client";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://transweave.dev";
+
 export const metadata: Metadata = {
-  title: "Transweave",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Transweave — Self-hosted i18n management",
+    template: "%s · Transweave",
+  },
   description:
     "Self-hosted i18n management platform for development teams. Manage multilingual translations with AI, CLI, and team collaboration.",
+  keywords: ["i18n", "translation management", "self-hosted", "open source", "localization", "AI translation"],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Transweave",
+    title: "Transweave — Self-hosted i18n management",
     description: "Self-hosted i18n management for teams that ship.",
+    url: SITE_URL,
+    siteName: "Transweave",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Transweave",
+    title: "Transweave — Self-hosted i18n management",
     description: "Self-hosted i18n management for teams that ship.",
     images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -33,7 +50,7 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning className="dark">
+    <html suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
